@@ -20,7 +20,11 @@ class RealCostCalculatorTest {
 	private final RealCostSettings s = RealCostSettings.defaults();
 
 	static Listing ad(Integer year, Integer month, String description) {
-		return TestListings.of(new RawListing(Site.STANDVIRTUAL, "t", "https://example.test/1", "t", 1500, "Toyota",
+		return ad(1500, year, month, description);
+	}
+
+	static Listing ad(Integer price, Integer year, Integer month, String description) {
+		return TestListings.of(new RawListing(Site.STANDVIRTUAL, "t", "https://example.test/1", "t", price, "Toyota",
 				"Yaris", null, year, month, 150000, Fuel.PETROL, 998, 68, "manual", 5, null, null, null, 0,
 				description, null, false), true);
 	}
@@ -43,7 +47,7 @@ class RealCostCalculatorTest {
 	void pre2007_usesLowIuc() {
 		RealCost c = calc.estimate(ad(2005, 3, null), match(Timing.CHAIN), s);
 		assertThat(c.itemsPt()).containsEntry("IUC (estimativa)", 40.0);
-		assertThat(c.totalEur()).isEqualTo(105 + 37.47 + 40);
+		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47 + 40);
 	}
 
 	@Test
@@ -65,21 +69,21 @@ class RealCostCalculatorTest {
 		RealCost c = calc.estimate(ad(2007, null, null), match(Timing.CHAIN), s);
 		assertThat(c.itemsPt()).containsEntry("IUC (estimativa, mês desconhecido)", 149.0)
 				.doesNotContainKey("IUC (estimativa)");
-		assertThat(c.totalEur()).isEqualTo(105 + 37.47 + 149);
+		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47 + 149);
 	}
 
 	@Test
 	void yearUnknown_iucLeftOutOfTotalAndSaid() {
 		RealCost c = calc.estimate(ad(null, null, null), match(Timing.CHAIN), s);
 		assertThat(c.itemsPt()).containsEntry("IUC (fora do total: ano de matrícula desconhecido)", 0.0);
-		assertThat(c.totalEur()).isEqualTo(105 + 37.47);
+		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47);
 	}
 
 	@Test
 	void beltEngineWithoutMention_addsBelt() {
 		RealCost c = calc.estimate(ad(2005, 3, "Carro em bom estado."), match(Timing.BELT), s);
 		assertThat(c.itemsPt()).containsEntry("Correia (assumida por fazer)", 350.0);
-		assertThat(c.totalEur()).isEqualTo(105 + 37.47 + 40 + 350);
+		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47 + 40 + 350);
 	}
 
 	@Test
@@ -107,7 +111,7 @@ class RealCostCalculatorTest {
 	@Test
 	void insuranceNotInTotal() {
 		RealCost c = calc.estimate(ad(2005, 3, null), match(Timing.CHAIN), s);
-		assertThat(c.totalEur()).isEqualTo(105 + 37.47 + 40);
+		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47 + 40);
 		assertThat(c.insuranceRangePt()).contains("800").contains("1500").contains("EUR");
 		assertThat(c.itemsPt().keySet()).noneMatch(k -> k.toLowerCase().contains("seguro"));
 	}
@@ -115,7 +119,22 @@ class RealCostCalculatorTest {
 	@Test
 	void itemsKeepStableOrder() {
 		RealCost c = calc.estimate(ad(2005, 3, null), match(Timing.BELT), s);
-		assertThat(c.itemsPt().keySet()).containsExactly("Papelada", "Inspeção", "IUC (estimativa)",
+		assertThat(c.itemsPt().keySet()).containsExactly("Preço pedido", "Papelada", "Inspeção", "IUC (estimativa)",
 				"Correia (assumida por fazer)");
+	}
+
+	@Test
+	void askingPrice_isFirstItemAndInTotal() {
+		RealCost c = calc.estimate(ad(2005, 3, null), match(Timing.CHAIN), s);
+		assertThat(c.itemsPt()).containsEntry("Preço pedido", 1500.0);
+		assertThat(c.itemsPt().keySet().iterator().next()).isEqualTo("Preço pedido");
+	}
+
+	@Test
+	void unknownPrice_leftOutOfTotalAndSaid() {
+		RealCost c = calc.estimate(ad(null, 2005, 3, null), match(Timing.CHAIN), s);
+		assertThat(c.itemsPt()).containsEntry("Preço pedido (desconhecido)", 0.0).doesNotContainKey("Preço pedido");
+		assertThat(c.itemsPt().keySet().iterator().next()).isEqualTo("Preço pedido (desconhecido)");
+		assertThat(c.totalEur()).isEqualTo(105 + 37.47 + 40);
 	}
 }

@@ -22,6 +22,11 @@ public class RealCostCalculator {
 
 	public RealCost estimate(Listing l, CarMatch m, RealCostSettings s) {
 		Map<String, Double> items = new LinkedHashMap<>();
+		if (l.getPriceEur() == null) {
+			items.put("Preço pedido (desconhecido)", 0.0);
+		} else {
+			items.put("Preço pedido", (double) l.getPriceEur());
+		}
 		items.put("Papelada", (double) s.paperworkEur());
 		items.put("Inspeção", s.ipoEur());
 		Integer year = l.getYear();
