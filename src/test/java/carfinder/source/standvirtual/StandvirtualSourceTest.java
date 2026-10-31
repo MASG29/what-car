@@ -29,6 +29,7 @@ class StandvirtualSourceTest {
 	private final List<String> requests = new CopyOnWriteArrayList<>();
 	private final List<String> userAgents = new CopyOnWriteArrayList<>();
 	private volatile String searchHtml;
+	private volatile boolean emptyAfterFirstPage;
 
 	private static String fixture(String name) throws IOException {
 		try (InputStream in = StandvirtualSourceTest.class.getResourceAsStream("/fixtures/" + name)) {
@@ -47,7 +48,9 @@ class StandvirtualSourceTest {
 			int status = 200;
 			String body;
 			if (path.equals("/carros")) {
-				body = searchHtml;
+				String q = ex.getRequestURI().getQuery();
+				boolean later = emptyAfterFirstPage && q != null && q.matches(".*page=([2-9]|\\d\\d+).*");
+				body = later ? withoutEdges(searchHtml) : searchHtml;
 			}
 			else if (path.startsWith("/carros/anuncio/")) {
 				body = fixture("standvirtual-advert.html");
@@ -68,6 +71,12 @@ class StandvirtualSourceTest {
 	@AfterEach
 	void stopServer() {
 		server.stop(0);
+	}
+
+	private static String withoutEdges(String html) {
+		int start = html.indexOf("edges\\\": [");
+		int end = html.indexOf("], \\\"topads");
+		return html.substring(0, start) + "edges\\\": [" + html.substring(end);
 	}
 
 	private StandvirtualSource source(int maxPages) {
@@ -102,6 +111,16 @@ class StandvirtualSourceTest {
 		assertThat(searchRequests(requests)).isEqualTo(3);
 		assertThat(requests).anyMatch(r -> r.contains("page=3"));
 		assertThat(progress).isNotEmpty();
+	}
+
+	@Test
+	void stopsPagingOnEmptySearchPage() {
+		emptyAfterFirstPage = true;
+
+		List<RawListing> result = source(25).search(QUERY, p -> { });
+
+		assertThat(searchRequests(requests)).isEqualTo(2);
+		assertThat(result).isNotEmpty();
 	}
 
 	@Test

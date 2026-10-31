@@ -56,7 +56,9 @@ public class StandvirtualSource implements ListingSource {
 			progress.accept("Standvirtual: página " + page + " de " + Math.min(totalPages, props.maxPages())
 					+ " (" + byId.size() + " anúncios)");
 			// Stop by page count, never by "id already seen": edge 0 can be a premium ad out of order.
-			if ((long) page * result.pageSize() >= result.totalCount() || page >= props.maxPages()) {
+			// An empty page ends the search even when totalCount says there is more.
+			if (result.listings().isEmpty() || (long) page * result.pageSize() >= result.totalCount()
+					|| page >= props.maxPages()) {
 				return List.copyOf(byId.values());
 			}
 			page++;
