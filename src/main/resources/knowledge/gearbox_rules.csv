@@ -1,1 +1,14 @@
 keyword,type,tier,source_url,tag
+MMT,ROBOTISED,HIGH,https://www.ecutesting.com/common-faults/toyota/toyota-mmt-clutch-actuator-fault/,F
+Durashift,ROBOTISED,HIGH,https://www.ecutesting.com/common-faults/ford/fiesta-clutch-actuator-fault/,F
+Easytronic,ROBOTISED,HIGH,https://gaga.ba/en/najcesci-kvarovi/opel-corsa-d-1-4,agg
+Dualogic,ROBOTISED,HIGH,https://eco-torque.co.uk/blogs/news/fiat-500-dualogic-semi-automatic-gearbox-faults-clutch-wear-hydraulic-pressure-actuator-problems,F
+2-Tronic,ROBOTISED,HIGH,https://www.ecutesting.com/common-faults/citroen/citroen-c2c3-sensodrive-gearbox-ecu/,F
+SensoDrive,ROBOTISED,HIGH,https://www.ecutesting.com/common-faults/citroen/citroen-c2c3-sensodrive-gearbox-ecu/,F
+i-SHIFT,ROBOTISED,HIGH,https://en.wikipedia.org/wiki/Honda_I-SHIFT,F
+Allshift,ROBOTISED,HIGH,https://www.autodoc.co.uk/info/problems-with-the-mitsubishi-colt,agg
+DQ200,DRY_DCT,HIGH,https://www.ecutesting.com/common-faults/volkswagen/volkswagen-golf-audi-a3-dsg-7-gearbox-problem/,F
+PowerShift,DRY_DCT,HIGH,https://static.nhtsa.gov/odi/tsbs/2019/MC-10164604-0001.pdf,P
+EDC,DRY_DCT,HIGH,https://eco-torque.co.uk/pages/renault-edc-dc4-dw5-dw6,F
+AL4,OTHER,HIGH,https://www.scribd.com/doc/78931265/Renault-DP0-AL4-Fault-Finding-MR341LAGUNA2,F
+DP0,OTHER,HIGH,https://www.scribd.com/doc/78931265/Renault-DP0-AL4-Fault-Finding-MR341LAGUNA2,F

@@ -1,1 +1,44 @@
 engine_id,make,family,fuel,cc,kw_list,timing
+toyota-xp10-1.0,Toyota,1.0 VVT-i (Yaris XP10),PETROL,,48,UNKNOWN
+toyota-xp10-1.3,Toyota,1.3 VVT-i (Yaris XP10),PETROL,,64,UNKNOWN
+toyota-1kr,Toyota,1.0 VVT-i 1KR-FE,PETROL,998,51,CHAIN
+toyota-2sz,Toyota,1.3 VVT-i 2SZ-FE,PETROL,,,CHAIN
+toyota-1nr,Toyota,1.33 Dual VVT-i 1NR-FE,PETROL,,,UNKNOWN
+toyota-zz,Toyota,1.4/1.6 VVT-i ZZ (4ZZ-FE/3ZZ-FE),PETROL,,,CHAIN
+toyota-1zr,Toyota,1.6 Dual VVT-i 1ZR-FE,PETROL,,,CHAIN
+toyota-1nd,Toyota,1.4 D-4D 1ND-TV,DIESEL,1364,66,UNKNOWN
+toyota-ad,Toyota,2.0/2.2 D-4D AD (1AD-FTV/2AD-FTV),DIESEL,,,UNKNOWN
+honda-l12a,Honda,1.2 i-DSI L12A,PETROL,,,CHAIN
+honda-l13a,Honda,1.4 i-DSI L13A,PETROL,1339,,CHAIN
+honda-l12b,Honda,1.2 i-VTEC L12B,PETROL,1198,66,UNKNOWN
+honda-l13z,Honda,1.4 i-VTEC L13Z,PETROL,1339,73,UNKNOWN
+honda-r18a,Honda,1.8 i-VTEC R18A,PETROL,,,UNKNOWN
+honda-n22a,Honda,2.2 i-CTDi N22A,DIESEL,,,CHAIN
+mazda-zj,Mazda,1.3 MZR ZJ,PETROL,1349,55,CHAIN
+mazda-z,Mazda,1.5/1.6 MZR Z-series (ZY/Z6),PETROL,,,CHAIN
+mazda-mzcd,Mazda,1.6 MZ-CD (= PSA/Ford DV6),DIESEL,1560,,BELT
+mitsubishi-1.1,Mitsubishi,1.1 4A9,PETROL,,,CHAIN
+mitsubishi-1.3,Mitsubishi,1.3 4A9,PETROL,,70,CHAIN
+vw-1.2-3cyl,Volkswagen,1.2 3-cyl 6v/12v EA111,PETROL,1198,40|47|51,CHAIN
+vw-1.4-16v,Volkswagen,1.4 16v BCA/BUD,PETROL,,,UNKNOWN
+vw-1.6-fsi,Volkswagen,1.6 FSI (BAG/BLF),PETROL,,,UNKNOWN
+vw-1.4-tsi-tc,Volkswagen,1.4 TSI twincharger EA111,PETROL,,,CHAIN
+vw-1.9-tdi-pd,Volkswagen,1.9 TDI PD,DIESEL,,,UNKNOWN
+vw-2.0-tdi-pd,Volkswagen,2.0 TDI PD (BKD/AZV/BMM),DIESEL,,,UNKNOWN
+ford-sigma-1.25,Ford,1.25 Sigma (non-VCT),PETROL,1242,,BELT
+ford-sigma,Ford,1.4/1.6 Sigma (non-VCT),PETROL,,,BELT
+ford-ti-vct,Ford,1.6 Ti-VCT,PETROL,,,BELT
+ford-1.6-tdci,Ford,1.6 TDCi (= PSA DV6),DIESEL,1560,,BELT
+renault-d4f,Renault,1.2 16v D4F,PETROL,1149,55,BELT
+renault-k4m,Renault,1.6 16v K4M,PETROL,,,BELT
+renault-k9k,Renault,1.5 dCi K9K,DIESEL,1461,65|81,BELT
+renault-f9q,Renault,1.9 dCi F9Q,DIESEL,,,UNKNOWN
+psa-tu3,Peugeot,1.4 8v TU3,PETROL,,,UNKNOWN
+psa-tu5,Peugeot,1.6 TU5,PETROL,,,BELT
+psa-kfu,Peugeot,1.4 16v KFU,PETROL,,,UNKNOWN
+psa-dv6,Peugeot,1.6 HDi DV6,DIESEL,1560,,BELT
+psa-thp,Peugeot,1.6 THP EP6,PETROL,,,CHAIN
+fiat-fire-1.2,Fiat,1.2 8v FIRE,PETROL,1242,51,BELT
+fiat-fire-1.4,Fiat,1.4 8v/16v FIRE,PETROL,,,BELT
+fiat-1.3-multijet,Fiat,1.3 Multijet,DIESEL,,,CHAIN
+fiat-1.4-tjet,Fiat,1.4 T-Jet,PETROL,,,BELT

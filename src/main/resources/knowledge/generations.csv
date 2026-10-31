@@ -1,1 +1,26 @@
 generation_id,make,model,code,segment,prod_start,prod_end,aliases,changeover_years
+colt-z30,Mitsubishi,Colt,Z30,B,2004-01,2012-06,,
+jazz-gd,Honda,Jazz,GD,B,2002-01,2008-06,,2008
+jazz-ge,Honda,Jazz,GE,B,2008-01,2015-06,,2008
+yaris-xp10,Toyota,Yaris,XP10,B,2001-01,2005-06,,
+yaris-xp90,Toyota,Yaris,XP90,B,2005-01,2011-06,,2011
+mazda2-dy,Mazda,2,DY,B,2003-01,2007-06,mazda2|mazda 2,2007
+mazda2-de,Mazda,2,DE,B,2007-01,2014-06,mazda2|mazda 2,2007
+fiesta-mk6,Ford,Fiesta,Mk6,B,2002-01,2008-06,,2008
+fusion,Ford,Fusion,,B,2002-01,2012-06,,
+polo-9n,Volkswagen,Polo,9N/9N3,B,2001-01,2009-06,vw,2009
+golf-v,Volkswagen,Golf,V,C,2003-01,2008-06,vw,2008
+corolla-e120,Toyota,Corolla,E120,C,2003-01,2007-06,,2007
+auris-e150,Toyota,Auris,E150,C,2007-01,2012-06,,
+civic-7,Honda,Civic,7th gen EP/EU,C,2001-01,2005-06,,2006
+civic-8,Honda,Civic,8th gen FK/FN,C,2006-01,2011-06,,2006
+mazda3-bk,Mazda,3,BK,C,2003-01,2009-06,mazda3|mazda 3,2009
+clio-ii,Renault,Clio,II,B,1998-01,2005-06,,2005
+clio-iii,Renault,Clio,III,B,2005-01,2012-06,,2005|2012
+peugeot-206,Peugeot,206,,B,1998-01,2012-06,,
+peugeot-207,Peugeot,207,,B,2006-01,2012-06,,
+c3-i,Citroën,C3,I,B,2002-01,2009-06,,2009
+punto-188,Fiat,Punto,188,B,2004-01,2009-06,,
+grande-punto,Fiat,Grande Punto,,B,2005-01,2009-06,,
+megane-ii,Renault,Mégane,II,C,2002-01,2008-06,,2008
+peugeot-307,Peugeot,307,,C,2001-01,2008-06,,

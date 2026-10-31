@@ -87,11 +87,6 @@ class KnowledgeLoaderTest {
 	}
 
 	@Test
-	void emptyKnowledgeBaseOnClasspath_loads() {
-		assertThat(KnowledgeLoader.loadClasspath().gearboxRules()).isEmpty();
-	}
-
-	@Test
 	void normalise_stripsAccentsAndCase() {
 		assertThat(Text.normalise("Citroën Mégane ")).isEqualTo("citroen megane");
 	}
