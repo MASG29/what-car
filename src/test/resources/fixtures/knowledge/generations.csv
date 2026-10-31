@@ -1,0 +1,3 @@
+generation_id,make,model,code,segment,prod_start,prod_end,aliases,changeover_years
+fake-polo-1,Volkswagen,Polo,P1,B,2010-01,2015-06,vw|volks,2013
+fake-clio-1,Renault,Clio,C1,B,2012-03,,,
