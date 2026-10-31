@@ -34,14 +34,10 @@ public class StandvirtualParser {
 	private static final Pattern NEXT_DATA = Pattern.compile(
 			"<script id=\"__NEXT_DATA__\"[^>]*>(.*?)</script>", Pattern.DOTALL);
 
-	private final JsonMapper mapper = JsonMapper.builder().build();
+	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
 	public SearchPage parseSearchPage(String html) {
-		Matcher m = NEXT_DATA.matcher(html);
-		if (!m.find()) {
-			throw formatChanged(null);
-		}
-		JsonNode search = findAdvertSearch(read(m.group(1)).path("props").path("pageProps").path("urqlState"));
+		JsonNode search = findAdvertSearch(nextData(html).path("props").path("pageProps").path("urqlState"));
 		JsonNode totalCount = search.path("totalCount");
 		JsonNode pageSize = search.path("pageInfo").path("pageSize");
 		JsonNode edges = search.path("edges");
@@ -96,9 +92,18 @@ public class StandvirtualParser {
 				0, null, null, false);
 	}
 
-	private JsonNode read(String json) {
+	/** The parsed {@code __NEXT_DATA__} JSON of a page. */
+	static JsonNode nextData(String html) {
+		Matcher m = NEXT_DATA.matcher(html);
+		if (!m.find()) {
+			throw formatChanged(null);
+		}
+		return read(m.group(1));
+	}
+
+	private static JsonNode read(String json) {
 		try {
-			return mapper.readTree(json);
+			return MAPPER.readTree(json);
 		}
 		catch (JacksonException e) {
 			throw formatChanged(e);
@@ -116,7 +121,7 @@ public class StandvirtualParser {
 	}
 
 	/** Non-blank scalar text, otherwise null (a blank would overwrite stored detail fields). */
-	private static String text(JsonNode n) {
+	static String text(JsonNode n) {
 		if (n == null || !n.isValueNode() || n.isNull()) {
 			return null;
 		}
@@ -125,7 +130,7 @@ public class StandvirtualParser {
 	}
 
 	/** Digits only ("1 299 cm3" -> 1299), otherwise null; never a default 0. */
-	private static Integer digits(JsonNode n) {
+	static Integer digits(JsonNode n) {
 		String s = text(n);
 		if (s == null) {
 			return null;
@@ -134,7 +139,7 @@ public class StandvirtualParser {
 		return d.isEmpty() || d.length() > 9 ? null : Integer.valueOf(d);
 	}
 
-	private static Fuel fuel(String value) {
+	static Fuel fuel(String value) {
 		if (value == null) {
 			return null;
 		}
@@ -157,7 +162,7 @@ public class StandvirtualParser {
 		};
 	}
 
-	private static SourceException formatChanged(Throwable cause) {
+	static SourceException formatChanged(Throwable cause) {
 		return new SourceException(FORMAT_CHANGED, cause);
 	}
 }
