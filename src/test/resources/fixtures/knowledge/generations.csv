@@ -1,3 +1,6 @@
 generation_id,make,model,code,segment,prod_start,prod_end,aliases,changeover_years
 fake-polo-1,Volkswagen,Polo,P1,B,2010-01,2015-06,vw|volks,2013
 fake-clio-1,Renault,Clio,C1,B,2012-03,,,
+fake-yaris-1,Toyota,Yaris,Y1,B,2005-01,2011-06,,2011
+fake-yaris-2,Toyota,Yaris,Y2,B,2011-01,,,2011
+fake-c3-1,Citroen,C3,K1,B,2002-01,2009-06,,

@@ -1,3 +1,7 @@
 engine_id,make,family,fuel,cc,kw_list,timing
 fake-eng-1,Volkswagen,Fake 1.0,PETROL,999,55|44,CHAIN
 fake-eng-2,Renault,Fake 1.5,DIESEL,1461,66,BELT
+fake-eng-3,Citroen,Fake 1.3,PETROL,1299,70,BELT
+fake-eng-4,Citroen,Fake 1.4,PETROL,1360,54,BELT
+fake-eng-5,Toyota,Fake 1.0,PETROL,,51,CHAIN
+fake-eng-6,Toyota,Fake 1.4D,DIESEL,1364,66,BELT
