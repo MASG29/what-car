@@ -14,4 +14,13 @@ public final class TestListings {
 				1500, make, model, version, year, month, 150000, fuel, cc, powerCv, gearbox, 5, null, null, null, 0,
 				null, null, false), Instant.EPOCH);
 	}
+
+	/** Any raw listing; detailFetched sets detailFetchedAt like a read advert page would. */
+	public static Listing of(RawListing raw, boolean detailFetched) {
+		Listing l = new Listing(raw, Instant.EPOCH);
+		if (detailFetched) {
+			l.markDetailFetched(Instant.EPOCH);
+		}
+		return l;
+	}
 }

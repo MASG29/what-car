@@ -1,0 +1,13 @@
+generation_id,make,model,survey,edition,metric,value,reference_value,lower_is_better,age_years,reg_year,combined,cause,source_url,tag
+r-clio-3,Renault,Clio,TUV,2019,defect_rate_10_11y,28.0,28.0,true,10,,false,,https://example.org/tuv-clio3-10,F
+r-clio-3,Renault,Clio,TUV,2024,defect_rate_12_13y,35.0,28.0,true,12,,false,,https://example.org/tuv-clio3-12,F
+,Renault,Clio,ADAC,2014,breakdowns_per_1000,50.0,40.0,true,9,2004,false,,https://example.org/adac-clio-2004,P
+,Renault,Clio,ADAC,2016,breakdowns_per_1000,30.0,40.0,true,9,2006,false,,https://example.org/adac-clio-2006,P
+,Ford,Fiesta,ADAC,2014,breakdowns_per_1000,20.0,40.0,true,9,2004,true,,https://example.org/adac-fiesta-2004,P
+,Ford,Fiesta,ADAC,2019,breakdowns_per_1000,60.0,40.0,true,9,2009,false,,https://example.org/adac-fiesta-2009,P
+,Citroën,C3,ADAC,2017,breakdowns_per_1000,40.0,40.0,true,9,2007,false,,https://example.org/adac-c3-2007,P
+,Citroën,C3,ADAC,2020,breakdowns_per_1000,20.0,40.0,true,9,2010,false,,https://example.org/adac-c3-2010,P
+r-polo-1,Volkswagen,Polo,TUV,2020,defect_rate_8_9y,20.0,20.0,true,8,,false,,https://example.org/tuv-polo-8,S
+,Toyota,Yaris,ADAC,2016,breakdowns_per_1000,30.0,40.0,true,9,2006,false,BATTERY,https://example.org/adac-yaris-2006,P
+,Toyota,Yaris,ADAC,2018,breakdowns_per_1000,40.0,40.0,true,9,2008,false,,https://example.org/adac-yaris-2008,P
+r-jazz-1,Honda,Jazz,RELIABILITY_INDEX,2006,reliability_index,16.75,67.39,true,,,false,,https://example.org/ri-jazz,S

@@ -1,0 +1,6 @@
+generation_id,engine_id,l_per_100km,cycle,source_url,tag
+r-clio-3,ce1,5.0,NEDC,https://example.org/c1,I
+r-fiesta-6,ce2,7.0,NEDC,https://example.org/c2,I
+r-polo-1,ce3,9.0,WLTP,https://example.org/c3,I
+r-yaris-1,ce4,3.0,WLTP,https://example.org/c4,I
+r-golf-5,ce5,5.8,NEDC,https://example.org/c5,I
