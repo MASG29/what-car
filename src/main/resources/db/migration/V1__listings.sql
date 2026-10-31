@@ -1,0 +1,32 @@
+CREATE TABLE listing (
+    id bigserial PRIMARY KEY,
+    site text NOT NULL,
+    external_id text NOT NULL,
+    url text NOT NULL,
+    title text NOT NULL,
+    price_eur integer,
+    make text,
+    model text,
+    version text,
+    year integer,
+    month integer,
+    km integer,
+    fuel text,
+    cc integer,
+    power_cv integer,
+    gearbox text,
+    doors integer,
+    seller_type text,
+    district text,
+    city text,
+    photo_count integer NOT NULL DEFAULT 0,
+    description varchar(4000),
+    imported boolean,
+    parts boolean NOT NULL DEFAULT false,
+    first_seen timestamptz NOT NULL,
+    last_seen timestamptz NOT NULL,
+    detail_fetched_at timestamptz,
+    UNIQUE (site, external_id)
+);
+
+CREATE INDEX listing_last_seen_idx ON listing (last_seen);
