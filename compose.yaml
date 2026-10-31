@@ -1,0 +1,9 @@
+services:
+  postgres:
+    image: 'postgres:17-alpine'
+    environment:
+      - 'POSTGRES_DB=carfinder'
+      - 'POSTGRES_USER=carfinder'
+      - 'POSTGRES_PASSWORD=carfinder'
+    ports:
+      - '5432:5432'
