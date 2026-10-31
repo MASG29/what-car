@@ -69,4 +69,18 @@ class ListingStoreTest {
 		assertThat(detailed.getDoors()).isEqualTo(3);
 		assertThat(detailed.getPriceEur()).isEqualTo(8000);
 	}
+
+	@Test
+	void upsert_afterDetailsWithParts_keepsParts() {
+		Listing l = store.upsert(raw("a5", 8000, null));
+		RawListing r = raw("a5", null, null);
+		store.applyDetails(l, new RawListing(r.site(), r.externalId(), r.url(), r.title(), r.priceEur(), r.make(),
+				r.model(), r.version(), r.year(), r.month(), r.km(), r.fuel(), r.cc(), r.powerCv(), r.gearbox(),
+				r.doors(), r.sellerType(), r.district(), r.city(), r.photoCount(), r.description(), r.imported(),
+				true));
+
+		Listing again = store.upsert(raw("a5", 8000, null));
+
+		assertThat(again.isParts()).isTrue();
+	}
 }

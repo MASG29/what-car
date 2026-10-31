@@ -63,7 +63,7 @@ public class Listing {
 		merge(raw, now);
 	}
 
-	/** Required fields and primitives always overwrite; nullable fields only when the new value is non-null. */
+	/** Required fields always overwrite; nullable fields only when non-null; photoCount only if > 0; parts only turns on. */
 	void merge(RawListing raw, Instant now) {
 		url = raw.url();
 		title = raw.title();
@@ -121,7 +121,8 @@ public class Listing {
 		if (raw.imported() != null) {
 			imported = raw.imported();
 		}
-		parts = raw.parts();
+		// false means "unknown" on search pages, so it never clears a parts flag set from details.
+		parts = parts || raw.parts();
 		lastSeen = now;
 	}
 
