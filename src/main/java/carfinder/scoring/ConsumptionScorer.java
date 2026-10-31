@@ -15,7 +15,7 @@ public class ConsumptionScorer {
 	private static final Locale PT = Locale.of("pt", "PT");
 	private final KnowledgeBase kb;
 
-	ConsumptionScorer(KnowledgeBase kb) {
+	public ConsumptionScorer(KnowledgeBase kb) {
 		this.kb = kb;
 	}
 

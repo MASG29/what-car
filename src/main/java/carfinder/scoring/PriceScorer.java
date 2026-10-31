@@ -22,7 +22,7 @@ public class PriceScorer {
 
 	private final PriceProperties props;
 
-	PriceScorer(PriceProperties props) {
+	public PriceScorer(PriceProperties props) {
 		this.props = props;
 	}
 
