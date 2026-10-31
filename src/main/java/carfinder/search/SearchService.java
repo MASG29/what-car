@@ -169,7 +169,9 @@ public class SearchService {
 		try {
 			SearchQuery query = new SearchQuery(limits.maxPriceEur(), limits.maxKm(), limits.minYear());
 			Preset anyPreset = Preset.BALANCED; // the filter does not depend on weights
+			int attempted = 0;
 			int failed = 0;
+			Site failedSite = null;
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
 				List<RawListing> found = waitingForUser(id,
@@ -188,6 +190,7 @@ public class SearchService {
 					Listing l = toRead.get(i);
 					String msg = site + ": a ler anúncio " + (i + 1) + " de " + toRead.size();
 					change(id, r -> r.update(RunStatus.RUNNING, msg));
+					attempted++;
 					try {
 						RawListing details = waitingForUser(id, () -> source.details(l.getUrl()));
 						store.applyDetails(l, details);
@@ -196,8 +199,13 @@ public class SearchService {
 						// a removed ad (404) keeps its search-page data
 						log.info("Advert page failed for {}: {}", l.getUrl(), e.getMessage());
 						failed++;
+						failedSite = site;
 					}
 				}
+			}
+			// Every advert page failing is a broken parser, not a few removed ads.
+			if (attempted >= 3 && failed == attempted) {
+				throw new SourceException(failedSite.formatChangedPt());
 			}
 			int collected = runs.findById(id).orElseThrow().getCollected();
 			String done = "Pesquisa concluída: " + collected + (collected == 1 ? " anúncio recolhido." : " anúncios recolhidos.")

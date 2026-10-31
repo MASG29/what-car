@@ -313,6 +313,30 @@ class SearchServiceTest {
 	}
 
 	@Test
+	void everyDetailsFails_atLeastThree_failsRunAsFormatChanged() {
+		List<RawListing> ads = List.of(clio("a", 2000, 150000), clio("b", 2100, 160000), clio("c", 2200, 170000));
+		when(source.search(any(), any())).thenReturn(ads);
+		when(source.details(anyString())).thenThrow(new SourceException("Standvirtual respondeu com erro HTTP 500"));
+		SearchService s = service();
+
+		UUID id = start(s);
+
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.FAILED);
+		assertThat(v.messagePt()).isEqualTo("Standvirtual mudou o formato da página");
+	}
+
+	@Test
+	void everyDetailsFails_onlyTwo_stillDone() {
+		List<RawListing> ads = List.of(clio("a", 2000, 150000), clio("b", 2100, 160000));
+		when(source.search(any(), any())).thenReturn(ads);
+		when(source.details(anyString())).thenThrow(new SourceException("Standvirtual respondeu com erro HTTP 404"));
+		SearchService s = service();
+
+		assertThat(s.status(start(s)).status()).isEqualTo(RunStatus.DONE);
+	}
+
+	@Test
 	void start_siteWithoutSource_rejected() {
 		SearchService s = service();
 
