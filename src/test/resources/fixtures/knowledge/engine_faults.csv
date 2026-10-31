@@ -1,3 +1,4 @@
 engine_id,fault,build_from,build_to,tier,advice,source_url,tag
 fake-eng-1,"Fake fault, with comma",2010-01,2012-12,HIGH,Check it,https://example.org/fault,F
 fake-eng-5,Fake open fault,2007-01,,MEDIUM,Check,https://example.org/fault2,F
+fake-eng-3,Fake short fault,2004-09,2004-10,MEDIUM,Check,https://example.org/fault3,F

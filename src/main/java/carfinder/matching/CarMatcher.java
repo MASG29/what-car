@@ -71,13 +71,22 @@ public class CarMatcher {
 				.filter(e -> e.cc() == null || l.getCc() == null || Math.abs(e.cc() - l.getCc()) <= 5)
 				.filter(e -> e.kwList().isEmpty() || kw == null || e.kwList().stream().anyMatch(k -> Math.abs(k - kw) <= 2))
 				.toList();
-		return kept.size() == 1 ? Optional.of(kept.getFirst()) : Optional.empty();
+		if (kept.size() == 1) {
+			return Optional.of(kept.getFirst());
+		}
+		// Engines with unknown cc and kW pass every check; prefer the one survivor matched on a known value.
+		List<Engine> onKnown = kept.stream()
+				.filter(e -> (e.cc() != null && l.getCc() != null) || (!e.kwList().isEmpty() && kw != null)).toList();
+		return onKnown.size() == 1 ? Optional.of(onKnown.getFirst()) : Optional.empty();
 	}
 
+	/** With an unknown month the fault hits (uncertain) if its window overlaps any month of the year. */
 	private static Optional<FaultHit> hit(EngineFault f, YearMonth reg, boolean monthKnown) {
 		YearMonth from = f.buildFrom();
 		YearMonth to = f.buildTo();
-		if ((from != null && reg.isBefore(from)) || (to != null && reg.isAfter(to.plusMonths(EDGE_MONTHS)))) {
+		YearMonth earliest = monthKnown ? reg : reg.withMonth(1);
+		YearMonth latest = monthKnown ? reg : reg.withMonth(12);
+		if ((from != null && latest.isBefore(from)) || (to != null && earliest.isAfter(to.plusMonths(EDGE_MONTHS)))) {
 			return Optional.empty();
 		}
 		boolean nearEdge = (from != null && Math.abs(ChronoUnit.MONTHS.between(from, reg)) <= EDGE_MONTHS)

@@ -159,6 +159,37 @@ class CarMatcherTest {
 	}
 
 	@Test
+	void missingMonth_faultOverlappingAnyMonthOfYear_hitsUncertain() {
+		// fake-eng-3 fault window 2004-09..2004-10, hits up to 2005-04; June is outside in both years
+		CarMatch lateMonths = matcher.match(listing("Citroën", "C3", null, 2004, null, Fuel.PETROL, 1298, 95, null));
+		CarMatch earlyMonths = matcher.match(listing("Citroën", "C3", null, 2005, null, Fuel.PETROL, 1298, 95, null));
+		CarMatch outside = matcher.match(listing("Citroën", "C3", null, 2006, null, Fuel.PETROL, 1298, 95, null));
+
+		assertThat(lateMonths.faults()).singleElement().extracting(FaultHit::uncertain).isEqualTo(true);
+		assertThat(earlyMonths.faults()).singleElement().extracting(FaultHit::uncertain).isEqualTo(true);
+		assertThat(outside.engine()).map(Engine::id).hasValue("fake-eng-3");
+		assertThat(outside.faults()).isEmpty();
+	}
+
+	@Test
+	void knownMonthOutsideWindow_noHit() {
+		CarMatch m = matcher.match(listing("Citroën", "C3", null, 2004, 6, Fuel.PETROL, 1298, 95, null));
+
+		assertThat(m.faults()).isEmpty();
+	}
+
+	@Test
+	void unknownCcKwEngines_doNotHideEngineMatchedOnKnownValues() {
+		CarMatcher real = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+		CarMatch polo = real.match(listing("Volkswagen", "Polo", null, 2006, 5, Fuel.PETROL, 1198, 64, null));
+		CarMatch yaris = real.match(listing("Toyota", "Yaris", null, 2008, 5, Fuel.PETROL, 998, 69, null));
+
+		assertThat(polo.engine()).map(Engine::id).hasValue("vw-1.2-3cyl");
+		assertThat(yaris.engine()).map(Engine::id).hasValue("toyota-1kr");
+	}
+
+	@Test
 	void missingFields_emptyMatchNoCrash() {
 		CarMatch m = matcher.match(listing(null, null, null, null, null, null, null, null, null));
 
