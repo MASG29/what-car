@@ -1,0 +1,9 @@
+generation_id,make,model,code,segment,prod_start,prod_end,aliases,changeover_years
+r-clio-2,Renault,Clio,II,B,1998-01,2005-06,,2005
+r-clio-3,Renault,Clio,III,B,2005-01,2012-06,,2005|2012
+r-fiesta-5,Ford,Fiesta,Mk5,B,2002-01,2008-06,,2008
+r-fiesta-6,Ford,Fiesta,Mk6,B,2008-01,,,2008
+r-c3-1,Citroën,C3,I,B,2002-01,2009-06,,2009
+r-polo-1,Volkswagen,Polo,9N,B,2001-01,2009-06,vw,2009
+r-yaris-1,Toyota,Yaris,XP90,B,2005-01,2011-06,,2011
+r-jazz-1,Honda,Jazz,GD,B,2002-01,2008-06,,

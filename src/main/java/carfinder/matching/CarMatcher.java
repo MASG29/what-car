@@ -40,9 +40,7 @@ public class CarMatcher {
 
 		List<Generation> candidates = reg == null || l.getMake() == null || l.getModel() == null ? List.of()
 				: kb.generationsFor(l.getMake(), l.getModel()).stream()
-						.filter(g -> !reg.isBefore(g.prodStart())
-								&& (g.prodEnd() == null || !reg.isAfter(g.prodEnd().plusMonths(EDGE_MONTHS))))
-						.toList();
+						.filter(g -> g.covers(reg)).toList();
 		Optional<Generation> generation = candidates.size() == 1
 				&& !candidates.getFirst().changeoverYears().contains(reg.getYear())
 						? Optional.of(candidates.getFirst()) : Optional.empty();
