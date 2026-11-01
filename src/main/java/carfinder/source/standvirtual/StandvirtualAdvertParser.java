@@ -89,7 +89,7 @@ public class StandvirtualAdvertParser {
 
 	/** Null when unknown, so it never overwrites the seller type a search page already stored. */
 	private static SellerType sellerType(String type) {
-		// ponytail: only "PROFESSIONAL" seen live; map the private-seller code once observed.
+		// Limitation: only "PROFESSIONAL" seen live; map the private-seller code once observed.
 		return "PROFESSIONAL".equals(type) ? SellerType.DEALER : null;
 	}
 }

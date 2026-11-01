@@ -1,6 +1,6 @@
 /**
- * Standvirtual is the only active site. Marketplace is paused (no toggle) since the account incident of
- * 2026-11-01; when it returns, switching it on must open an in-page confirmation naming the account risk.
+ * Standvirtual is the only active site. Marketplace is paused (no toggle); when it returns, switching it on
+ * must open an in-page confirmation naming the account risk.
  */
 export function SitesPanel() {
   return (

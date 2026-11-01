@@ -39,7 +39,7 @@ public class PriceScorer {
 		if (!realPrice(l) || l.getYear() == null) {
 			return none(l.getYear() == null ? "ano não indicado" : "preço não indicado");
 		}
-		// ponytail: make aliases ("vw") are not unified across ads; only the generation window uses the KB.
+		// Limitation: make aliases ("vw") are not unified across ads; only the generation window uses the KB.
 		List<Integer> prices = List.of();
 		int step = 0;
 		for (; step < STEPS.size(); step++) {

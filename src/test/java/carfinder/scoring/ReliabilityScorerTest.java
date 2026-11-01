@@ -176,7 +176,7 @@ class ReliabilityScorerTest {
 	@Test
 	void syntheticGearboxHit_penalisesAndWarns() {
 		GearboxRule automatic = new GearboxRule("autom", GearboxType.ROBOTISED, Tier.HIGH,
-				"reports/Fiabilidade carros segmentos B e C.md", "I");
+				"regra do car-finder: automático antes de 2012 costuma ser robotizado", "I");
 
 		SubScore s = clio3AgeTen(List.of(), List.of(new GearboxHit(automatic, "Automática")));
 

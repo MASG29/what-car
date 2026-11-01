@@ -31,7 +31,7 @@ public class SearchRun {
 	private Preset preset;
 	private String customWeightsJson;
 
-	// ponytail: EAGER, a run holds a few hundred ids at most; page them if runs grow to thousands.
+	// Limitation: EAGER, a run holds a few hundred ids at most; page them if runs grow to thousands.
 	@ElementCollection(fetch = FetchType.EAGER)
 	@CollectionTable(name = "search_run_site", joinColumns = @JoinColumn(name = "run_id"))
 	@Enumerated(EnumType.STRING)

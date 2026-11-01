@@ -137,7 +137,8 @@ class CarMatcherTest {
 		assertThat(m.gearbox()).singleElement().satisfies(h -> {
 			assertThat(h.rule().type()).isEqualTo(GearboxType.ROBOTISED);
 			assertThat(h.rule().tier()).isEqualTo(Tier.HIGH);
-			assertThat(h.rule().sourceUrl()).isEqualTo(CarMatcher.AUTOMATIC_SOURCE);
+			assertThat(h.rule().sourceUrl())
+					.isEqualTo("regra do car-finder: automático antes de 2012 costuma ser robotizado");
 			assertThat(h.matchedText()).isEqualTo("Automática");
 		});
 		assertThat(y2012.gearbox()).isEmpty();

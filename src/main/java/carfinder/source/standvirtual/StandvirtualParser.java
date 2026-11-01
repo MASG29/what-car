@@ -146,7 +146,7 @@ public class StandvirtualParser {
 		return switch (value) {
 			case "gaz" -> Fuel.PETROL;
 			case "diesel" -> Fuel.DIESEL;
-			// ponytail: only values seen live are mapped; add hybrid/LPG/electric codes once observed.
+			// Limitation: only values seen live are mapped; add hybrid/LPG/electric codes once observed.
 			default -> Fuel.OTHER;
 		};
 	}

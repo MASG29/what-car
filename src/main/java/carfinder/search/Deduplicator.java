@@ -29,7 +29,7 @@ public final class Deduplicator {
 		return groups.stream().map(List::copyOf).toList();
 	}
 
-	// ponytail: make aliases ("VW" vs "Volkswagen") are not unified; add a KnowledgeBase lookup if Marketplace needs it.
+	// Limitation: make aliases ("VW" vs "Volkswagen") are not unified; add a KnowledgeBase lookup if Marketplace needs it.
 	static boolean same(Listing a, Listing b) {
 		return a.getMake() != null && b.getMake() != null && normalise(a.getMake()).equals(normalise(b.getMake()))
 				&& a.getModel() != null && b.getModel() != null

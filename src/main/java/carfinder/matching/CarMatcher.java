@@ -24,8 +24,8 @@ import org.springframework.stereotype.Component;
 @Component
 public class CarMatcher {
 
-	/** "automático" on a pre-2012 small car is usually a robotised single-clutch box. */
-	static final String AUTOMATIC_SOURCE = "reports/Fiabilidade carros segmentos B e C.md";
+	/** The app's own rule, not a cited source: "automático" on a pre-2012 small car is usually a robotised box. */
+	static final String AUTOMATIC_SOURCE = "regra do car-finder: automático antes de 2012 costuma ser robotizado";
 	private static final GearboxRule AUTOMATIC_RULE = new GearboxRule("autom", GearboxType.ROBOTISED, Tier.HIGH,
 			AUTOMATIC_SOURCE, "I");
 	private static final int EDGE_MONTHS = 6;
