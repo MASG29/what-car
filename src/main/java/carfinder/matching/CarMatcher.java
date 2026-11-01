@@ -13,8 +13,10 @@ import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 
@@ -27,6 +29,8 @@ public class CarMatcher {
 	private static final GearboxRule AUTOMATIC_RULE = new GearboxRule("autom", GearboxType.ROBOTISED, Tier.HIGH,
 			AUTOMATIC_SOURCE, "I");
 	private static final int EDGE_MONTHS = 6;
+	/** A word in the version or title that names one generation among several (the Clio II Campus was sold until 2012). */
+	private static final Map<String, String> GENERATION_KEYWORDS = Map.of("campus", "clio-ii");
 
 	private final KnowledgeBase kb;
 
@@ -41,6 +45,7 @@ public class CarMatcher {
 		List<Generation> candidates = reg == null || l.getMake() == null || l.getModel() == null ? List.of()
 				: kb.generationsFor(l.getMake(), l.getModel()).stream()
 						.filter(g -> g.covers(reg)).toList();
+		candidates = byKeyword(l, candidates);
 		Optional<Generation> generation = candidates.size() == 1
 				&& !candidates.getFirst().changeoverYears().contains(reg.getYear())
 						? Optional.of(candidates.getFirst()) : Optional.empty();
@@ -52,6 +57,19 @@ public class CarMatcher {
 
 		return new CarMatch(generation, candidates, generation.isEmpty() && !candidates.isEmpty(), engine, faults,
 				gearbox(l, candidates), faults.stream().anyMatch(FaultHit::uncertain));
+	}
+
+	private static List<Generation> byKeyword(Listing l, List<Generation> candidates) {
+		String text = Text.normalise(Stream.of(l.getVersion(), l.getTitle()).filter(t -> t != null)
+				.collect(Collectors.joining(" ")));
+		List<Generation> named = candidates.stream().filter(g -> GENERATION_KEYWORDS.entrySet().stream()
+				.anyMatch(k -> k.getValue().equals(g.id()) && wordIn(k.getKey(), text))).toList();
+		return named.isEmpty() ? candidates : named;
+	}
+
+	private static boolean wordIn(String word, String normalisedText) {
+		return Pattern.compile("(?<![\\p{Alnum}])" + Pattern.quote(Text.normalise(word)) + "(?![\\p{Alnum}])")
+				.matcher(normalisedText).find();
 	}
 
 	private Optional<Engine> engine(Listing l, List<Generation> candidates) {
@@ -97,9 +115,7 @@ public class CarMatcher {
 				.filter(t -> t != null && !t.isBlank()).toList();
 		List<GearboxHit> hits = new ArrayList<>();
 		for (GearboxRule rule : kb.gearboxRules()) {
-			Pattern word = Pattern.compile("(?<![\\p{Alnum}])" + Pattern.quote(Text.normalise(rule.keyword()))
-					+ "(?![\\p{Alnum}])");
-			texts.stream().filter(t -> word.matcher(Text.normalise(t)).find()).findFirst()
+			texts.stream().filter(t -> wordIn(rule.keyword(), Text.normalise(t))).findFirst()
 					.ifPresent(t -> hits.add(new GearboxHit(rule, t)));
 		}
 		boolean smallOldAutomatic = hits.isEmpty() && l.getGearbox() != null && l.getYear() != null

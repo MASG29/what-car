@@ -243,4 +243,18 @@ class CarMatcherTest {
 		assertThat(variant.generation()).map(Generation::id).hasValue("golf-iv-variant");
 		assertThat(evo.generation()).map(Generation::id).hasValue("punto-evo");
 	}
+
+	@Test
+	void realKnowledgeBase_clioCampusIsClioII_otherClios2005to2012Mixed() {
+		CarMatcher real = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+		CarMatch campus = real.match(listing("Renault", "Clio", "1.2 Campus", 2007, 4, Fuel.PETROL, null, null, null));
+		CarMatch dci = real.match(listing("Renault", "Clio", "1.5 dCi", 2007, 4, Fuel.DIESEL, null, null, null));
+
+		assertThat(campus.generation()).map(Generation::id).hasValue("clio-ii");
+		assertThat(campus.mixed()).isFalse();
+		assertThat(dci.generation()).isEmpty();
+		assertThat(dci.mixed()).isTrue();
+		assertThat(dci.candidates()).extracting(Generation::id).containsExactlyInAnyOrder("clio-ii", "clio-iii");
+	}
 }
