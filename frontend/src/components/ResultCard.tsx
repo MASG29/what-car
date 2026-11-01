@@ -28,6 +28,7 @@ export function ResultCard({ s, position }: { s: Scored; position: number }) {
         <h3>
           {position}. <Source url={l.url} label={l.title} />
         </h3>
+        <p>{s.whyPt}</p>
         <p>{adFacts(l)}</p>
         <p className="score">
           Pontuação {pct(s.total)} · confiança {pct(s.confidence)} · ordenação {pct(s.rank)}

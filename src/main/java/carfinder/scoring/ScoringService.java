@@ -19,9 +19,13 @@ import java.util.EnumMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 import org.springframework.stereotype.Component;
 
-/** Match, score, cost, filter, group duplicates, then rank by weighted score adjusted by confidence. */
+/**
+ * Match, score, cost, filter, group duplicates, then rank by weighted score adjusted by confidence, plus the
+ * condition hints read from the description (floor 0). The hints never change a sub-score or the shown total.
+ */
 @Component
 public class ScoringService {
 
@@ -96,18 +100,23 @@ public class ScoringService {
 			Listing l = group.getFirst();
 			Kept k = kept.get(l);
 			Totals t = combine(k.subs(), w);
-			List<String> warnings = k.subs().values().stream().flatMap(x -> x.warningsPt().stream()).distinct()
-					.toList();
+			ConditionResult condition = ConditionReader.read(l.getDescription());
+			List<String> warnings = Stream.concat(k.subs().values().stream().flatMap(x -> x.warningsPt().stream()),
+					condition.problemsPt().stream().map(p -> "O anúncio menciona: " + p)).distinct().toList();
+			List<String> notes = Stream.concat(k.notes().stream(),
+					condition.maintenancePt().stream().map(m -> "Manutenção recente: " + m)).toList();
 			List<String> alsoOn = group.subList(1, group.size()).stream().map(Listing::getUrl).toList();
-			scored.add(new ScoredListing(l, alsoOn, Collections.unmodifiableMap(k.subs()), t.total(), t.confidence(), t.rank(), false,
-					warnings, k.notes(), k.cost(), checklist.build(l, k.match())));
+			scored.add(new ScoredListing(l, alsoOn, Collections.unmodifiableMap(k.subs()), t.total(), t.confidence(),
+					Math.max(0, t.rank() + condition.rankAdjustment()), false, warnings, notes, k.cost(),
+					checklist.build(l, k.match()), condition, null));
 		}
 		scored.sort(Comparator.comparingDouble(ScoredListing::rank).reversed());
 		List<ScoredListing> ranked = new ArrayList<>();
 		for (int i = 0; i < scored.size(); i++) {
 			ScoredListing x = scored.get(i);
 			ranked.add(new ScoredListing(x.listing(), x.alsoOnUrls(), x.subs(), x.total(), x.confidence(), x.rank(),
-					i < 5, x.warningsPt(), x.notesPt(), x.realCost(), x.checklist()));
+					i < 5, x.warningsPt(), x.notesPt(), x.realCost(), x.checklist(), x.condition(),
+					WhyText.build(x, i + 1)));
 		}
 		return new Ranking(List.copyOf(ranked), List.copyOf(excluded));
 	}

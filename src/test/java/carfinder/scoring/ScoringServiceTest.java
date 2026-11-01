@@ -40,7 +40,7 @@ class ScoringServiceTest {
 			new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(KB),
 			Clock.fixed(Instant.parse("2026-10-31T00:00:00Z"), ZoneOffset.UTC));
 	private static final SearchLimits LIMITS = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
-			EnumSet.allOf(Fuel.class), Set.of(), List.of(), RealCostSettings.defaults());
+			EnumSet.allOf(Fuel.class), Set.of(), List.of(), RealCostSettings.defaults(), null);
 
 	static Listing clio(Site site, String id, Integer price, Integer year, Integer km, boolean parts) {
 		return TestListings.of(new RawListing(site, id, "https://example.test/" + id, "Clio " + id, price, "Renault",
@@ -150,6 +150,48 @@ class ScoringServiceTest {
 		assertThat(ranked.getFirst().notesPt()).contains("ano não indicado");
 		assertThat(ranked.getFirst().warningsPt()).containsOnlyOnce("km não indicados");
 		assertThat(ranked.getFirst().confidence()).isLessThan(0.5);
+	}
+
+	static Listing clioSaying(String id, String description) {
+		return clioSaying(id, description, 5);
+	}
+
+	static Listing clioSaying(String id, String description, int photos) {
+		return TestListings.of(new RawListing(Site.STANDVIRTUAL, id, "https://example.test/" + id, "Clio " + id, 1500,
+				"Renault", "Clio", null, 2008, 6, 100000, Fuel.PETROL, null, null, null, null, null, null, null, photos,
+				description, null, false), true);
+	}
+
+	@Test
+	void rank_conditionHints_adjustRankNotTotal() {
+		Listing plain = clioSaying("plain", null);
+		Listing scratched = clioSaying("scratched", "Tem riscos e alguma ferrugem.");
+		Listing serviced = clioSaying("serviced", "Embraiagem nova.");
+		List<ScoredListing> ranked = service.rank(List.of(plain, scratched, serviced), List.of(), LIMITS,
+				Preset.BALANCED, null).ranked();
+
+		assertThat(ranked).extracting(x -> x.listing().getExternalId()).containsExactly("serviced", "plain",
+				"scratched");
+		ScoredListing s = ranked.get(0);
+		ScoredListing p = ranked.get(1);
+		ScoredListing x = ranked.get(2);
+		assertThat(s.total()).isEqualTo(p.total()).isEqualTo(x.total());
+		assertThat(s.subs()).isEqualTo(p.subs());
+		assertThat(s.rank()).isCloseTo(p.rank() + 0.03, within(1e-9));
+		assertThat(x.rank()).isCloseTo(Math.max(0, p.rank() - 0.10), within(1e-9));
+		assertThat(x.warningsPt()).contains("O anúncio menciona: riscos", "O anúncio menciona: ferrugem");
+		assertThat(s.notesPt()).contains("Manutenção recente: embraiagem");
+		assertThat(x.condition().problemsPt()).containsExactly("riscos", "ferrugem");
+		assertThat(s.whyPt()).startsWith("1.º lugar: ").endsWith("+0,03 por manutenção recente (embraiagem).");
+		assertThat(x.whyPt()).startsWith("3.º lugar: ").endsWith("−0,10 por riscos, ferrugem mencionados.");
+	}
+
+	@Test
+	void rank_conditionPenalty_flooredAtZero() {
+		Listing bad = clioSaying("bad", "riscos, amolgadelas, ferrugem, fumo", 1); // photos 0.1, rank 0.1
+		ScoringService.Ranking r = service.rank(List.of(bad), List.of(), LIMITS,
+				Preset.CUSTOM, new Weights(0, 0, 0, 0, 1));
+		assertThat(r.ranked().getFirst().rank()).isZero();
 	}
 
 	@Test

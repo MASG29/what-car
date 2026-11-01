@@ -71,6 +71,13 @@ public class ListingFilter {
 				.filter(Objects::nonNull).map(d -> normalise(d)).noneMatch(normalise(l.getDistrict())::equals)) {
 			drop.add("distrito fora da tua escolha (" + l.getDistrict() + ")");
 		}
+		if (s.minDoors() != null) {
+			if (l.getDoors() == null) {
+				notes.add("portas não indicadas");
+			} else if (l.getDoors() < s.minDoors()) {
+				drop.add("menos portas do que pedes (" + l.getDoors() + ")");
+			}
+		}
 		String model = modelProblem(l, s.models());
 		if (model != null) {
 			drop.add(model);

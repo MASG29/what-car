@@ -1,6 +1,7 @@
 package carfinder.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
@@ -17,6 +18,7 @@ import carfinder.listing.Listing;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.listing.TestListings;
+import carfinder.scoring.ConditionResult;
 import carfinder.scoring.Criterion;
 import carfinder.scoring.Excluded;
 import carfinder.scoring.ScoredListing;
@@ -67,6 +69,16 @@ class SearchControllerTest {
 	}
 
 	@Test
+	void postSearch_minDoors_optionalAndPassedOn() throws Exception {
+		when(service.start(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
+		String withDoors = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "
+				+ "\"minDoors\": 5}";
+		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(withDoors)))
+				.andExpect(status().isAccepted());
+		verify(service).start(argThat(l -> Integer.valueOf(5).equals(l.minDoors())), any(), any(), any());
+	}
+
+	@Test
 	void postSearch_invalidLimits_400() throws Exception {
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON)
 				.content(search("{\"maxPriceEur\": 2500, \"minYear\": 2000, \"fuels\": [\"PETROL\"]}")))
@@ -80,7 +92,8 @@ class SearchControllerTest {
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"districts\": [null]}",
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"models\": [null]}",
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": []}",
-			"{\"maxPriceEur\": 0, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"]}"})
+			"{\"maxPriceEur\": 0, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"]}",
+			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"minDoors\": 0}"})
 	void postSearch_badLimitValues_400(String limits) throws Exception {
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(limits)))
 				.andExpect(status().isBadRequest());
@@ -146,7 +159,8 @@ class SearchControllerTest {
 		ScoredListing kept = new ScoredListing(ad("k"), List.of(), Map.of(Criterion.PRICE, some,
 				Criterion.RELIABILITY, none), 0.7, 0.5, 0.52, true, List.of("km não indicados"), List.of(),
 				new RealCost(2500, Map.of("Preço pedido", 2000.0), "800 a 1500 €/ano"),
-				new Checklist(List.of(new Checklist.Link("IMT", "https://example.test/imt")), List.of("Revisões?")));
+				new Checklist(List.of(new Checklist.Link("IMT", "https://example.test/imt")), List.of("Revisões?")),
+				new ConditionResult(List.of(), List.of()), "1.º lugar: preço 70 %; confiança 50 %.");
 		List<Excluded> excluded = List.of(
 				new Excluded(ad("x1"), List.of("preço acima do teu limite (2600 €)", "ano abaixo do teu limite (1999)")),
 				new Excluded(ad("x2"), List.of("preço acima do teu limite (2800 €)")));
@@ -159,6 +173,7 @@ class SearchControllerTest {
 				.andExpect(jsonPath("$.ranked[0].subs.RELIABILITY.value").doesNotExist())
 				.andExpect(jsonPath("$.ranked[0].subs.RELIABILITY.explanationPt").value("sem dados"))
 				.andExpect(jsonPath("$.ranked[0].top5").value(true))
+				.andExpect(jsonPath("$.ranked[0].whyPt").value("1.º lugar: preço 70 %; confiança 50 %."))
 				.andExpect(jsonPath("$.ranked[0].realCost.totalEur").value(2500.0))
 				.andExpect(jsonPath("$.ranked[0].checklist.links[0].url").value("https://example.test/imt"))
 				.andExpect(jsonPath("$.excluded[1].reasonsPt[0]").value("preço acima do teu limite (2800 €)"))

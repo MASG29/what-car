@@ -1,0 +1,113 @@
+package carfinder.scoring;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
+
+import java.util.List;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
+
+class ConditionReaderTest {
+
+	@Test
+	void nullOrBlank_noHints() {
+		assertThat(ConditionReader.read(null)).isEqualTo(new ConditionResult(List.of(), List.of()));
+		assertThat(ConditionReader.read("  ")).isEqualTo(new ConditionResult(List.of(), List.of()));
+	}
+
+	@Test
+	void problems_eachGroupFound_accentsAndCaseIgnored() {
+		ConditionResult r = ConditionReader.read("Tem RISCOS na porta, uma amolgadela, pintura a descascar no tejadilho, "
+				+ "alguma ferrugem, embraiagem a patinar, luz do airbag acesa, luz do motor, deita fumo, "
+				+ "barulho no motor e caixa a raspar.");
+		assertThat(r.problemsPt()).containsExactly("riscos", "amolgadelas",
+				"pintura danificada", "ferrugem",
+				"embraiagem gasta", "luz do airbag",
+				"luz do motor", "fumo",
+				"barulho no motor", "caixa com problemas");
+		assertThat(r.maintenancePt()).isEmpty();
+	}
+
+	@Test
+	void problems_alternativeWordings() {
+		assertThat(ConditionReader.read("Um risco pequeno; carro amolgado; pintura queimada; airbag acesa; "
+				+ "embraiagem gasta; caixa com folga").problemsPt()).containsExactly("riscos",
+						"amolgadelas", "pintura danificada",
+						"embraiagem gasta", "luz do airbag",
+						"caixa com problemas");
+	}
+
+	@Test
+	void problems_samePhraseTwice_countedOnce() {
+		assertThat(ConditionReader.read("riscos na frente e riscos atrás").problemsPt())
+				.containsExactly("riscos");
+	}
+
+	@Test
+	void maintenance_eachGroupFound() {
+		ConditionResult r = ConditionReader.read("Embraiagem nova, bomba de água substituída, amortecedores trocados "
+				+ "e correia de distribuição feita.");
+		assertThat(r.maintenancePt()).containsExactly("embraiagem",
+				"bomba de água", "amortecedores",
+				"distribuição");
+		assertThat(r.problemsPt()).isEmpty();
+	}
+
+	@Test
+	void maintenance_kitAndBeltTogether_countedOnce() {
+		assertThat(ConditionReader.read("Kit de distribuição e correia nova").maintenancePt())
+				.containsExactly("distribuição");
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = { "Sem riscos nem amolgadelas", "Nunca teve ferrugem", "Não tem riscos",
+			"Zero problemas de ferrugem", "não tem qualquer ferrugem", "Sem luz do motor acesa",
+			"NÃO deita fumo" })
+	void negation_withinThreeWordsBefore_ignored(String text) {
+		assertThat(ConditionReader.read(text).problemsPt()).isEmpty();
+	}
+
+	@Test
+	void negation_moreThanThreeWordsBefore_counts() {
+		assertThat(ConditionReader.read("Nunca deu qualquer problema mas tem ferrugem").problemsPt())
+				.containsExactly("ferrugem");
+	}
+
+	@Test
+	void negation_doesNotCrossSentenceEnd() {
+		assertThat(ConditionReader.read("Sem acidentes. Riscos no para-choques.").problemsPt())
+				.containsExactly("riscos");
+	}
+
+	@Test
+	void negation_oneNegatedOneNot_counts() {
+		assertThat(ConditionReader.read("Sem riscos no interior, mas a porta tem vários riscos").problemsPt())
+				.containsExactly("riscos");
+	}
+
+	@Test
+	void naoFumador_isNotANegation() {
+		assertThat(ConditionReader.read("Dono não fumador, riscos no para-choques").problemsPt())
+				.containsExactly("riscos");
+	}
+
+	@Test
+	void negation_appliesToMaintenanceToo() {
+		assertThat(ConditionReader.read("sem embraiagem nova").maintenancePt()).isEmpty();
+	}
+
+	@Test
+	void wordBoundaries_noFalseHits() {
+		assertThat(ConditionReader.read("Não fumador, pintura original, caixa automática").problemsPt()).isEmpty();
+	}
+
+	@Test
+	void adjustment_capsAtThreeEach() {
+		assertThat(new ConditionResult(List.of(), List.of()).rankAdjustment()).isZero();
+		assertThat(new ConditionResult(List.of("a"), List.of()).rankAdjustment()).isCloseTo(-0.05, within(1e-9));
+		assertThat(new ConditionResult(List.of(), List.of("a", "b")).rankAdjustment()).isCloseTo(0.06, within(1e-9));
+		assertThat(new ConditionResult(List.of("a", "b", "c", "d", "e"), List.of("a", "b", "c", "d"))
+				.rankAdjustment()).isCloseTo(0.09 - 0.15, within(1e-9));
+	}
+}

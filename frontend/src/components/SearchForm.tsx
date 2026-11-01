@@ -42,6 +42,10 @@ export function SearchForm({ form, onChange, lastUsed }: Props) {
           Ano mínimo
           <input inputMode="numeric" value={form.minYear} onChange={(e) => set({ minYear: e.target.value })} />
         </label>
+        <label>
+          Mínimo de portas (opcional)
+          <input inputMode="numeric" value={form.minDoors ?? ''} onChange={(e) => set({ minDoors: e.target.value })} />
+        </label>
       </div>
 
       <fieldset>

@@ -10,9 +10,11 @@ import java.util.Set;
 /**
  * The user's limits. Price, km and year have no defaults. The cap defaults to the asking price (spec) and the cost
  * items to the report's values. models are "make model" strings; empty = every B/C model in the knowledge base.
+ * minDoors is optional (null = any).
  */
 public record SearchLimits(@Positive int maxPriceEur, PriceCap priceCap, @Positive int maxKm, @Positive int minYear,
-		@NotEmpty Set<Fuel> fuels, Set<String> districts, List<String> models, RealCostSettings realCost) {
+		@NotEmpty Set<Fuel> fuels, Set<String> districts, List<String> models, RealCostSettings realCost,
+		@Positive Integer minDoors) {
 
 	public enum PriceCap { ASKING, REAL_COST }
 

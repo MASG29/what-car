@@ -67,7 +67,7 @@ class SearchServiceTest {
 	private static final KnowledgeBase KB = KnowledgeLoader
 			.load(Paths.get("src/test/resources/fixtures/knowledge-reliability"));
 	private static final SearchLimits LIMITS = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
-			EnumSet.allOf(Fuel.class), Set.of(), List.of(), null);
+			EnumSet.allOf(Fuel.class), Set.of(), List.of(), null, null);
 	private static final Duration LONG = Duration.ofMinutes(10);
 
 	@Autowired

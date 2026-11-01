@@ -25,9 +25,21 @@ class ChecklistBuilderTest {
 	}
 
 	@Test
-	void checklist_alwaysAsksKmAndPlate() {
-		assertThat(b.build(ad(2005, 3, null), match(Timing.CHAIN)).questionsPt()).contains("Quantos km tem?",
-				"Qual é a matrícula?");
+	void checklist_kmKnown_asksToConfirmIt_alwaysAsksPlate() {
+		// ad() has 150000 km; PT thousands separator is a no-break space
+		assertThat(b.build(ad(2005, 3, null), match(Timing.CHAIN)).questionsPt())
+				.contains("Confirma os 150\u00A0000 km no histórico das inspeções", "Qual é a matrícula?")
+				.doesNotContain("Quantos km tem?");
+	}
+
+	@Test
+	void checklist_kmUnknown_asksKm() {
+		var noKm = TestListings.of(new RawListing(Site.STANDVIRTUAL, "t", "https://example.test/1", "t", 1500,
+				"Toyota", "Yaris", null, 2005, 3, null, Fuel.PETROL, 998, 68, null, 5, null, null, null, 0, null,
+				null, false), true);
+		var q = b.build(noKm, noEngine()).questionsPt();
+		assertThat(q).contains("Quantos km tem?", "Qual é a matrícula?");
+		assertThat(q).noneMatch(x -> x.startsWith("Confirma os"));
 	}
 
 	@Test

@@ -42,7 +42,18 @@ class ListingFilterTest {
 
 	static SearchLimits limits(PriceCap cap, List<String> models, Set<String> districts) {
 		return new SearchLimits(2500, cap, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), districts, models,
-				RealCostSettings.defaults());
+				RealCostSettings.defaults(), null);
+	}
+
+	static SearchLimits minDoors(Integer n) {
+		return new SearchLimits(2500, PriceCap.ASKING, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), Set.of(),
+				List.of(), RealCostSettings.defaults(), n);
+	}
+
+	static Listing withDoors(Integer doors) {
+		return TestListings.of(new RawListing(Site.STANDVIRTUAL, "x", "https://example.test/x", "t", 1500,
+				"Volkswagen", "Polo", null, 2010, 6, 150000, Fuel.PETROL, null, null, null, doors, null, "Braga", null,
+				8, null, null, false), true);
 	}
 
 	static SearchLimits limits() {
@@ -203,5 +214,29 @@ class ListingFilterTest {
 				false), false);
 		dropped(filter.apply(bare, NO_MATCH, PLAIN, new RealCost(142.47, Map.of(), ""),
 				limits(PriceCap.REAL_COST, List.of("VW Polo"), Set.of("Braga"))));
+	}
+
+	@Test
+	void doors_fewerThanAsked_dropped() {
+		FilterResult r = filter.apply(withDoors(3), NO_MATCH, PLAIN, COST, minDoors(5));
+		assertThat(r.keep()).isFalse();
+		assertThat(r.notesPt()).containsExactly("menos portas do que pedes (3)");
+	}
+
+	@Test
+	void doors_enoughOrNoMinimum_kept() {
+		assertThat(filter.apply(withDoors(5), NO_MATCH, PLAIN, COST, minDoors(5))).isEqualTo(
+				new FilterResult(true, List.of()));
+		assertThat(filter.apply(withDoors(3), NO_MATCH, PLAIN, COST, minDoors(null))).isEqualTo(
+				new FilterResult(true, List.of()));
+		assertThat(filter.apply(withDoors(null), NO_MATCH, PLAIN, COST, minDoors(null))).isEqualTo(
+				new FilterResult(true, List.of()));
+	}
+
+	@Test
+	void doors_unknown_keptWithNote() {
+		FilterResult r = filter.apply(withDoors(null), NO_MATCH, PLAIN, COST, minDoors(5));
+		assertThat(r.keep()).isTrue();
+		assertThat(r.notesPt()).containsExactly("portas não indicadas");
 	}
 }

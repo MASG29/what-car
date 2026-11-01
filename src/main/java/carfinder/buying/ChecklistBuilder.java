@@ -5,6 +5,7 @@ import carfinder.matching.CarMatch;
 import carfinder.knowledge.Timing;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,7 +20,12 @@ public class ChecklistBuilder {
 					"https://www.registoautomovel.pt/blog/certidao-permanente-automovel"));
 
 	public Checklist build(Listing l, CarMatch m) {
-		List<String> q = new ArrayList<>(List.of("Quantos km tem?", "Qual é a matrícula?"));
+		List<String> q = new ArrayList<>();
+		// PT thousands separator, fixed to a no-break space whatever the JDK's locale data says
+		q.add(l.getKm() == null ? "Quantos km tem?"
+				: "Confirma os %s km no histórico das inspeções".formatted(
+						String.format(Locale.ROOT, "%,d", l.getKm()).replace(',', '\u00A0')));
+		q.add("Qual é a matrícula?");
 		if (RealCostCalculator.beltPossible(m)) {
 			q.add("Quando foi trocada a correia de distribuição? Há fatura?");
 		}

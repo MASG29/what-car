@@ -23,6 +23,8 @@ export type SearchLimits = {
   districts: string[]
   models: string[]
   realCost: RealCostSettings
+  /** null = any number of doors */
+  minDoors: number | null
 }
 
 /** value null = "sem dados". */
@@ -67,6 +69,8 @@ export type Scored = {
   notesPt: string[]
   realCost: { totalEur: number; itemsPt: Record<string, number>; insuranceRangePt: string }
   checklist: { links: { labelPt: string; url: string }[]; questionsPt: string[] }
+  /** PT sentence: position, strongest criteria, missing data, confidence, condition hints */
+  whyPt: string
 }
 
 export type Ranking = {

@@ -35,7 +35,7 @@ public record RankingDto(List<Scored> ranked, List<Dropped> excluded, Map<String
 
 	public record Scored(Ad listing, List<String> alsoOnUrls, Map<Criterion, Sub> subs, double total,
 			double confidence, double rank, boolean top5, List<String> warningsPt, List<String> notesPt,
-			RealCost realCost, Checklist checklist) {
+			RealCost realCost, Checklist checklist, String whyPt) {
 	}
 
 	public record Dropped(Ad listing, List<String> reasonsPt) {
@@ -59,7 +59,7 @@ public record RankingDto(List<Scored> ranked, List<Dropped> excluded, Map<String
 		Map<Criterion, Sub> subs = new EnumMap<>(Criterion.class);
 		s.subs().forEach((c, x) -> subs.put(c, sub(x)));
 		return new Scored(ad(s.listing()), s.alsoOnUrls(), subs, s.total(), s.confidence(), s.rank(), s.top5(),
-				s.warningsPt(), s.notesPt(), s.realCost(), s.checklist());
+				s.warningsPt(), s.notesPt(), s.realCost(), s.checklist(), s.whyPt());
 	}
 
 	private static Sub sub(SubScore x) {
