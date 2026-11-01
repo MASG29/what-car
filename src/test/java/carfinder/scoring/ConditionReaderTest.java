@@ -88,6 +88,23 @@ class ConditionReaderTest {
 	}
 
 	@Test
+	void negation_stopsAtNewVerb() {
+		assertThat(ConditionReader.read("Sem acidentes, tem riscos").problemsPt()).containsExactly("riscos");
+		assertThat(ConditionReader.read("Vendo por não precisar, tem ferrugem").problemsPt())
+				.containsExactly("ferrugem");
+		assertThat(ConditionReader.read("Nunca teve acidentes, tinha amolgadelas").problemsPt())
+				.containsExactly("amolgadelas");
+		assertThat(ConditionReader.read("Sem acidentes, apresenta ferrugem").problemsPt()).containsExactly("ferrugem");
+		assertThat(ConditionReader.read("Sem acidentes, com riscos na porta").problemsPt()).containsExactly("riscos");
+	}
+
+	@Test
+	void negation_directlyBeforeVerb_stillNegates() {
+		assertThat(ConditionReader.read("Não tem riscos").problemsPt()).isEmpty();
+		assertThat(ConditionReader.read("Nunca apresentou nem apresenta ferrugem").problemsPt()).isEmpty();
+	}
+
+	@Test
 	void negation_butClauseAfterMas_counts() {
 		assertThat(ConditionReader.read("Nunca deu qualquer problema mas tem ferrugem").problemsPt())
 				.containsExactly("ferrugem");

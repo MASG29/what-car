@@ -13,7 +13,8 @@ import java.util.regex.Pattern;
 /**
  * Reads problem and maintenance phrases from an ad's description (normalised: no accents, lower case). A phrase
  * is ignored when "sem", "nao", "nunca" or "zero" comes before it in the same clause: a negation covers lists
- * joined by "," "e" "ou" "nem" and stops at . ! ? ; or at "mas", "porem", "contudo".
+ * joined by "," "e" "ou" "nem" and stops at . ! ? ; at "mas", "porem", "contudo", or at a new verb
+ * ("tem", "tinha", "apresenta", "com"), so "Sem acidentes, tem riscos" counts "riscos".
  */
 public final class ConditionReader {
 
@@ -40,7 +41,9 @@ public final class ConditionReader {
 			BELT_DONE, "(kit de distribuicao|correia( de distribuicao)?) " + DONE);
 
 	private static final Set<String> NEGATIONS = Set.of("sem", "nao", "nunca", "zero");
-	private static final Pattern CLAUSE_END = Pattern.compile("[.!?;]|\\b(mas|porem|contudo)\\b");
+	/** A new verb ("tem", "tinha", "apresenta", "com") ends the scope unless a negation sits right before it. */
+	private static final Pattern CLAUSE_END = Pattern.compile(
+			"[.!?;]|\\b(mas|porem|contudo)\\b|(?<!\\b(nao|nunca|nem) )\\b(tem|tinha|apresenta|com)\\b");
 
 	private ConditionReader() {
 	}
