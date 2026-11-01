@@ -97,16 +97,46 @@ class PriceScorerTest {
 	}
 
 	@Test
-	void price_comparablesMustShareModelGenerationYearsAndKm() {
+	void price_comparablesNeverCrossModelOrGeneration_evenWhenWidened() {
+		List<Listing> pool = new ArrayList<>();
+		pool.add(ad("a", 1400, 2006, 100000, false));
+		pool.add(ad("b", 1500, 2006, 100000, false));
+		pool.add(ad("other-model", "Renault", "Megane", 1500, 2006, 100000, false));
+		pool.add(ad("other-gen", 1500, 2004, 100000, false)); // Clio II, 2 years away
+		PriceResult r = scorer.score(ad("self", 1450, 2006, 100000, false), MATCH, pool);
+		assertThat(r.score().value()).isEmpty();
+		assertThat(r.score().explanationPt()).isEqualTo("poucos anúncios comparáveis (2)");
+	}
+
+	@Test
+	void price_unknownKmSkipsKmCheck_notWidened() {
 		List<Listing> pool = new ArrayList<>(pool().subList(0, 2));
-		pool.add(ad("other-model", "Renault", "Megane", 1500, 2009, 100000, false));
-		pool.add(ad("other-gen", 1500, 2013, 100000, false)); // Clio IV, also > 2 years away
-		pool.add(ad("far-year", 1500, 2012, 100000, false));
-		pool.add(ad("far-km", 1500, 2009, 160000, false));
-		assertThat(score(1450, pool).score().explanationPt()).contains("(2)");
-		// unknown km on either side skips the km check
 		pool.add(ad("no-km", 1500, 2009, null, false));
-		assertThat(score(1450, pool).score().explanationPt()).contains("de 3 anúncios");
+		PriceResult r = score(1450, pool);
+		assertThat(r.score().explanationPt()).contains("de 3 anúncios").doesNotContain("alargada");
+		assertThat(r.score().confidence()).isCloseTo(0.3, within(1e-9));
+	}
+
+	@Test
+	void price_tooFew_dropsKmRuleFirst_andStopsThere() {
+		List<Listing> pool = new ArrayList<>(pool().subList(0, 2));
+		pool.add(ad("far-km", 1500, 2009, 160000, false));
+		pool.add(ad("far-year", 1500, 2012, 100000, false)); // only counts at the +-3 years step
+		PriceResult r = score(1450, pool);
+		assertThat(r.score().value()).isPresent();
+		assertThat(r.score().explanationPt()).contains("de 3 anúncios comparáveis (comparação alargada)");
+		assertThat(r.score().confidence()).isCloseTo(0.3 * 0.7, within(1e-9));
+	}
+
+	@Test
+	void price_tooFew_thenAllowsThreeYears_notFour() {
+		List<Listing> pool = new ArrayList<>(pool().subList(0, 2));
+		pool.add(ad("four-years", 1500, 2005, 160000, false));
+		assertThat(score(1450, pool).score().explanationPt()).isEqualTo("poucos anúncios comparáveis (2)");
+		pool.add(ad("three-years", 1500, 2012, 160000, false));
+		PriceResult r = score(1450, pool);
+		assertThat(r.score().explanationPt()).contains("de 3 anúncios comparáveis (comparação alargada)");
+		assertThat(r.score().confidence()).isCloseTo(0.3 * 0.7, within(1e-9));
 	}
 
 	@Test

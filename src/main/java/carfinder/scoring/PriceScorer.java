@@ -10,15 +10,24 @@ import java.util.OptionalDouble;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.stereotype.Component;
 
-/** Compares an ad's price with the median of comparable ads in the pool. */
+/**
+ * Compares an ad's price with the median of comparable ads in the pool. With fewer than 3, the comparison widens
+ * in steps (drop the km rule, then also allow +-3 years) and stops at the first step with enough ads.
+ */
 @Component
 @EnableConfigurationProperties(PriceProperties.class)
 public class PriceScorer {
 
 	private static final int MIN_COMPARABLES = 3;
 	private static final int PLACEHOLDER_BELOW_EUR = 100;
-	private static final int MAX_YEAR_GAP = 2;
 	private static final int MAX_KM_GAP = 50_000;
+	private static final double WIDENED_CONFIDENCE = 0.7;
+
+	/** Year gap and km rule per step, strictest first. */
+	private record Step(int maxYearGap, boolean kmRule) {
+	}
+
+	private static final List<Step> STEPS = List.of(new Step(2, true), new Step(2, false), new Step(3, false));
 
 	private final PriceProperties props;
 
@@ -31,17 +40,27 @@ public class PriceScorer {
 			return none(0, l.getYear() == null ? "ano não indicado" : "preço não indicado");
 		}
 		// ponytail: make aliases ("vw") are not unified across ads; only the generation window uses the KB.
-		List<Integer> prices = pool.stream().filter(p -> comparable(l, m, p)).map(Listing::getPriceEur).sorted()
-				.toList();
+		List<Integer> prices = List.of();
+		int step = 0;
+		for (; step < STEPS.size(); step++) {
+			Step st = STEPS.get(step);
+			prices = pool.stream().filter(p -> comparable(l, m, p, st)).map(Listing::getPriceEur).sorted().toList();
+			if (prices.size() >= MIN_COMPARABLES) {
+				break;
+			}
+		}
 		int n = prices.size();
 		if (n < MIN_COMPARABLES) {
 			return none(n, "poucos anúncios comparáveis (" + n + ")");
 		}
+		boolean widened = step > 0;
 		double median = n % 2 == 1 ? prices.get(n / 2) : (prices.get(n / 2 - 1) + prices.get(n / 2)) / 2.0;
 		double ratio = l.getPriceEur() / median;
-		SubScore s = new SubScore(OptionalDouble.of(Ratio.toScore(ratio)), Math.min(1.0, n / 10.0),
-				"%d € vs mediana %.0f € de %d anúncios comparáveis".formatted(l.getPriceEur(), median, n), List.of(),
-				List.of());
+		SubScore s = new SubScore(OptionalDouble.of(Ratio.toScore(ratio)),
+				Math.min(1.0, n / 10.0) * (widened ? WIDENED_CONFIDENCE : 1.0),
+				"%d € vs mediana %.0f € de %d anúncios comparáveis".formatted(l.getPriceEur(), median, n)
+						+ (widened ? " (comparação alargada)" : ""),
+				List.of(), List.of());
 		return new PriceResult(s, OptionalDouble.of(ratio), ratio > props.inflatedRatio(),
 				ratio <= props.wellBelowRatio());
 	}
@@ -55,17 +74,17 @@ public class PriceScorer {
 		return p.getPriceEur() != null && p.getPriceEur() >= PLACEHOLDER_BELOW_EUR;
 	}
 
-	private static boolean comparable(Listing l, CarMatch m, Listing p) {
+	private static boolean comparable(Listing l, CarMatch m, Listing p, Step st) {
 		if (p.getUrl().equals(l.getUrl()) || p.isParts() || !realPrice(p) || p.getYear() == null) {
 			return false;
 		}
 		if (!sameName(l.getMake(), p.getMake()) || !sameName(l.getModel(), p.getModel())) {
 			return false;
 		}
-		if (Math.abs(p.getYear() - l.getYear()) > MAX_YEAR_GAP) {
+		if (Math.abs(p.getYear() - l.getYear()) > st.maxYearGap()) {
 			return false;
 		}
-		if (l.getKm() != null && p.getKm() != null && Math.abs(p.getKm() - l.getKm()) > MAX_KM_GAP) {
+		if (st.kmRule() && l.getKm() != null && p.getKm() != null && Math.abs(p.getKm() - l.getKm()) > MAX_KM_GAP) {
 			return false;
 		}
 		return m.generation().map(g -> g.covers(registration(p))).orElse(true);
