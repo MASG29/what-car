@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { getRun, pollFailure } from './api'
+import { formatInt, getRun, pollFailure } from './api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -17,4 +17,11 @@ test('getRun_networkError_givesPtMessage_andKeepsRun', async () => {
     forgetRun: false,
     messagePt: 'Não foi possível contactar o servidor. A aplicação está a correr?',
   })
+})
+
+test('formatInt_separatorOnlyFromTenThousand', () => {
+  expect(formatInt(9500)).toBe('9500')
+  expect(formatInt(10000)).toBe('10\u00a0000')
+  expect(formatInt(169000)).toBe('169\u00a0000')
+  expect(formatInt(1234567)).toBe('1\u00a0234\u00a0567')
 })

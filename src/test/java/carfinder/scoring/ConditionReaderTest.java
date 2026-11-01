@@ -64,12 +64,26 @@ class ConditionReaderTest {
 	@ValueSource(strings = { "Sem riscos nem amolgadelas", "Nunca teve ferrugem", "Não tem riscos",
 			"Zero problemas de ferrugem", "não tem qualquer ferrugem", "Sem luz do motor acesa",
 			"NÃO deita fumo" })
-	void negation_withinThreeWordsBefore_ignored(String text) {
+	void negation_beforePhraseInSameClause_ignored(String text) {
 		assertThat(ConditionReader.read(text).problemsPt()).isEmpty();
 	}
 
 	@Test
-	void negation_moreThanThreeWordsBefore_counts() {
+	void negation_coversListJoinedByCommaOrEOuNem() {
+		assertThat(ConditionReader.read("Sem riscos, amolgadelas ou ferrugem").problemsPt()).isEmpty();
+		assertThat(ConditionReader.read("Não tem riscos, nem amolgadelas e nunca ferrugem").problemsPt()).isEmpty();
+		assertThat(ConditionReader.read("Carro sem qualquer tipo de riscos ou amolgadelas").problemsPt()).isEmpty();
+	}
+
+	@Test
+	void negation_stopsAtMasPoremContudo() {
+		assertThat(ConditionReader.read("sem riscos mas tem ferrugem").problemsPt()).containsExactly("ferrugem");
+		assertThat(ConditionReader.read("Sem riscos, porém tem ferrugem").problemsPt()).containsExactly("ferrugem");
+		assertThat(ConditionReader.read("sem riscos, contudo tem ferrugem").problemsPt()).containsExactly("ferrugem");
+	}
+
+	@Test
+	void negation_butClauseAfterMas_counts() {
 		assertThat(ConditionReader.read("Nunca deu qualquer problema mas tem ferrugem").problemsPt())
 				.containsExactly("ferrugem");
 	}

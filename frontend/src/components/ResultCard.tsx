@@ -1,4 +1,4 @@
-import { type Ad, CRITERIA, CRITERION_PT, formatEur, pct, type Scored } from '../api'
+import { type Ad, CRITERIA, CRITERION_PT, formatEur, formatInt, pct, type Scored } from '../api'
 import { FUEL_PT } from '../limits'
 import { ChecklistPanel } from './ChecklistPanel'
 import { RealCostPanel } from './RealCostPanel'
@@ -9,7 +9,7 @@ export function adFacts(l: Ad): string {
   return [
     l.priceEur != null ? formatEur(l.priceEur) : 'preço não indicado',
     l.year != null ? (l.month != null ? `${String(l.month).padStart(2, '0')}/${l.year}` : String(l.year)) : 'ano não indicado',
-    l.km != null ? `${l.km.toLocaleString('pt-PT')} km` : 'km não indicados',
+    l.km != null ? `${formatInt(l.km)} km` : 'km não indicados',
     l.fuel ? FUEL_PT[l.fuel] : null,
     l.cc ? `${l.cc} cm³` : null,
     l.powerCv ? `${l.powerCv} cv` : null,

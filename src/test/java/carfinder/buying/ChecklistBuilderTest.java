@@ -33,6 +33,14 @@ class ChecklistBuilderTest {
 	}
 
 	@Test
+	void checklist_kmBelowTenThousand_noSeparator() {
+		var low = TestListings.of(new RawListing(Site.STANDVIRTUAL, "t", "https://example.test/1", "t", 1500,
+				"Toyota", "Yaris", null, 2005, 3, 9500, Fuel.PETROL, 998, 68, null, 5, null, null, null, 0, null,
+				null, false), true);
+		assertThat(b.build(low, noEngine()).questionsPt()).contains("Confirma os 9500 km no histórico das inspeções");
+	}
+
+	@Test
 	void checklist_kmUnknown_asksKm() {
 		var noKm = TestListings.of(new RawListing(Site.STANDVIRTUAL, "t", "https://example.test/1", "t", 1500,
 				"Toyota", "Yaris", null, 2005, 3, null, Fuel.PETROL, 998, 68, null, 5, null, null, null, 0, null,

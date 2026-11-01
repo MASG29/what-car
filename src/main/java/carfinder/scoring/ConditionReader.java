@@ -2,6 +2,7 @@ package carfinder.scoring;
 
 import carfinder.knowledge.Text;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -11,7 +12,8 @@ import java.util.regex.Pattern;
 
 /**
  * Reads problem and maintenance phrases from an ad's description (normalised: no accents, lower case). A phrase
- * is ignored when "sem", "nao", "nunca" or "zero" is among the 3 words before it in the same sentence.
+ * is ignored when "sem", "nao", "nunca" or "zero" comes before it in the same clause: a negation covers lists
+ * joined by "," "e" "ou" "nem" and stops at . ! ? ; or at "mas", "porem", "contudo".
  */
 public final class ConditionReader {
 
@@ -35,8 +37,7 @@ public final class ConditionReader {
 			"distribuição", "kit de distribuicao|correia( de distribuicao)? " + DONE);
 
 	private static final Set<String> NEGATIONS = Set.of("sem", "nao", "nunca", "zero");
-	private static final Pattern SENTENCE_END = Pattern.compile("[.!?;]");
-	private static final int WINDOW = 3;
+	private static final Pattern CLAUSE_END = Pattern.compile("[.!?;]|\\b(mas|porem|contudo)\\b");
 
 	private ConditionReader() {
 	}
@@ -65,14 +66,8 @@ public final class ConditionReader {
 	}
 
 	private static boolean negated(String before) {
-		String[] sentences = SENTENCE_END.split(before, -1);
-		String[] words = sentences[sentences.length - 1].split("[^a-z0-9]+");
-		for (int i = Math.max(0, words.length - WINDOW); i < words.length; i++) {
-			if (NEGATIONS.contains(words[i])) {
-				return true;
-			}
-		}
-		return false;
+		String[] clauses = CLAUSE_END.split(before, -1);
+		return Arrays.stream(clauses[clauses.length - 1].split("[^a-z0-9]+")).anyMatch(NEGATIONS::contains);
 	}
 
 	private static Map<String, Pattern> phrases(String... labelThenRegex) {
