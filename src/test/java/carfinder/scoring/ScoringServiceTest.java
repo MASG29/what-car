@@ -72,12 +72,29 @@ class ScoringServiceTest {
 		// Missing reliability is left out, not counted as 0 ...
 		assertThat(onlyPriceAndPhotos.total()).isCloseTo(0.6, within(1e-9));
 		assertThat(onlyPriceAndPhotos.confidence()).isCloseTo(0.4, within(1e-9));
-		assertThat(onlyPriceAndPhotos.rank()).isCloseTo(0.42, within(1e-9));
+		assertThat(onlyPriceAndPhotos.rank()).isCloseTo(0.24 * 0.7, within(1e-9));
 		assertThat(documented.total()).isCloseTo(0.39 / 0.7, within(1e-9));
 		assertThat(documented.confidence()).isCloseTo(0.7, within(1e-9));
 		// ... but lower confidence keeps it below the documented ad despite its higher total.
 		assertThat(onlyPriceAndPhotos.total()).isGreaterThan(documented.total());
 		assertThat(documented.rank()).isGreaterThan(onlyPriceAndPhotos.rank());
+	}
+
+	@Test
+	void rank_missingCriteriaAddNothing_sparsePerfectAdBelowDocumentedAverageAd() {
+		Weights w = Preset.BALANCED.weights(null);
+		ScoringService.Totals sparse = ScoringService.combine(
+				subs(Map.of(Criterion.COMPLETENESS, sub(1.0), Criterion.PHOTOS, sub(1.0))), w);
+		Map<Criterion, SubScore> allFive = new EnumMap<>(Criterion.class);
+		for (Criterion c : Criterion.values()) {
+			allFive.put(c, sub(0.6));
+		}
+		ScoringService.Totals documented = ScoringService.combine(allFive, w);
+
+		assertThat(sparse.total()).isCloseTo(1.0, within(1e-9)); // shown total unchanged
+		assertThat(sparse.rank()).isCloseTo(0.25 * 0.625, within(1e-9));
+		assertThat(documented.rank()).isCloseTo(0.6, within(1e-9));
+		assertThat(documented.rank()).isGreaterThan(sparse.rank());
 	}
 
 	@Test

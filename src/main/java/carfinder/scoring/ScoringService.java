@@ -21,7 +21,7 @@ import java.util.List;
 import java.util.Map;
 import org.springframework.stereotype.Component;
 
-/** Match, score, cost, filter, group duplicates, then rank by total adjusted by confidence. */
+/** Match, score, cost, filter, group duplicates, then rank by weighted score adjusted by confidence. */
 @Component
 public class ScoringService {
 
@@ -113,9 +113,9 @@ public class ScoringService {
 	}
 
 	/**
-	 * total re-normalises over present values (a missing value is left out, never a neutral number); confidence
-	 * counts every criterion, so missing data lowers rank. With equal totals the documented ad wins; a sparse ad
-	 * can still lead when its present scores are clearly higher.
+	 * total (shown) re-normalises over present values (a missing value is left out, never a neutral number). rank
+	 * divides by every weight, so a missing criterion adds nothing, then scales by confidence: a sparse ad cannot
+	 * outrank a documented one just because data is missing.
 	 */
 	static Totals combine(Map<Criterion, SubScore> subs, Weights w) {
 		double weighted = 0;
@@ -137,6 +137,7 @@ public class ScoringService {
 		}
 		double total = presentWeight > 0 ? weighted / presentWeight : 0;
 		double confidence = allWeight > 0 ? conf / allWeight : 0;
-		return new Totals(total, confidence, total * (0.5 + 0.5 * confidence));
+		double rankBase = allWeight > 0 ? weighted / allWeight : 0;
+		return new Totals(total, confidence, rankBase * (0.5 + 0.5 * confidence));
 	}
 }
