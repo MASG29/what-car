@@ -61,8 +61,9 @@ public class PriceScorer {
 				"%d € vs mediana %.0f € de %d anúncios comparáveis".formatted(l.getPriceEur(), median, n)
 						+ (widened ? " (comparação alargada)" : ""),
 				List.of(), List.of());
-		return new PriceResult(s, OptionalDouble.of(ratio), ratio > props.inflatedRatio(),
-				ratio <= props.wellBelowRatio());
+		// A widened comparison ignores km, so it scores but never drops an ad or excuses km over the limit.
+		return new PriceResult(s, OptionalDouble.of(ratio), !widened && ratio > props.inflatedRatio(),
+				!widened && ratio <= props.wellBelowRatio());
 	}
 
 	private static PriceResult none(int n, String why) {

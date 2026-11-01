@@ -129,6 +129,19 @@ class PriceScorerTest {
 	}
 
 	@Test
+	void price_widened_neverFlagsInflatedOrWellBelow() {
+		List<Listing> pool = new ArrayList<>();
+		for (int i = 0; i < 3; i++) {
+			pool.add(ad("high-km" + i, 1000, 2009, 280000, false));
+		}
+		PriceResult dear = scorer.score(ad("self", 1900, 2009, 120000, false), MATCH, pool); // ratio 1.9
+		assertThat(dear.score().explanationPt()).contains("comparação alargada");
+		assertThat(dear.inflated()).isFalse();
+		PriceResult cheap = scorer.score(ad("self", 500, 2009, 120000, false), MATCH, pool); // ratio 0.5
+		assertThat(cheap.wellBelow()).isFalse();
+	}
+
+	@Test
 	void price_tooFew_thenAllowsThreeYears_notFour() {
 		List<Listing> pool = new ArrayList<>(pool().subList(0, 2));
 		pool.add(ad("four-years", 1500, 2005, 160000, false));
