@@ -5,9 +5,10 @@ Every row cites its source in `source_url`, and `tag` records how the figure was
 
 ## consumption.csv
 
-- Source: the French ADEME/UTAC type-approval files (editions 2001 to 2012, published on
-  data.gouv.fr). All figures are combined NEDC values in l/100 km.
-- Rows: manual gearbox only. For each generation and engine, the earliest edition inside the
-  generation's production window is used.
-- Value: the most common combined figure among that engine's rows. On a tie, the higher figure is
-  kept, so the score never looks better than the source allows.
+- Sources: the French ADEME/UTAC type-approval files (editions 2001 to 2012, published on
+  data.gouv.fr) for most rows; Toyota's 2006 Yaris brochure for the two Yaris XP10 rows. All
+  figures are combined NEDC values in l/100 km.
+- ADEME rows: manual gearbox only. For each generation and engine, the earliest edition inside
+  the generation's production window is used, and the value is the most common combined figure
+  among that engine's rows. On a tie, the higher figure is kept, so the score never looks better
+  than the source allows.
