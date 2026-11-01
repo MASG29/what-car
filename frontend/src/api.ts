@@ -82,7 +82,9 @@ export type Scoring = { preset: Preset; customWeights: Weights | null }
 
 const GENERIC_ERROR = 'O pedido não foi aceite. Revê os dados e tenta de novo.'
 
-/** Errors carry the server's messagePt when it sends one; Spring's default 400 body has none. */
+export type ApiError = Error & { status?: number }
+
+/** Errors carry the HTTP status and the server's messagePt when it sends one; Spring's default 400 body has none. */
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
   let res: Response
   try {
@@ -92,7 +94,8 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
   }
   if (res.ok) return res.json()
   const body = await res.json().catch(() => null)
-  throw new Error(typeof body?.messagePt === 'string' && body.messagePt ? body.messagePt : GENERIC_ERROR)
+  const message = typeof body?.messagePt === 'string' && body.messagePt ? body.messagePt : GENERIC_ERROR
+  throw Object.assign(new Error(message), { status: res.status })
 }
 
 const post = <T>(url: string, body: unknown) =>
@@ -102,6 +105,10 @@ export const startSearch = (req: Scoring & { limits: SearchLimits; sites: Site[]
   post<{ id: string }>('/api/searches', req)
 export const getRun = (id: string) => call<RunView>(`/api/searches/${id}`)
 export const getResults = (id: string) => call<Ranking>(`/api/searches/${id}/results`)
+/** A stored run id that 404s is stale (e.g. a new database): forget it silently. Anything else is shown. */
+export const pollFailure = (e: ApiError) =>
+  e.status === 404 ? { forgetRun: true, messagePt: null } : { forgetRun: false, messagePt: e.message }
+
 export const scoreLink = (req: Scoring & { url: string; limits: SearchLimits | null }) =>
   post<Ranking>('/api/score-link', req)
 

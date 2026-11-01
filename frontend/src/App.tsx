@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { getResults, getRun, type Preset, type Ranking, type RunView, type Scoring, startSearch } from './api'
+import { type ApiError, getResults, getRun, pollFailure, type Preset, type Ranking, type RunView, type Scoring, startSearch } from './api'
 import { LinkScorer } from './components/LinkScorer'
 import { PresetPicker } from './components/PresetPicker'
 import { Results } from './components/Results'
@@ -49,7 +49,15 @@ export default function App() {
         if (r.status === 'DONE') setRanking(await getResults(runId))
         else if (r.status !== 'FAILED') timer = window.setTimeout(tick, POLL_MS)
       } catch (e) {
-        if (!stopped) setError((e as Error).message)
+        if (stopped) return
+        // Drop the run so Pesquisar is enabled again.
+        setRun(null)
+        const f = pollFailure(e as ApiError)
+        if (f.forgetRun) {
+          localStorage.removeItem(RUN_ID)
+          setRunId(null)
+        }
+        setError(f.messagePt)
       }
     }
     tick()

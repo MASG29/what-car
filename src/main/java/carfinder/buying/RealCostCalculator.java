@@ -46,7 +46,7 @@ public class RealCostCalculator {
 		}
 		double total = items.values().stream().mapToDouble(Double::doubleValue).sum();
 		String insurance = "Seguro: cerca de " + s.insuranceMinEur() + " a " + s.insuranceMaxEur()
-				+ " EUR por ano (não incluído no total)";
+				+ " € por ano (não incluído no total)";
 		return new RealCost(total, items, insurance);
 	}
 }

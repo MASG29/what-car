@@ -112,7 +112,7 @@ class RealCostCalculatorTest {
 	void insuranceNotInTotal() {
 		RealCost c = calc.estimate(ad(2005, 3, null), match(Timing.CHAIN), s);
 		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47 + 40);
-		assertThat(c.insuranceRangePt()).contains("800").contains("1500").contains("EUR");
+		assertThat(c.insuranceRangePt()).contains("800").contains("1500").contains("€").doesNotContain("EUR");
 		assertThat(c.itemsPt().keySet()).noneMatch(k -> k.toLowerCase().contains("seguro"));
 	}
 
