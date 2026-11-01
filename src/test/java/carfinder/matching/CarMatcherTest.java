@@ -211,4 +211,36 @@ class CarMatcherTest {
 		assertThat(polo.generation()).map(Generation::id).hasValue("polo-9n");
 		assertThat(polo.mixed()).isFalse();
 	}
+
+	@Test
+	void realKnowledgeBase_kwFills_pickOnlyTheEngineTheyIdentify() {
+		CarMatcher real = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+		CarMatch tu3 = real.match(listing("Peugeot", "206", null, 2005, 5, Fuel.PETROL, 1360, 75, null));
+		CarMatch sixteenValve = real.match(listing("Peugeot", "206", null, 2005, 5, Fuel.PETROL, 1360, 90, null));
+		CarMatch peugeot16 = real.match(listing("Peugeot", "206", null, 2000, 5, Fuel.PETROL, 1587, 90, null));
+		CarMatch golf16 = real.match(listing("Volkswagen", "Golf", null, 2005, 5, Fuel.PETROL, 1595, 102, null));
+
+		assertThat(tu3.engine()).map(Engine::id).hasValue("psa-tu3");
+		// KFU and TU5 stay without kW: a 1.6 8v at about 65 kW would otherwise pass as the 1.4 16v
+		assertThat(sixteenValve.engine()).isEmpty();
+		assertThat(peugeot16.engine()).isEmpty();
+		assertThat(golf16.engine()).isEmpty(); // 75 kW, not the 1.4 16v (55/59 kW)
+	}
+
+	@Test
+	void realKnowledgeBase_neighbourGenerations() {
+		CarMatcher real = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+		CarMatch polo = real.match(listing("VW", "Polo", null, 2011, 4, Fuel.PETROL, 1198, 60, null));
+		CarMatch golf = real.match(car("Volkswagen", "Golf", 2010, 4));
+		CarMatch variant = real.match(car("Volkswagen", "Golf Variant", 2005, 4));
+		CarMatch evo = real.match(car("Fiat", "Punto Evo", 2011, 4));
+
+		assertThat(polo.generation()).map(Generation::id).hasValue("polo-6r");
+		assertThat(polo.engine()).map(Engine::id).hasValue("vw-1.2-3cyl");
+		assertThat(golf.generation()).map(Generation::id).hasValue("golf-vi");
+		assertThat(variant.generation()).map(Generation::id).hasValue("golf-iv-variant");
+		assertThat(evo.generation()).map(Generation::id).hasValue("punto-evo");
+	}
 }

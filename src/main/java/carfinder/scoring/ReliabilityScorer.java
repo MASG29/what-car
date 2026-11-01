@@ -117,15 +117,18 @@ public class ReliabilityScorer {
 		return new SubScore(value, confidence, text, sources, List.copyOf(warnings));
 	}
 
-	/** Series rows whose registration year (June, as in generation matching) lies inside a candidate's window. */
+	/**
+	 * Series rows whose registration year (June, as in generation matching) lies inside every candidate's window, so
+	 * a changeover car never uses a row that belongs to only one of its possible generations.
+	 */
 	private List<SurveyResult> seriesRows(CarMatch m) {
 		if (m.candidates().isEmpty()) {
 			return List.of();
 		}
 		Generation any = m.candidates().getFirst();
-		return kb.seriesSurveys(any.make(), any.model()).stream()
+		return kb.seriesSurveys(any.make(), any.seriesModel()).stream()
 				.filter(s -> s.regYear() != null
-						&& m.candidates().stream().anyMatch(g -> g.covers(YearMonth.of(s.regYear(), 6))))
+						&& m.candidates().stream().allMatch(g -> g.covers(YearMonth.of(s.regYear(), 6))))
 				.toList();
 	}
 

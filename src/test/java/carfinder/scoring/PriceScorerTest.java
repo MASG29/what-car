@@ -19,7 +19,7 @@ import org.junit.jupiter.api.Test;
 class PriceScorerTest {
 
 	private static final Generation CLIO3 = new Generation("r-clio-3", "Renault", "Clio", "III", "B",
-			YearMonth.of(2005, 1), YearMonth.of(2012, 6), List.of(), List.of());
+			YearMonth.of(2005, 1), YearMonth.of(2012, 6), List.of(), List.of(), "Clio");
 	private static final CarMatch MATCH = new CarMatch(Optional.of(CLIO3), List.of(CLIO3), false, Optional.empty(),
 			List.of(), List.of(), false);
 	private final PriceScorer scorer = new PriceScorer(new PriceProperties(1.25, 0.80));

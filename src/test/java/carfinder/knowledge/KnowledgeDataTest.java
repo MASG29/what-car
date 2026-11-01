@@ -99,4 +99,43 @@ class KnowledgeDataTest {
 			}
 		}
 	}
+
+	@Test
+	void consumption_sourcedAdemeRowsPinned() {
+		assertThat(KB.consumption("yaris-xp90", "toyota-1kr")).hasValueSatisfying(c -> {
+			assertThat(c.lPer100km()).isEqualTo(5.4);
+			assertThat(c.cycle()).isEqualTo(Cycle.NEDC);
+			assertThat(c.sourceUrl())
+					.isEqualTo("https://www.data.gouv.fr/storage/f/2014-07-07T09-57-45/carlab-mars-2006-complete.zip");
+			assertThat(c.tag()).isEqualTo("P");
+		});
+		assertThat(KB.consumption("peugeot-206", "psa-tu3")).map(ConsumptionFigure::lPer100km).hasValue(6.3);
+		assertThat(KB.consumption("grande-punto", "fiat-1.3-multijet")).map(ConsumptionFigure::lPer100km)
+				.hasValue(4.7);
+		assertThat(KB.consumption("yaris-xp10", "toyota-xp10-1.0")).map(ConsumptionFigure::lPer100km)
+				.hasValue(5.6); // brochure row kept; ADEME 2003 agrees
+		assertThat(KB.consumption("fusion", "ford-sigma-1.25")).isEmpty(); // no matching official version
+	}
+
+	@Test
+	void neighbourGenerations_sourcedWindows() {
+		assertThat(KB.generationsFor("VW", "Golf")).extracting(Generation::id)
+				.containsExactly("golf-iv", "golf-v", "golf-vi");
+		assertThat(KB.generationsFor("VW", "Golf Variant")).extracting(Generation::id)
+				.containsExactly("golf-iv-variant", "golf-v-variant", "golf-vi-variant");
+		assertThat(KB.generationsFor("Fiat", "Punto")).extracting(Generation::id)
+				.containsExactly("punto-188", "punto-evo");
+		assertThat(KB.generationsFor("Fiat", "Punto Evo")).extracting(Generation::id).containsExactly("punto-evo");
+		var c3ii = KB.generationsFor("Citroën", "C3").getLast();
+		assertThat(c3ii.id()).isEqualTo("c3-ii");
+		assertThat(c3ii.prodStart()).isEqualTo(java.time.YearMonth.of(2009, 1));
+		assertThat(c3ii.changeoverYears()).containsExactly(2009);
+		assertThat(KB.surveysForGeneration("c3-ii")).isEmpty(); // no score rows without a source
+	}
+
+	@Test
+	void psaPetrolEngines_kwFromAdeme() {
+		assertThat(KB.enginesFor("peugeot-206")).filteredOn(e -> e.id().equals("psa-tu3")).singleElement()
+				.extracting(Engine::kwList).isEqualTo(List.of(54, 55));
+	}
 }

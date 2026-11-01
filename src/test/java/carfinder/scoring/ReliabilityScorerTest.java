@@ -210,13 +210,28 @@ class ReliabilityScorerTest {
 	}
 
 	@Test
-	void realKnowledgeBase_c3Of2009_doesNotUseSuccessorRow() {
+	void realKnowledgeBase_c3_seriesRowsStayInsideEveryCandidateWindow() {
 		KnowledgeBase real = KnowledgeLoader.loadClasspath();
-		Listing c3 = car("Citroën", "C3", 2009);
+		ReliabilityScorer s = new ReliabilityScorer(real);
+		CarMatcher m = new CarMatcher(real);
+		Listing c3of2008 = car("Citroën", "C3", 2008);
+		Listing c3of2009 = car("Citroën", "C3", 2009); // C3 I or C3 II
+		Listing c3of2011 = car("Citroën", "C3", 2011);
 
-		SubScore s = new ReliabilityScorer(real).score(new CarMatcher(real).match(c3), c3, 17);
+		assertThat(s.score(m.match(c3of2008), c3of2008, 18).explanationPt()).contains("TÜV 2019")
+				.doesNotContain("EZ2010");
+		// no EZ2009 row: a C3 I row (EZ2007) or a C3 II row (EZ2010) might be of another generation
+		assertThat(s.score(m.match(c3of2009), c3of2009, 17).explanationPt()).doesNotContain("EZ2007", "EZ2010");
+		assertThat(s.score(m.match(c3of2011), c3of2011, 15).explanationPt()).contains("EZ2010");
+	}
 
-		assertThat(s.explanationPt()).contains("EZ2007").doesNotContain("EZ2010");
-		assertThat(s.confidence()).isCloseTo(0.4, within(1e-9));
+	@Test
+	void realKnowledgeBase_grandePunto_usesCombinedAdacPuntoRow() {
+		KnowledgeBase real = KnowledgeLoader.loadClasspath();
+		Listing gp = car("Fiat", "Grande Punto", 2006);
+
+		SubScore s = new ReliabilityScorer(real).score(new CarMatcher(real).match(gp), gp, 20);
+
+		assertThat(s.explanationPt()).isEqualTo("aproximado: Fiat Punto ADAC EZ2006, aos ~9 anos (linha combinada)");
 	}
 }

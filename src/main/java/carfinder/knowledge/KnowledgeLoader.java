@@ -162,13 +162,14 @@ public final class KnowledgeLoader {
 		List<Generation> generations = new ArrayList<>();
 		Set<String> generationIds = new HashSet<>();
 		for (Row r : rows(opener, "generations.csv", "generation_id", "make", "model", "code", "segment",
-				"prod_start", "prod_end", "aliases", "changeover_years")) {
+				"prod_start", "prod_end", "aliases", "changeover_years", "series_model")) {
 			String id = r.req("generation_id");
 			if (!generationIds.add(id)) {
 				throw r.error("duplicate generation_id " + id);
 			}
 			generations.add(new Generation(id, r.req("make"), r.req("model"), r.opt("code"), r.req("segment"),
-					r.month("prod_start"), r.month("prod_end"), r.list("aliases"), r.intList("changeover_years")));
+					r.month("prod_start"), r.month("prod_end"), r.list("aliases"), r.intList("changeover_years"),
+					r.opt("series_model") == null ? r.req("model") : r.opt("series_model")));
 		}
 
 		List<Engine> engines = new ArrayList<>();
