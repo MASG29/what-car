@@ -55,6 +55,11 @@ class ConditionReaderTest {
 	}
 
 	@Test
+	void maintenance_kitStillDue_notCounted() {
+		assertThat(ConditionReader.read("Precisa de kit de distribuição.").maintenancePt()).isEmpty();
+	}
+
+	@Test
 	void maintenance_kitAndBeltTogether_countedOnce() {
 		assertThat(ConditionReader.read("Kit de distribuição e correia nova").maintenancePt())
 				.containsExactly("distribuição");

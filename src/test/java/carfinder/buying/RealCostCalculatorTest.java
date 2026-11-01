@@ -109,6 +109,21 @@ class RealCostCalculatorTest {
 	}
 
 	@Test
+	void beltStillDue_keepsBelt() {
+		for (String d : List.of("Correia por fazer", "Precisa de kit de distribuição.",
+				"Correia a precisar de troca")) {
+			assertThat(calc.estimate(ad(2005, 3, d), match(Timing.BELT), s).itemsPt())
+					.as(d).containsKey("Correia (assumida por fazer)");
+		}
+	}
+
+	@Test
+	void beltDone_noBelt() {
+		assertThat(calc.estimate(ad(2005, 3, "Correia feita"), match(Timing.BELT), s).itemsPt())
+				.doesNotContainKey("Correia (assumida por fazer)");
+	}
+
+	@Test
 	void insuranceNotInTotal() {
 		RealCost c = calc.estimate(ad(2005, 3, null), match(Timing.CHAIN), s);
 		assertThat(c.totalEur()).isEqualTo(1500 + 105 + 37.47 + 40);

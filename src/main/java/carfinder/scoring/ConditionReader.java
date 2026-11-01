@@ -29,12 +29,15 @@ public final class ConditionReader {
 			"barulho no motor", "barulho no motor",
 			"caixa com problemas", "caixa (a raspar|com folga)");
 
+	/** Maintenance label for a timing belt or kit said to be done. */
+	public static final String BELT_DONE = "distribuição";
+
 	private static final String DONE = "(nova|novo|mudada|mudado|substituida|substituido|trocada|trocado|feita|feito)";
 	private static final Map<String, Pattern> MAINTENANCE = phrases(
 			"embraiagem", "embraiagem " + DONE,
 			"bomba de água", "bomba de agua " + DONE,
 			"amortecedores", "amortecedores (novos|mudados|substituidos|trocados)",
-			"distribuição", "kit de distribuicao|correia( de distribuicao)? " + DONE);
+			BELT_DONE, "(kit de distribuicao|correia( de distribuicao)?) " + DONE);
 
 	private static final Set<String> NEGATIONS = Set.of("sem", "nao", "nunca", "zero");
 	private static final Pattern CLAUSE_END = Pattern.compile("[.!?;]|\\b(mas|porem|contudo)\\b");

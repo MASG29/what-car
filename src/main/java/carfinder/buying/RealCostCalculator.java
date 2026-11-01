@@ -1,19 +1,15 @@
 package carfinder.buying;
 
-import static carfinder.knowledge.Text.normalise;
-
 import carfinder.knowledge.Timing;
 import carfinder.listing.Listing;
 import carfinder.matching.CarMatch;
+import carfinder.scoring.ConditionReader;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 import org.springframework.stereotype.Component;
 
 @Component
 public class RealCostCalculator {
-
-	private static final Pattern BELT_MENTION = Pattern.compile("correia|distribui");
 
 	/** Engine unknown or belt/unknown timing: the belt may be due. Chain engines never. */
 	static boolean beltPossible(CarMatch m) {
@@ -39,9 +35,8 @@ public class RealCostCalculator {
 			boolean pre = year < 2007 || (year == 2007 && l.getMonth() < 7);
 			items.put("IUC (estimativa)", (double) (pre ? s.iucPre2007Eur() : s.iucPost2007Eur()));
 		}
-		String d = l.getDescription();
-		boolean mentioned = d != null && BELT_MENTION.matcher(normalise(d)).find();
-		if (beltPossible(m) && !mentioned) {
+		boolean done = ConditionReader.read(l.getDescription()).maintenancePt().contains(ConditionReader.BELT_DONE);
+		if (beltPossible(m) && !done) {
 			items.put("Correia (assumida por fazer)", (double) s.beltEur());
 		}
 		double total = items.values().stream().mapToDouble(Double::doubleValue).sum();
