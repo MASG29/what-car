@@ -1,4 +1,4 @@
-import { FUEL_PT, FUELS, type LimitsForm, type RealCostSettings } from '../limits'
+import { FUEL_PT, FUELS, type LimitsForm, type RealCostSettings, SHORTLIST } from '../limits'
 
 const COST_PT: Record<keyof RealCostSettings, string> = {
   paperworkEur: 'Papelada (registo e transferência)',
@@ -56,6 +56,19 @@ export function SearchForm({ form, onChange, lastUsed }: Props) {
             {FUEL_PT[f]}
           </label>
         ))}
+      </fieldset>
+
+      <fieldset>
+        <legend>Modelos</legend>
+        <label className="inline">
+          <input type="checkbox" checked={form.allBC ?? false} onChange={(e) => set({ allBC: e.target.checked })} />
+          Todos os B/C
+        </label>
+        <p className="muted">
+          {form.allBC
+            ? 'Todos os modelos dos segmentos B e C da base de conhecimento.'
+            : `Lista do relatório: ${SHORTLIST.join(', ')}.`}
+        </p>
       </fieldset>
 
       <label>

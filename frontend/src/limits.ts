@@ -23,8 +23,16 @@ export type LimitsForm = {
   districts: string
   /** optional; absent in forms saved before the field existed */
   minDoors: string
+  /** true = every B/C model in the knowledge base; absent in forms saved before the field existed */
+  allBC?: boolean
   realCost: RealCostSettings
 }
+
+/** The research report's shortlist (spec, "Search scope"): the default model scope. */
+export const SHORTLIST = [
+  'Mitsubishi Colt', 'Honda Jazz', 'Toyota Yaris', 'Mazda 2', 'Ford Fiesta', 'Ford Fusion',
+  'Volkswagen Polo', 'Volkswagen Golf', 'Toyota Corolla', 'Toyota Auris', 'Honda Civic', 'Mazda 3',
+]
 
 const positiveInt = (s: string) => /^\d+$/.test(s.trim()) && Number(s) > 0
 
@@ -62,7 +70,7 @@ export const emptyForm = (): LimitsForm => ({
 /** Only call with a form that validateLimits accepts. Empty districts = every district; empty doors = any. */
 export const toSearchLimits = (f: LimitsForm): SearchLimits => ({
   maxPriceEur: Number(f.maxPriceEur), maxKm: Number(f.maxKm), minYear: Number(f.minYear),
-  fuels: f.fuels, priceCap: f.priceCap, models: [], realCost: f.realCost,
+  fuels: f.fuels, priceCap: f.priceCap, models: f.allBC ? [] : SHORTLIST, realCost: f.realCost,
   districts: f.districts.split(',').map((d) => d.trim()).filter(Boolean),
   minDoors: (f.minDoors ?? '').trim() === '' ? null : Number(f.minDoors),
 })

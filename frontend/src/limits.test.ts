@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type LimitsForm, toSearchLimits, validateLimits } from './limits'
+import { type LimitsForm, SHORTLIST, toSearchLimits, validateLimits } from './limits'
 
 const costs = {
   paperworkEur: 105, ipoEur: 37.47, iucPre2007Eur: 40, iucPost2007Eur: 149,
@@ -40,4 +40,11 @@ test('minDoors_optionalButPositive', () => {
 
   expect(toSearchLimits(filled).minDoors).toBeNull()
   expect(toSearchLimits({ ...filled, minDoors: '5' }).minDoors).toBe(5)
+})
+
+test('models_defaultToReportShortlist_allBcSendsEmpty', () => {
+  expect(toSearchLimits(filled).models).toEqual(SHORTLIST)
+  expect(SHORTLIST).toContain('Mitsubishi Colt')
+  expect(SHORTLIST).not.toContain('Renault Clio')
+  expect(toSearchLimits({ ...filled, allBC: true }).models).toEqual([])
 })
