@@ -73,6 +73,10 @@ chosen.
 - The knowledge base covers B and C segment cars built up to about 2012. Other cars are dropped
   or shown without reliability data.
 
+### Licence
+
+MIT, see [LICENSE](LICENSE).
+
 ## Português
 
 Um localizador pessoal de carros usados. Lê anúncios do Standvirtual, exclui os que estão fora
@@ -151,3 +155,7 @@ valores de consumo.
   leitor ser atualizado (a aplicação avisa, em vez de devolver resultados vazios).
 - A base de conhecimento cobre carros dos segmentos B e C fabricados até cerca de 2012. Os outros são
   excluídos ou aparecem sem dados de fiabilidade.
+
+### Licença
+
+MIT, ver [LICENSE](LICENSE).
