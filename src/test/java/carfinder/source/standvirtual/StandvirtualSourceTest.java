@@ -55,6 +55,11 @@ class StandvirtualSourceTest {
 			else if (path.startsWith("/carros/anuncio/")) {
 				body = fixture("standvirtual-advert.html");
 			}
+			else if (path.equals("/moved")) {
+				status = 302;
+				body = "";
+				ex.getResponseHeaders().add("Location", base + "/carros/anuncio/renault-clio-IDfake0002.html");
+			}
 			else {
 				status = path.startsWith("/gone") ? 404 : 500;
 				body = "nope";
@@ -147,6 +152,25 @@ class StandvirtualSourceTest {
 					.isInstanceOf(IllegalStateException.class);
 		}
 		assertThat(requests).isEmpty();
+	}
+
+	@Test
+	void otherSchemeHostOrPort_throwsWithoutRequest() {
+		int port = server.getAddress().getPort();
+		for (String url : List.of("http://localhost:" + port + "/carros/anuncio/x", "https://127.0.0.1:" + port
+				+ "/carros/anuncio/x", "http://127.0.0.1:" + (port + 1) + "/carros/anuncio/x",
+				"http://example.test/carros/anuncio/x")) {
+			assertThatThrownBy(() -> source(5).details(url)).as(url).isInstanceOf(IllegalStateException.class);
+		}
+		assertThat(requests).isEmpty();
+	}
+
+	@Test
+	void redirect_notFollowed() {
+		assertThatThrownBy(() -> source(5).details(base + "/moved"))
+				.isInstanceOf(SourceException.class)
+				.hasMessageContaining("302");
+		assertThat(requests).containsExactly("/moved");
 	}
 
 	@Test

@@ -27,7 +27,7 @@ public class StandvirtualSource implements ListingSource {
 	private final StandvirtualProperties props;
 	private final Pace pace;
 	private final HttpClient http = HttpClient.newBuilder()
-			.followRedirects(HttpClient.Redirect.NORMAL)
+			.followRedirects(HttpClient.Redirect.NEVER)
 			.connectTimeout(Duration.ofSeconds(15))
 			.build();
 	private final StandvirtualParser searchParser = new StandvirtualParser();
@@ -71,6 +71,12 @@ public class StandvirtualSource implements ListingSource {
 	}
 
 	private synchronized String get(URI uri) {
+		URI base = URI.create(props.baseUrl());
+		if (!base.getScheme().equalsIgnoreCase(String.valueOf(uri.getScheme()))
+				|| !base.getHost().equalsIgnoreCase(String.valueOf(uri.getHost())) || base.getPort() != uri.getPort()
+				|| uri.getUserInfo() != null) {
+			throw new IllegalStateException("Not the configured Standvirtual host: " + uri);
+		}
 		String path = uri.getPath() == null ? "" : uri.getPath();
 		if (FORBIDDEN.stream().anyMatch(path::startsWith)) {
 			throw new IllegalStateException("Forbidden Standvirtual path: " + path);
