@@ -37,38 +37,6 @@ public final class KnowledgeBase {
 		return generations.stream().filter(g -> matches(g, m) && matches(g, mo)).toList();
 	}
 
-	/**
-	 * Finds the make and model in free text (an ad title) and returns a generation carrying the canonical names. The
-	 * make (or a make alias such as "vw") and the model must both appear as whole words, or a model alias such as
-	 * "mazda2" alone. The longest model wins ("Grande Punto" over "Punto"), then the earliest in the text.
-	 */
-	public Optional<Generation> recogniseMakeModel(String text) {
-		String t = " " + Text.normalise(text).replaceAll("[^a-z0-9]+", " ") + " ";
-		Generation best = null;
-		int bestPos = 0;
-		for (Generation g : generations) {
-			String make = word(g.make());
-			String model = word(g.model());
-			boolean makeSeen = t.contains(make) || g.aliases().stream().map(KnowledgeBase::word)
-					.anyMatch(a -> t.contains(a) && !a.contains(model.strip()));
-			int pos = makeSeen ? t.indexOf(model) : -1;
-			if (pos < 0) {
-				pos = g.aliases().stream().map(KnowledgeBase::word).filter(a -> a.contains(model.strip()))
-						.mapToInt(t::indexOf).filter(i -> i >= 0).min().orElse(-1);
-			}
-			if (pos >= 0 && (best == null || g.model().length() > best.model().length()
-					|| g.model().length() == best.model().length() && pos < bestPos)) {
-				best = g;
-				bestPos = pos;
-			}
-		}
-		return Optional.ofNullable(best);
-	}
-
-	private static String word(String s) {
-		return " " + Text.normalise(s).replaceAll("[^a-z0-9]+", " ").strip() + " ";
-	}
-
 	public List<SurveyResult> surveysForGeneration(String id) {
 		return filter(surveys, s -> id.equals(s.generationId()));
 	}

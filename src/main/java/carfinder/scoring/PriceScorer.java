@@ -37,7 +37,7 @@ public class PriceScorer {
 
 	public PriceResult score(Listing l, CarMatch m, List<Listing> pool) {
 		if (!realPrice(l) || l.getYear() == null) {
-			return none(0, l.getYear() == null ? "ano não indicado" : "preço não indicado");
+			return none(l.getYear() == null ? "ano não indicado" : "preço não indicado");
 		}
 		// ponytail: make aliases ("vw") are not unified across ads; only the generation window uses the KB.
 		List<Integer> prices = List.of();
@@ -51,7 +51,7 @@ public class PriceScorer {
 		}
 		int n = prices.size();
 		if (n < MIN_COMPARABLES) {
-			return none(n, "poucos anúncios comparáveis (" + n + ")");
+			return none("poucos anúncios comparáveis (" + n + ")");
 		}
 		boolean widened = step > 0;
 		double median = n % 2 == 1 ? prices.get(n / 2) : (prices.get(n / 2 - 1) + prices.get(n / 2)) / 2.0;
@@ -66,7 +66,7 @@ public class PriceScorer {
 				!widened && ratio <= props.wellBelowRatio());
 	}
 
-	private static PriceResult none(int n, String why) {
+	private static PriceResult none(String why) {
 		return new PriceResult(new SubScore(OptionalDouble.empty(), 0, why, List.of(), List.of()),
 				OptionalDouble.empty(), false, false);
 	}

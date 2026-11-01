@@ -12,7 +12,6 @@ import carfinder.search.SearchLimits.PriceCap;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Objects;
 import java.util.Set;
 import org.springframework.stereotype.Component;
 
@@ -68,7 +67,7 @@ public class ListingFilter {
 			drop.add("combustível fora da tua escolha");
 		}
 		if (l.getDistrict() != null && !s.districts().isEmpty() && s.districts().stream()
-				.filter(Objects::nonNull).map(d -> normalise(d)).noneMatch(normalise(l.getDistrict())::equals)) {
+				.map(d -> normalise(d)).noneMatch(normalise(l.getDistrict())::equals)) {
 			drop.add("distrito fora da tua escolha (" + l.getDistrict() + ")");
 		}
 		if (s.minDoors() != null) {
@@ -101,7 +100,7 @@ public class ListingFilter {
 			names.add(normalise(g.make() + " " + g.model()));
 			g.aliases().forEach(a -> names.add(normalise(a + " " + g.model())));
 		}
-		return models.stream().filter(Objects::nonNull).map(x -> normalise(x)).anyMatch(names::contains) ? null
+		return models.stream().map(x -> normalise(x)).anyMatch(names::contains) ? null
 				: "modelo fora da tua escolha";
 	}
 }

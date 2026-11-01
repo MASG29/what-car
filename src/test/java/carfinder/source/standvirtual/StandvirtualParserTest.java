@@ -79,7 +79,7 @@ class StandvirtualParserTest {
 
 	@Test
 	void searchUrl_containsPriceAndPage() {
-		URI uri = StandvirtualUrls.search(2500, 3);
+		URI uri = StandvirtualUrls.search(URI.create("https://www.standvirtual.com"), 2500, 3);
 
 		assertThat(uri.getHost()).isEqualTo("www.standvirtual.com");
 		assertThat(uri.getPath()).isEqualTo("/carros");
