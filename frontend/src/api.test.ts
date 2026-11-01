@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { formatInt, getRun, pollFailure } from './api'
+import { formatInt, getRun, pct, pollFailure } from './api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -24,4 +24,8 @@ test('formatInt_separatorOnlyFromTenThousand', () => {
   expect(formatInt(10000)).toBe('10\u00a0000')
   expect(formatInt(169000)).toBe('169\u00a0000')
   expect(formatInt(1234567)).toBe('1\u00a0234\u00a0567')
+})
+
+test('pct_usesPtFormWithSpaceBeforePercent', () => {
+  expect(pct(0.8)).toBe('80\u00a0%')
 })

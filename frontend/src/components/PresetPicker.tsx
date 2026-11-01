@@ -1,4 +1,4 @@
-import { CRITERIA, CRITERION_PT, type Preset } from '../api'
+import { CRITERIA, CRITERION_PT, pct, type Preset } from '../api'
 import { normaliseWeights } from '../weights'
 
 const PRESET_PT: Record<Preset, string> = {
@@ -31,7 +31,7 @@ export function PresetPicker({ preset, sliders, onPreset, onSliders }: Props) {
           {CRITERIA.map((c, i) => (
             <label key={c}>
               <span>
-                {CRITERION_PT[c]}: {Math.round(weights[i] * 100)}%
+                {CRITERION_PT[c]}: {pct(weights[i])}
               </span>
               <input
                 type="range"

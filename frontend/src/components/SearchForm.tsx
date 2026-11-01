@@ -84,7 +84,7 @@ export function SearchForm({ form, onChange, lastUsed }: Props) {
               <input
                 type="number"
                 min={0}
-                step="0.01"
+                step={k === 'ipoEur' ? '0.01' : '1'}
                 value={Number.isNaN(form.realCost[k]) ? '' : form.realCost[k]}
                 onChange={(e) => set({ realCost: { ...form.realCost, [k]: e.target.valueAsNumber } })}
               />

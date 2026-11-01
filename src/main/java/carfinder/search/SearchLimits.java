@@ -2,6 +2,7 @@ package carfinder.search;
 
 import carfinder.buying.RealCostSettings;
 import carfinder.listing.Fuel;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.Positive;
 import java.util.List;
@@ -13,7 +14,7 @@ import java.util.Set;
  * minDoors is optional (null = any).
  */
 public record SearchLimits(@Positive int maxPriceEur, PriceCap priceCap, @Positive int maxKm, @Positive int minYear,
-		@NotEmpty Set<Fuel> fuels, Set<String> districts, List<String> models, RealCostSettings realCost,
+		@NotEmpty Set<Fuel> fuels, Set<String> districts, List<String> models, @Valid RealCostSettings realCost,
 		@Positive Integer minDoors) {
 
 	public enum PriceCap { ASKING, REAL_COST }

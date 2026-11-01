@@ -124,4 +124,4 @@ export const formatEur = (n: number) => eur.format(n)
 /** PT integer: no-break space between thousands, only from 10 000 ("9500", "169 000"). */
 export const formatInt = (n: number) =>
   Math.abs(n) < 10000 ? String(n) : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
-export const pct = (x: number) => `${Math.round(x * 100)}%`
+export const pct = (x: number) => `${Math.round(x * 100)}\u00a0%`

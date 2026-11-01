@@ -93,7 +93,10 @@ class SearchControllerTest {
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"models\": [null]}",
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": []}",
 			"{\"maxPriceEur\": 0, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"]}",
-			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"minDoors\": 0}"})
+			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"minDoors\": 0}",
+			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"realCost\": "
+					+ "{\"paperworkEur\": -1, \"ipoEur\": 37.47, \"iucPre2007Eur\": 40, \"iucPost2007Eur\": 149, "
+					+ "\"beltEur\": 350, \"insuranceMinEur\": 800, \"insuranceMaxEur\": 1500}}"})
 	void postSearch_badLimitValues_400(String limits) throws Exception {
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(limits)))
 				.andExpect(status().isBadRequest());
