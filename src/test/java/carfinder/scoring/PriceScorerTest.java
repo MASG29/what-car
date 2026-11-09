@@ -79,6 +79,12 @@ class PriceScorerTest {
 	}
 
 	@Test
+	void price_wellBelow_warnsToCheckPhotos() {
+		assertThat(score(1100, pool()).score().warningsPt()).containsExactly(PriceScorer.CHECK_PHOTOS);
+		assertThat(score(1450, pool()).score().warningsPt()).isEmpty();
+	}
+
+	@Test
 	void price_excludesItselfAndParts() {
 		List<Listing> pool = new ArrayList<>(pool().subList(0, 2));
 		pool.add(ad("self", 1450, 2009, 100000, false)); // same url as the scored ad
@@ -139,6 +145,7 @@ class PriceScorerTest {
 		assertThat(dear.inflated()).isFalse();
 		PriceResult cheap = scorer.score(ad("self", 500, 2009, 120000, false), MATCH, pool); // ratio 0.5
 		assertThat(cheap.wellBelow()).isFalse();
+		assertThat(cheap.score().warningsPt()).isEmpty();
 	}
 
 	@Test

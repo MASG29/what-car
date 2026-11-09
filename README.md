@@ -111,8 +111,13 @@ chosen.
 - No `Host` header check: a malicious web page could use DNS rebinding to reach the app on
   127.0.0.1 while it runs. The risk is low for a personal tool, but do not run it next to
   untrusted browsing if that matters to you.
-- Only Standvirtual is supported, and a change in its page format stops searches until the
-  parser is updated (the app says so instead of returning empty results).
+- Only Standvirtual and Marketplace (through HAR import) are supported, and a change in their page
+  format stops searches until the parser is updated (the app says so instead of returning empty
+  results).
+- The app does not look at photos. Damage that shows only in the pictures (dents, scratches, a
+  repainted panel) is missed unless the title or description mentions it. Telling it from photos
+  would need an image-recognition model, which this project does not use. When an ad costs 80% or
+  less of the median of comparable ads, the app warns you to check its photos closely.
 - The knowledge base covers B and C segment cars built up to about 2012. Other cars are dropped
   or shown without reliability data.
 
@@ -237,8 +242,14 @@ valores de consumo.
 - Não há verificação do cabeçalho `Host`: uma página maliciosa pode usar DNS rebinding para
   chegar à aplicação em 127.0.0.1 enquanto ela corre. O risco é baixo para uma ferramenta pessoal,
   mas não a deixes a correr junto de navegação pouco fiável se isso te preocupar.
-- Só o Standvirtual é suportado, e uma mudança no formato das páginas para as pesquisas até o
-  leitor ser atualizado (a aplicação avisa, em vez de devolver resultados vazios).
+- Só o Standvirtual e o Marketplace (por importação de HAR) são suportados, e uma mudança no
+  formato das páginas para as pesquisas até o leitor ser atualizado (a aplicação avisa, em vez de
+  devolver resultados vazios).
+- A aplicação não olha para as fotos. Danos que só se veem nas imagens (amolgadelas, riscos, uma
+  peça repintada) passam despercebidos se o título ou a descrição não os referirem. Detetá-los nas
+  fotos exigiria um modelo de reconhecimento de imagem, que este projeto não usa. Quando um anúncio
+  custa 80% ou menos da mediana dos anúncios comparáveis, a aplicação avisa para veres as fotos com
+  atenção.
 - A base de conhecimento cobre carros dos segmentos B e C fabricados até cerca de 2012. Os outros são
   excluídos ou aparecem sem dados de fiabilidade.
 

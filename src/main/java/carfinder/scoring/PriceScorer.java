@@ -22,6 +22,8 @@ public class PriceScorer {
 	private static final int PLACEHOLDER_BELOW_EUR = 100;
 	private static final int MAX_KM_GAP = 50_000;
 	private static final double WIDENED_CONFIDENCE = 0.7;
+	/** The app cannot see photos; a price well below comparable ads is the hint that something may be hidden. */
+	static final String CHECK_PHOTOS = "Preço bem abaixo de anúncios comparáveis: vê as fotos com atenção (riscos, amolgadelas, pintura diferente)";
 
 	/** Year gap and km rule per step, strictest first. */
 	private record Step(int maxYearGap, boolean kmRule) {
@@ -56,14 +58,14 @@ public class PriceScorer {
 		boolean widened = step > 0;
 		double median = n % 2 == 1 ? prices.get(n / 2) : (prices.get(n / 2 - 1) + prices.get(n / 2)) / 2.0;
 		double ratio = l.getPriceEur() / median;
+		// A widened comparison ignores km, so it scores but never drops an ad, excuses km or warns.
+		boolean wellBelow = !widened && ratio <= props.wellBelowRatio();
 		SubScore s = new SubScore(OptionalDouble.of(Ratio.toScore(ratio)),
 				Math.min(1.0, n / 10.0) * (widened ? WIDENED_CONFIDENCE : 1.0),
 				"%d € vs mediana %.0f € de %d anúncios comparáveis".formatted(l.getPriceEur(), median, n)
 						+ (widened ? " (comparação alargada)" : ""),
-				List.of(), List.of());
-		// A widened comparison ignores km, so it scores but never drops an ad or excuses km over the limit.
-		return new PriceResult(s, OptionalDouble.of(ratio), !widened && ratio > props.inflatedRatio(),
-				!widened && ratio <= props.wellBelowRatio());
+				List.of(), wellBelow ? List.of(CHECK_PHOTOS) : List.of());
+		return new PriceResult(s, OptionalDouble.of(ratio), !widened && ratio > props.inflatedRatio(), wellBelow);
 	}
 
 	private static PriceResult none(String why) {
