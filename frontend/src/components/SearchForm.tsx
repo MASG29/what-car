@@ -1,3 +1,4 @@
+import { LocationFields } from './LocationFields'
 import { FUEL_PT, FUELS, type LimitsForm, type RealCostSettings, SHORTLIST } from '../limits'
 
 const COST_PT: Record<keyof RealCostSettings, string> = {
@@ -71,10 +72,7 @@ export function SearchForm({ form, onChange, lastUsed }: Props) {
         </p>
       </fieldset>
 
-      <label>
-        Distritos (separados por vírgulas; vazio = todos)
-        <input value={form.districts} onChange={(e) => set({ districts: e.target.value })} />
-      </label>
+      <LocationFields form={form} onChange={set} />
 
       <fieldset>
         <legend>O preço máximo aplica-se a</legend>

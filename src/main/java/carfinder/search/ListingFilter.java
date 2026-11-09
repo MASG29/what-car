@@ -3,6 +3,10 @@ package carfinder.search;
 import static carfinder.knowledge.Text.normalise;
 
 import carfinder.buying.RealCost;
+import carfinder.geo.Located;
+import carfinder.geo.Place;
+import carfinder.geo.Places;
+import carfinder.geo.Precision;
 import carfinder.knowledge.Generation;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.listing.Listing;
@@ -23,9 +27,11 @@ public class ListingFilter {
 	private static final Set<String> SEGMENTS = Set.of("b", "c");
 
 	private final KnowledgeBase kb;
+	private final Places places;
 
-	public ListingFilter(KnowledgeBase kb) {
+	public ListingFilter(KnowledgeBase kb, Places places) {
 		this.kb = kb;
+		this.places = places;
 	}
 
 	public FilterResult apply(Listing l, CarMatch m, PriceResult p, RealCost rc, SearchLimits s) {
@@ -66,10 +72,7 @@ public class ListingFilter {
 		if (l.getFuel() != null && !s.fuels().contains(l.getFuel())) {
 			drop.add("combustível fora da tua escolha");
 		}
-		if (l.getDistrict() != null && !s.districts().isEmpty() && s.districts().stream()
-				.map(d -> normalise(d)).noneMatch(normalise(l.getDistrict())::equals)) {
-			drop.add("distrito fora da tua escolha (" + l.getDistrict() + ")");
-		}
+		location(l, s, drop, notes);
 		if (s.minDoors() != null) {
 			if (l.getDoors() == null) {
 				notes.add("portas não indicadas");
@@ -82,6 +85,30 @@ public class ListingFilter {
 			drop.add(model);
 		}
 		return drop.isEmpty() ? new FilterResult(true, List.copyOf(notes)) : new FilterResult(false, List.copyOf(drop));
+	}
+
+	/** Straight-line distance from the centre. Unknown or ambiguous places are kept, with a note saying why. */
+	private void location(Listing l, SearchLimits s, List<String> drop, List<String> notes) {
+		if (s.centre() == null || s.radiusKm() == null) {
+			return;
+		}
+		Place centre = places.centre(s.centre());
+		Located at = places.resolve(l.getCity(), l.getDistrict());
+		switch (at.precision()) {
+			case AMBIGUOUS -> notes.add("localidade ambígua (" + l.getCity() + ")");
+			case UNKNOWN -> notes.add("localização desconhecida");
+			default -> {
+				long km = Math.round(Places.distanceKm(centre, at.place().orElseThrow()));
+				if (km > s.radiusKm()) {
+					drop.add("a ~" + km + " km de " + centre.name() + " (raio " + s.radiusKm() + " km)");
+					return;
+				}
+				if (at.precision() == Precision.DISTRICT_ONLY) {
+					notes.add("só sabemos o distrito (" + l.getDistrict() + ")");
+				}
+				notes.add("a ~" + km + " km em linha reta");
+			}
+		}
 	}
 
 	/** Null when the ad's model is wanted; otherwise the reason. Make aliases resolve through the knowledge base. */

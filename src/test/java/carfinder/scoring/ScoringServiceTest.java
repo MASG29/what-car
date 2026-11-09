@@ -7,6 +7,7 @@ import static org.assertj.core.api.Assertions.within;
 import carfinder.buying.ChecklistBuilder;
 import carfinder.buying.RealCostCalculator;
 import carfinder.buying.RealCostSettings;
+import carfinder.geo.Places;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
@@ -37,10 +38,10 @@ class ScoringServiceTest {
 			.load(Paths.get("src/test/resources/fixtures/knowledge-reliability"));
 	private final ScoringService service = new ScoringService(new CarMatcher(KB), new ReliabilityScorer(KB),
 			new PriceScorer(new PriceProperties(1.25, 0.80)), new ConsumptionScorer(KB), new CompletenessScorer(),
-			new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(KB),
+			new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(KB, new Places()),
 			Clock.fixed(Instant.parse("2026-10-31T00:00:00Z"), ZoneOffset.UTC));
 	private static final SearchLimits LIMITS = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
-			EnumSet.allOf(Fuel.class), Set.of(), List.of(), RealCostSettings.defaults(), null);
+			EnumSet.allOf(Fuel.class), null, null, List.of(), RealCostSettings.defaults(), null);
 
 	static Listing clio(Site site, String id, Integer price, Integer year, Integer km, boolean parts) {
 		return TestListings.of(new RawListing(site, id, "https://example.test/" + id, "Clio " + id, price, "Renault",

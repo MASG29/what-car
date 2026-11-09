@@ -3,6 +3,7 @@ package carfinder.search;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import carfinder.buying.RealCost;
+import carfinder.geo.Places;
 import carfinder.buying.RealCostSettings;
 import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
@@ -20,7 +21,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.OptionalDouble;
-import java.util.Set;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
@@ -28,7 +28,8 @@ import org.junit.jupiter.params.provider.ValueSource;
 class ListingFilterTest {
 
 	private final ListingFilter filter = new ListingFilter(
-			KnowledgeLoader.load(Paths.get("src/test/resources/fixtures/knowledge")));
+			KnowledgeLoader.load(Paths.get("src/test/resources/fixtures/knowledge")),
+			new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
 
 	private static final CarMatch NO_MATCH = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(),
 			List.of(), List.of(), false);
@@ -40,14 +41,14 @@ class ListingFilterTest {
 				OptionalDouble.empty(), inflated, wellBelow);
 	}
 
-	static SearchLimits limits(PriceCap cap, List<String> models, Set<String> districts) {
-		return new SearchLimits(2500, cap, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), districts, models,
-				RealCostSettings.defaults(), null);
+	static SearchLimits limits(PriceCap cap, List<String> models, String centre) {
+		return new SearchLimits(2500, cap, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), centre,
+				centre == null ? null : 65, models, RealCostSettings.defaults(), null);
 	}
 
 	static SearchLimits minDoors(Integer n) {
-		return new SearchLimits(2500, PriceCap.ASKING, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), Set.of(),
-				List.of(), RealCostSettings.defaults(), n);
+		return new SearchLimits(2500, PriceCap.ASKING, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), null,
+				null, List.of(), RealCostSettings.defaults(), n);
 	}
 
 	static Listing withDoors(Integer doors) {
@@ -57,7 +58,7 @@ class ListingFilterTest {
 	}
 
 	static SearchLimits limits() {
-		return limits(PriceCap.ASKING, List.of(), Set.of());
+		return limits(PriceCap.ASKING, List.of(), null);
 	}
 
 	static Listing ad(Integer price, String make, String model, Integer year, Integer km, Fuel fuel,
@@ -122,7 +123,7 @@ class ListingFilterTest {
 	@Test
 	void filter_realCostCap_usesTotal() {
 		Listing l = ok(); // asking 1500, under the 2500 cap
-		SearchLimits real = limits(PriceCap.REAL_COST, List.of(), Set.of());
+		SearchLimits real = limits(PriceCap.REAL_COST, List.of(), null);
 		assertThat(filter.apply(l, NO_MATCH, PLAIN, new RealCost(2400, Map.of(), ""), real).keep()).isTrue();
 		dropped(filter.apply(l, NO_MATCH, PLAIN, new RealCost(2600, Map.of(), ""), real));
 	}
@@ -151,20 +152,56 @@ class ListingFilterTest {
 				.isTrue();
 	}
 
-	@Test
-	void districtNotWanted_dropped_matchIgnoresCase() {
-		SearchLimits north = limits(PriceCap.ASKING, List.of(), Set.of("Braga", "Porto"));
-		dropped(filter.apply(ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, "Lisboa", 8, true, false),
-				NO_MATCH, PLAIN, COST, north));
-		assertThat(filter.apply(ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, "braga", 8, true, false),
-				NO_MATCH, PLAIN, COST, north).keep()).isTrue();
+	private static Listing at(String city, String district) {
+		return TestListings.of(new RawListing(Site.STANDVIRTUAL, "x", "https://example.test/x", "t", 1500,
+				"Volkswagen", "Polo", null, 2010, 6, 150000, Fuel.PETROL, null, null, null, null, null, district,
+				city, 8, null, null, false), true);
+	}
+
+	private FilterResult near(Listing l) {
+		return filter.apply(l, NO_MATCH, PLAIN, COST, limits(PriceCap.ASKING, List.of(), "Ponte de Lima"));
 	}
 
 	@Test
-	void filter_nullDistrict_kept() {
-		SearchLimits north = limits(PriceCap.ASKING, List.of(), Set.of("Braga"));
-		assertThat(filter.apply(ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, null, 8, true, false),
-				NO_MATCH, PLAIN, COST, north).keep()).isTrue();
+	void location_cityInsideRadius_keptWithDistance() {
+		FilterResult r = near(at("Braga", "Braga"));
+		assertThat(r.keep()).isTrue();
+		assertThat(r.notesPt()).containsExactly("a ~27 km em linha reta");
+	}
+
+	@Test
+	void location_cityOutsideRadius_dropped() {
+		FilterResult r = near(at("Lisboa", "Lisboa"));
+		assertThat(r.keep()).isFalse();
+		assertThat(r.notesPt()).singleElement().asString()
+				.matches("a ~\\d+ km de Ponte de Lima \\(raio 65 km\\)");
+	}
+
+	@Test
+	void location_districtOnly_usesCapital() {
+		FilterResult braga = near(at(null, "Braga"));
+		assertThat(braga.keep()).isTrue();
+		assertThat(braga.notesPt()).containsExactly("só sabemos o distrito (Braga)", "a ~27 km em linha reta");
+		FilterResult porto = near(at(null, "Porto"));
+		assertThat(porto.keep()).isFalse();
+		assertThat(porto.notesPt()).containsExactly("a ~69 km de Ponte de Lima (raio 65 km)");
+	}
+
+	@Test
+	void location_ambiguousOrUnknown_keptWithNote() {
+		FilterResult amb = near(at("Porto", null));
+		assertThat(amb.keep()).isTrue();
+		assertThat(amb.notesPt()).containsExactly("localidade ambígua (Porto)");
+		FilterResult unknown = near(at(null, null));
+		assertThat(unknown.keep()).isTrue();
+		assertThat(unknown.notesPt()).containsExactly("localização desconhecida");
+	}
+
+	@Test
+	void location_nullCentre_noLocationNote() {
+		FilterResult r = apply(at("Lisboa", "Lisboa"));
+		assertThat(r.keep()).isTrue();
+		assertThat(r.notesPt()).isEmpty();
 	}
 
 	@Test
@@ -188,16 +225,16 @@ class ListingFilterTest {
 
 	@Test
 	void modelsList_matchesThroughMakeAlias() {
-		SearchLimits polo = limits(PriceCap.ASKING, List.of("VW Polo"), Set.of());
+		SearchLimits polo = limits(PriceCap.ASKING, List.of("VW Polo"), null);
 		assertThat(filter.apply(ok(), NO_MATCH, PLAIN, COST, polo).keep()).isTrue();
 		Listing vw = ad(1500, "VW", "Polo", 2010, 150000, Fuel.PETROL, "Braga", 8, true, false);
-		SearchLimits full = limits(PriceCap.ASKING, List.of("Volkswagen  POLO"), Set.of());
+		SearchLimits full = limits(PriceCap.ASKING, List.of("Volkswagen  POLO"), null);
 		assertThat(filter.apply(vw, NO_MATCH, PLAIN, COST, full).keep()).isTrue();
 	}
 
 	@Test
 	void modelsList_otherModel_dropped() {
-		SearchLimits yaris = limits(PriceCap.ASKING, List.of("Toyota Yaris"), Set.of());
+		SearchLimits yaris = limits(PriceCap.ASKING, List.of("Toyota Yaris"), null);
 		dropped(filter.apply(ok(), NO_MATCH, PLAIN, COST, yaris));
 	}
 
@@ -213,7 +250,7 @@ class ListingFilterTest {
 				null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null,
 				false), false);
 		dropped(filter.apply(bare, NO_MATCH, PLAIN, new RealCost(142.47, Map.of(), ""),
-				limits(PriceCap.REAL_COST, List.of("VW Polo"), Set.of("Braga"))));
+				limits(PriceCap.REAL_COST, List.of("VW Polo"), "Braga")));
 	}
 
 	@Test

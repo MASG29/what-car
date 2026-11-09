@@ -89,7 +89,6 @@ class SearchControllerTest {
 	@ParameterizedTest
 	@ValueSource(strings = {
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [null]}",
-			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"districts\": [null]}",
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], \"models\": [null]}",
 			"{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": []}",
 			"{\"maxPriceEur\": 0, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"]}",
@@ -101,6 +100,30 @@ class SearchControllerTest {
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(limits)))
 				.andExpect(status().isBadRequest());
 		verifyNoInteractions(service);
+	}
+
+	@Test
+	void postSearch_unknownCentre_400WithPtMessage() throws Exception {
+		when(service.start(any(), any(), any(), any()))
+				.thenThrow(new IllegalArgumentException("Localidade desconhecida: Atlantida"));
+		String limits = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "
+				+ "\"centre\": \"Atlantida\", \"radiusKm\": 65}";
+
+		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(limits)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.messagePt").value("Localidade desconhecida: Atlantida"));
+	}
+
+	@Test
+	void postSearch_centreAndRadiusReachTheService() throws Exception {
+		when(service.start(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
+		String limits = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "
+				+ "\"centre\": \"Ponte de Lima\", \"radiusKm\": 65}";
+
+		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(limits)))
+				.andExpect(status().isAccepted());
+		verify(service).start(argThat(l -> "Ponte de Lima".equals(l.centre()) && Integer.valueOf(65).equals(l.radiusKm())),
+				any(), any(), any());
 	}
 
 	@Test

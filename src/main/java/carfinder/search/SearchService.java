@@ -1,5 +1,6 @@
 package carfinder.search;
 
+import carfinder.geo.Places;
 import carfinder.listing.Fuel;
 import carfinder.listing.Listing;
 import carfinder.listing.ListingRepository;
@@ -56,7 +57,7 @@ public class SearchService {
 	private static final Duration DETAILS_AGE = Duration.ofDays(7);
 	/** Pasted links are scored without the user's caps; only the ad's own problems exclude it. */
 	private static final SearchLimits NO_LIMITS = new SearchLimits(Integer.MAX_VALUE, null, Integer.MAX_VALUE, 1,
-			EnumSet.allOf(Fuel.class), null, null, null, null);
+			EnumSet.allOf(Fuel.class), null, null, null, null, null);
 	private static final Logger log = LoggerFactory.getLogger(SearchService.class);
 
 	private final Map<Site, ListingSource> sources;
@@ -66,6 +67,7 @@ public class SearchService {
 	private final ScoringService scoring;
 	private final JsonMapper json;
 	private final Clock clock;
+	private final Places places;
 	private final Executor executor;
 	private final Duration needsUserTimeout;
 	private final Duration needsUserRetry;
@@ -75,14 +77,15 @@ public class SearchService {
 	public SearchService(List<ListingSource> sources, ListingStore store, ListingRepository listings,
 			SearchRunRepository runs, ScoringService scoring, JsonMapper json, Clock clock,
 			@Value("${carfinder.needs-user-timeout}") Duration needsUserTimeout,
-			@Value("${carfinder.needs-user-retry}") Duration needsUserRetry) {
+			@Value("${carfinder.needs-user-retry}") Duration needsUserRetry, Places places) {
 		this(sources, store, listings, runs, scoring, json, clock, Executors.newSingleThreadExecutor(),
-				needsUserTimeout, needsUserRetry);
+				needsUserTimeout, needsUserRetry, places);
 	}
 
 	SearchService(List<ListingSource> sources, ListingStore store, ListingRepository listings,
 			SearchRunRepository runs, ScoringService scoring, JsonMapper json, Clock clock, Executor executor,
-			Duration needsUserTimeout, Duration needsUserRetry) {
+			Duration needsUserTimeout, Duration needsUserRetry, Places places) {
+		this.places = places;
 		this.sources = sources.stream().collect(Collectors.toMap(ListingSource::site, Function.identity()));
 		this.store = store;
 		this.listings = listings;
@@ -107,6 +110,11 @@ public class SearchService {
 		if (!sources.keySet().containsAll(sites)) {
 			throw new IllegalArgumentException(UNSUPPORTED);
 		}
+		if (limits.centre() == null || limits.centre().isBlank() || limits.radiusKm() == null
+				|| limits.radiusKm() <= 0) {
+			throw new IllegalArgumentException("Indica o centro e o raio da pesquisa");
+		}
+		places.centre(limits.centre()); // unknown or ambiguous centre fails before the run starts
 		if (!busy.compareAndSet(false, true)) {
 			throw new IllegalStateException("Já há uma pesquisa a decorrer");
 		}

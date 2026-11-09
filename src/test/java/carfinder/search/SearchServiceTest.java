@@ -13,6 +13,7 @@ import static org.mockito.Mockito.when;
 import carfinder.TestcontainersConfiguration;
 import carfinder.buying.ChecklistBuilder;
 import carfinder.buying.RealCostCalculator;
+import carfinder.geo.Places;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
@@ -67,7 +68,8 @@ class SearchServiceTest {
 	private static final KnowledgeBase KB = KnowledgeLoader
 			.load(Paths.get("src/test/resources/fixtures/knowledge-reliability"));
 	private static final SearchLimits LIMITS = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
-			EnumSet.allOf(Fuel.class), Set.of(), List.of(), null, null);
+			EnumSet.allOf(Fuel.class), "Ponte de Lima", 500, List.of(), null, null);
+	private static final Places PLACES = new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv"));
 	private static final Duration LONG = Duration.ofMinutes(10);
 
 	@Autowired
@@ -79,7 +81,7 @@ class SearchServiceTest {
 
 	private final ScoringService scoring = new ScoringService(new CarMatcher(KB), new ReliabilityScorer(KB),
 			new PriceScorer(new PriceProperties(1.25, 0.80)), new ConsumptionScorer(KB), new CompletenessScorer(),
-			new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(KB),
+			new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(KB, PLACES),
 			Clock.systemUTC());
 	private final ListingSource source = mock(ListingSource.class);
 
@@ -92,7 +94,7 @@ class SearchServiceTest {
 
 	private SearchService service(java.util.concurrent.Executor executor, Duration timeout) {
 		return new SearchService(List.of(source), store, listings, runs, scoring, JsonMapper.builder().build(),
-				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10));
+				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10), PLACES);
 	}
 
 	private SearchService service() {
@@ -334,6 +336,39 @@ class SearchServiceTest {
 		SearchService s = service();
 
 		assertThat(s.status(start(s)).status()).isEqualTo(RunStatus.DONE);
+	}
+
+	@Test
+	void start_centreAndRadiusRequired_unknownCentreRejected() {
+		SearchService s = service();
+		Set<Site> sites = Set.of(Site.STANDVIRTUAL);
+		for (SearchLimits bad : new SearchLimits[] {withCentre(null, 65), withCentre(" ", 65),
+				withCentre("Ponte de Lima", null), withCentre("Ponte de Lima", 0), withCentre("Ponte de Lima", -5)}) {
+			assertThatThrownBy(() -> s.start(bad, Preset.BALANCED, null, sites))
+					.isInstanceOf(IllegalArgumentException.class).hasMessage("Indica o centro e o raio da pesquisa");
+		}
+		assertThatThrownBy(() -> s.start(withCentre("Atlantida", 65), Preset.BALANCED, null, sites))
+				.isInstanceOf(IllegalArgumentException.class).hasMessage("Localidade desconhecida: Atlantida");
+		assertThat(runs.count()).isZero();
+		assertThat(s.start(withCentre("ponte de lima", 65), Preset.BALANCED, null, sites)).isNotNull();
+	}
+
+	private static SearchLimits withCentre(String centre, Integer radius) {
+		return new SearchLimits(5000, PriceCap.ASKING, 300000, 1995, EnumSet.allOf(Fuel.class), centre, radius,
+				List.of(), null, null);
+	}
+
+	@Test
+	void oldRunLimitsWithDistricts_stillLoad() {
+		UUID id = UUID.randomUUID();
+		String old = "{\"maxPriceEur\":5000,\"priceCap\":\"ASKING\",\"maxKm\":300000,\"minYear\":1995,"
+				+ "\"fuels\":[\"PETROL\"],\"districts\":[\"Braga\"],\"models\":[]}";
+		runs.save(new SearchRun(id, old, Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL), Instant.now()));
+
+		ScoringService.Ranking r = service().results(id);
+
+		assertThat(r.ranked()).isEmpty();
+		assertThat(r.excluded()).isEmpty();
 	}
 
 	@Test

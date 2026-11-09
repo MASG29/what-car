@@ -8,7 +8,7 @@ const costs = {
 
 const filled: LimitsForm = {
   maxPriceEur: '2500', maxKm: '300000', minYear: '2000', fuels: ['PETROL'],
-  priceCap: 'ASKING', districts: '', minDoors: '', realCost: costs,
+  priceCap: 'ASKING', centre: 'Ponte de Lima', radiusKm: '65', minDoors: '', realCost: costs,
 }
 
 test('validateLimits_requiresPriceKmYearFuel', () => {
@@ -47,4 +47,25 @@ test('models_defaultToReportShortlist_allBcSendsEmpty', () => {
   expect(SHORTLIST).toContain('Mitsubishi Colt')
   expect(SHORTLIST).not.toContain('Renault Clio')
   expect(toSearchLimits({ ...filled, allBC: true }).models).toEqual([])
+})
+
+test('validateLimits_requiresCentreAndRadius', () => {
+  expect(validateLimits({ ...filled, centre: ' ', radiusKm: '' })).toEqual([
+    'Indica o centro da pesquisa.',
+    'Indica o raio em km.',
+  ])
+  expect(validateLimits({ ...filled, radiusKm: '0' })).toEqual(['Indica o raio em km.'])
+  expect(validateLimits({ ...filled, radiusKm: '6.5' })).toEqual(['Indica o raio em km.'])
+})
+
+test('toSearchLimits_sendsTrimmedCentreAndNumericRadius', () => {
+  const l = toSearchLimits({ ...filled, centre: '  Ponte de Lima ', radiusKm: '65' })
+  expect(l.centre).toBe('Ponte de Lima')
+  expect(l.radiusKm).toBe(65)
+  expect('districts' in l).toBe(false)
+})
+
+test('oldSavedFormWithDistricts_validatesWithoutThrowing', () => {
+  const old = { ...filled, districts: 'Braga', centre: undefined, radiusKm: undefined } as unknown as LimitsForm
+  expect(validateLimits(old)).toEqual(['Indica o centro da pesquisa.', 'Indica o raio em km.'])
 })

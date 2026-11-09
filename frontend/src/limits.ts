@@ -20,7 +20,9 @@ export type LimitsForm = {
   minYear: string
   fuels: Fuel[]
   priceCap: 'ASKING' | 'REAL_COST'
-  districts: string
+  /** a locality, "Name" or "Name, District"; absent in forms saved before the centre existed */
+  centre: string
+  radiusKm: string
   /** optional; absent in forms saved before the field existed */
   minDoors: string
   /** true = every B/C model in the knowledge base; absent in forms saved before the field existed */
@@ -42,6 +44,8 @@ export function validateLimits(form: LimitsForm): string[] {
   if (!positiveInt(form.maxPriceEur)) errors.push('Indica o preço máximo.')
   if (!positiveInt(form.maxKm)) errors.push('Indica os km máximos.')
   if (!positiveInt(form.minYear)) errors.push('Indica o ano mínimo.')
+  if ((form.centre ?? '').trim() === '') errors.push('Indica o centro da pesquisa.')
+  if (!positiveInt(form.radiusKm ?? '')) errors.push('Indica o raio em km.')
   if (form.fuels.length === 0) errors.push('Escolhe pelo menos um combustível.')
   const doors = (form.minDoors ?? '').trim()
   if (doors !== '' && !positiveInt(doors)) errors.push('O mínimo de portas tem de ser um número maior que zero.')
@@ -61,16 +65,16 @@ export const DEFAULT_REAL_COST: RealCostSettings = {
   beltEur: 350, insuranceMinEur: 800, insuranceMaxEur: 1500,
 }
 
-/** Price, km, year and fuel start empty. Districts start with the spec's default region. */
+/** Price, km, year, fuel, centre and radius start empty: no hidden defaults. */
 export const emptyForm = (): LimitsForm => ({
   maxPriceEur: '', maxKm: '', minYear: '', fuels: [], priceCap: 'ASKING',
-  districts: 'Viana do Castelo, Braga, Porto', minDoors: '', realCost: { ...DEFAULT_REAL_COST },
+  centre: '', radiusKm: '', minDoors: '', realCost: { ...DEFAULT_REAL_COST },
 })
 
-/** Only call with a form that validateLimits accepts. Empty districts = every district; empty doors = any. */
+/** Only call with a form that validateLimits accepts. Empty doors = any. */
 export const toSearchLimits = (f: LimitsForm): SearchLimits => ({
   maxPriceEur: Number(f.maxPriceEur), maxKm: Number(f.maxKm), minYear: Number(f.minYear),
   fuels: f.fuels, priceCap: f.priceCap, models: f.allBC ? [] : SHORTLIST, realCost: f.realCost,
-  districts: f.districts.split(',').map((d) => d.trim()).filter(Boolean),
+  centre: (f.centre ?? '').trim(), radiusKm: Number(f.radiusKm),
   minDoors: (f.minDoors ?? '').trim() === '' ? null : Number(f.minDoors),
 })

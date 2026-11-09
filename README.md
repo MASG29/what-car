@@ -5,7 +5,7 @@
 ## English
 
 A personal used-car finder. It reads ads from Standvirtual, drops the ones outside your limits
-(price, km, year, fuel, district, doors), scores the rest and shows the best five with the reasons
+(price, km, year, fuel, distance from your centre, doors), scores the rest and shows the best five with the reasons
 behind each score.
 
 Each ad is scored on:
@@ -55,6 +55,18 @@ content is downloaded and forbid aggregating listings for third parties. This to
 on your own machine for your personal search and republishes nothing. **You are responsible for
 checking and respecting each site's terms before running a search.**
 
+### Location
+
+You give a centre (a locality) and a radius in km; there are no defaults. Ads farther away in a
+straight line are dropped with the distance as the reason. An ad whose place is ambiguous, unknown
+or only known by district is kept with a note, never dropped for that alone. Typing a name shared by
+several places asks for "Name, District". Places come from a trimmed file committed in
+`src/main/resources/geo/places-pt.tsv` (rebuilt by `scripts/build-places.sh`); the app makes no
+geo service calls.
+
+Place data: [GeoNames](https://www.geonames.org/), licensed
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
+
 ### Knowledge data
 
 The reliability, fault, gearbox and consumption tables live in `src/main/resources/knowledge/`.
@@ -80,7 +92,7 @@ MIT, see [LICENSE](LICENSE).
 ## Português
 
 Um localizador pessoal de carros usados. Lê anúncios do Standvirtual, exclui os que estão fora
-dos teus limites (preço, km, ano, combustível, distrito, portas), pontua os restantes e mostra os
+dos teus limites (preço, km, ano, combustível, distância ao teu centro, portas), pontua os restantes e mostra os
 cinco melhores com as razões de cada pontuação.
 
 Cada anúncio é pontuado em:
@@ -137,6 +149,18 @@ pedem consentimento antes de se descarregar conteúdo e proíbem agregar anúnci
 Esta ferramenta guarda os resultados no teu computador, para a tua pesquisa pessoal, e não
 republica nada. **És responsável por verificar e respeitar os termos de cada site antes de
 fazer uma pesquisa.**
+
+### Localização
+
+Indicas um centro (uma localidade) e um raio em km; não há valores por defeito. Os anúncios mais
+longe em linha reta são excluídos, com a distância como razão. Um anúncio com localidade ambígua,
+desconhecida ou só conhecida pelo distrito fica com uma nota e nunca é excluído só por isso. Se o
+nome existir em várias localidades, escreve "Nome, Distrito". As localidades vêm de um ficheiro
+reduzido, guardado em `src/main/resources/geo/places-pt.tsv` (gerado por `scripts/build-places.sh`);
+a aplicação não chama nenhum serviço de geolocalização.
+
+Dados de localidades: [GeoNames](https://www.geonames.org/), licença
+[CC BY 4.0](https://creativecommons.org/licenses/by/4.0/).
 
 ### Dados de conhecimento
 

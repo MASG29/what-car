@@ -20,7 +20,8 @@ export type SearchLimits = {
   maxKm: number
   minYear: number
   fuels: Fuel[]
-  districts: string[]
+  centre: string
+  radiusKm: number
   models: string[]
   realCost: RealCostSettings
   /** null = any number of doors */
