@@ -33,7 +33,7 @@ class MarketplaceTitleTest {
 	@Test
 	void noYearNoFuel() {
 		assertThat(title.read("Toyota yaris")).isEqualTo(new TitleFacts("Toyota", "Yaris", null, null));
-		assertThat(title.read("Golf 2005")).isEqualTo(new TitleFacts(null, null, null, null)); // year not leading
+		assertThat(title.read("Golf 2005").year()).isEqualTo(2005);
 		assertThat(title.read("")).isEqualTo(new TitleFacts(null, null, null, null));
 	}
 
@@ -46,5 +46,17 @@ class MarketplaceTitleTest {
 		assertThat(MarketplaceTitle.km(null)).isNull();
 		assertThat(MarketplaceTitle.km("12 km")).isEqualTo(12);
 		assertThat(MarketplaceTitle.km("Ponte de Lima")).isNull();
+	}
+
+	@Test
+	void yearAnywhereInTitle_whenItIsTheOnlyOne() {
+		assertThat(title.read("Oportunidade!!! Vendo Ford Fiesta 1998, 1.25 gasolina"))
+				.isEqualTo(new TitleFacts("Ford", "Fiesta", 1998, Fuel.PETROL));
+		assertThat(title.read("Renault Clio de 2003").year()).isEqualTo(2003);
+		assertThat(title.read("Peugeot 2008 1.2").year()).isNull(); // a model name
+		assertThat(title.read("Clio 2003 ou troco por carro de 2010").year()).isNull(); // two years
+		assertThat(title.read("Golf 2000 km").year()).isNull();
+		assertThat(title.read("Polo 1400 cc").year()).isNull();
+		assertThat(title.read("Clio 2099").year()).isNull(); // the future
 	}
 }

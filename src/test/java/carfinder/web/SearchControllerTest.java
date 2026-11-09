@@ -220,7 +220,18 @@ class SearchControllerTest {
 			"https://www.standvirtual.com/carros/anuncio/%2e%2e/%2e%2e/ad/contact/x",
 			"https://www.standvirtual.com/carros/anuncio/",
 			"https://www.standvirtual.com/carros?search%5Bfilter_float_price%3Ato%5D=2500",
-			"https://www.facebook.com/marketplace/item/123456789/",
+			"http://www.facebook.com/marketplace/item/123456789/",
+			"https://facebook.com/marketplace/item/123456789/",
+			"https://m.facebook.com/marketplace/item/123456789/",
+			"https://www.facebook.com.evil.test/marketplace/item/123456789/",
+			"https://user@www.facebook.com/marketplace/item/123456789/",
+			"https://www.facebook.com:8443/marketplace/item/123456789/",
+			"https://www.facebook.com/marketplace/item/abc/",
+			"https://www.facebook.com/marketplace/item/123/../../api/graphql/",
+			"https://www.facebook.com/marketplace/item/123/photos/",
+			"https://www.facebook.com/api/graphql/",
+			"https://www.facebook.com/marketplace/",
+			"https://www.facebook.com/login/",
 			"file:///etc/passwd",
 			"não é um link",
 			" "})
@@ -230,12 +241,18 @@ class SearchControllerTest {
 		verifyNoInteractions(service);
 	}
 
-	@Test
-	void scoreLink_marketplace_saysNotSupportedYet() throws Exception {
+	@ParameterizedTest
+	@ValueSource(strings = {"https://www.facebook.com/marketplace/item/123456789/",
+			"https://www.facebook.com/marketplace/item/123456789",
+			"https://WWW.facebook.com/marketplace/item/123456789/?ref=search&tracking=x#photo"})
+	void scoreLink_acceptsMarketplaceItem_rejectsOtherPaths(String url) throws Exception {
+		String clean = "https://www.facebook.com/marketplace/item/123456789/";
+		when(service.scoreLink(eq(Site.MARKETPLACE), eq(clean), any(), any(), any()))
+				.thenReturn(new ScoringService.Ranking(List.of(), List.of()));
+
 		mvc.perform(post("/api/score-link").contentType(MediaType.APPLICATION_JSON)
-				.content("{\"url\": \"https://www.facebook.com/marketplace/item/123456789/\"}"))
-				.andExpect(status().isBadRequest())
-				.andExpect(jsonPath("$.messagePt").value("Site ainda não suportado"));
+				.content("{\"url\": \"" + url + "\"}")).andExpect(status().isOk());
+		verify(service).scoreLink(eq(Site.MARKETPLACE), eq(clean), any(), any(), any());
 	}
 
 	@Test

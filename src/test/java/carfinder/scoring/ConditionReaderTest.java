@@ -219,4 +219,38 @@ class ConditionReaderTest {
 		assertThat(new ConditionResult(List.of(), List.of(), List.of("batido"), true).rankAdjustment()).isZero();
 		assertThat(ConditionReader.read(null, null)).isEqualTo(new ConditionResult(List.of(), List.of()));
 	}
+
+	@Test
+	void maintenance_marketplaceWordings() {
+		ConditionResult r = ConditionReader.read("Kit de embreagem novo à cerca de de 2000kms ✅ Meti uns seletores novos "
+				+ "(todos) ✅ Revisão feita à 500 kms, juntamente com 4 pneus novos da Michelin ✅");
+		assertThat(r.maintenancePt()).containsExactlyInAnyOrder("embraiagem", "revisão", "pneus", "seletores");
+		assertThat(ConditionReader.read("Precisa de pneus novos e de revisão.").maintenancePt()).isEmpty();
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"vendo citroen c3 às peças", "Peças VW Polo 6N 1.4", "vendo peças vw golf 4",
+			"Vende-se peças de Clio"})
+	void parts_otherWordings_inTitle(String title) {
+		assertThat(ConditionReader.read(title, null).parts()).as(title).isTrue();
+	}
+
+	@Test
+	void parts_descriptionThatIsJustPecas() {
+		assertThat(ConditionReader.read("2002 Peugeot 206", "Peças\nMotor a gasolina").parts()).isTrue();
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"Todas as peças originais.", "Peças novas: embraiagem e travões.",
+			"Tem peças novas.", "Vendo carro com peças de origem."})
+	void parts_goodPecasWords_notParts(String description) {
+		assertThat(ConditionReader.read("Polo 1.4", description).parts()).as(description).isFalse();
+	}
+
+	@Test
+	void damage_motorABater() {
+		assertThat(ConditionReader.read("ford fiesta 1994 motor abater restante top", null).damagePt())
+				.containsExactly("motor a bater");
+		assertThat(ConditionReader.read("Motor a bater.").damagePt()).containsExactly("motor a bater");
+	}
 }

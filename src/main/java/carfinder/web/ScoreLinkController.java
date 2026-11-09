@@ -9,6 +9,8 @@ import carfinder.web.dto.RankingDto;
 import carfinder.web.dto.ScoreLinkRequest;
 import jakarta.validation.Valid;
 import java.net.URI;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -23,6 +25,8 @@ public class ScoreLinkController {
 	static final String UNSUPPORTED = "Site ainda não suportado";
 	private static final String STANDVIRTUAL_HOST = "www.standvirtual.com";
 	private static final String STANDVIRTUAL_AD_PATH = "/carros/anuncio/";
+	private static final String MARKETPLACE_HOST = "www.facebook.com";
+	private static final Pattern MARKETPLACE_ITEM = Pattern.compile("^/marketplace/item/(\\d+)/?$");
 
 	private final SearchService service;
 
@@ -42,9 +46,9 @@ public class ScoreLinkController {
 	}
 
 	/**
-	 * Accepts only https://www.standvirtual.com/carros/anuncio/... ad pages. Marketplace item links
-	 * (https://www.facebook.com/marketplace/item/&lt;id&gt;/) are to be recognised here, with the same strictness, once a
-	 * Marketplace source exists; until then they get "Site ainda não suportado" like any other site.
+	 * Accepts only https://www.standvirtual.com/carros/anuncio/... ad pages and
+	 * https://www.facebook.com/marketplace/item/&lt;digits&gt;/ items: exact host, https, no user info or port. The
+	 * URL is rebuilt without query or fragment.
 	 */
 	static Link parse(String url) {
 		URI uri;
@@ -55,8 +59,17 @@ public class ScoreLinkController {
 			throw new IllegalArgumentException(UNSUPPORTED);
 		}
 		String path = uri.getPath();
-		if (!"https".equalsIgnoreCase(uri.getScheme()) || !STANDVIRTUAL_HOST.equalsIgnoreCase(uri.getHost())
-				|| uri.getRawUserInfo() != null || uri.getPort() != -1 || path == null
+		if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getRawUserInfo() != null || uri.getPort() != -1) {
+			throw new IllegalArgumentException(UNSUPPORTED);
+		}
+		if (MARKETPLACE_HOST.equalsIgnoreCase(uri.getHost())) {
+			Matcher m = MARKETPLACE_ITEM.matcher(String.valueOf(uri.getRawPath()));
+			if (!m.matches()) {
+				throw new IllegalArgumentException(UNSUPPORTED);
+			}
+			return new Link(Site.MARKETPLACE, "https://" + MARKETPLACE_HOST + "/marketplace/item/" + m.group(1) + "/");
+		}
+		if (!STANDVIRTUAL_HOST.equalsIgnoreCase(uri.getHost()) || path == null
 				|| !path.startsWith(STANDVIRTUAL_AD_PATH) || path.length() == STANDVIRTUAL_AD_PATH.length()
 				|| path.contains("..") || path.contains("//")) {
 			throw new IllegalArgumentException(UNSUPPORTED);

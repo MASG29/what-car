@@ -14,4 +14,9 @@ public interface ListingSource {
 
 	/** Reads one advert page; a removed ad throws {@link SourceException}. */
 	RawListing details(String url);
+
+	/** How many advert pages one run may read from this site. */
+	default int maxDetailsPerRun() {
+		return Integer.MAX_VALUE;
+	}
 }

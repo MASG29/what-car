@@ -181,7 +181,7 @@ public class MarketplaceFeedParser {
 		return parts.length == 3 ? places.district(parts[1].strip()).orElse(null) : null;
 	}
 
-	private static Integer price(String amount) {
+	static Integer price(String amount) {
 		if (amount == null) {
 			return null;
 		}
@@ -195,7 +195,7 @@ public class MarketplaceFeedParser {
 	}
 
 	/** A non-blank scalar as text, else null. */
-	private static String text(JsonNode n) {
+	static String text(JsonNode n) {
 		if (n == null || n.isNull() || n.isContainer()) {
 			return null;
 		}

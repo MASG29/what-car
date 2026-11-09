@@ -15,11 +15,14 @@ import carfinder.source.ListingSource;
 import carfinder.source.NeedsUserException;
 import carfinder.source.SearchQuery;
 import carfinder.source.SourceException;
+import carfinder.source.marketplace.LoginWallException;
+import carfinder.source.marketplace.SoldOrReservedException;
 import jakarta.annotation.PreDestroy;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.EnumSet;
 import java.util.IdentityHashMap;
 import java.util.List;
@@ -168,9 +171,25 @@ public class SearchService {
 		}
 		Preset p = preset == null ? Preset.BALANCED : preset;
 		p.weights(custom);
-		RawListing raw = source.details(url);
+		RawListing fetched = source.details(url);
+		RawListing raw = listings.findBySiteAndExternalId(site, fetched.externalId()).map(l -> gapsOnly(l, fetched))
+				.orElse(fetched);
 		Listing l = store.applyDetails(store.upsert(raw), raw);
 		return scoring.rank(List.of(l), pool(), limits == null ? NO_LIMITS : limits, p, custom);
+	}
+
+	/**
+	 * Marketplace pages give year and km only from the seller's free text ("revisão aos 500 km"), so the imported
+	 * figures (Facebook's own fields) win; the page only fills what the import lacked.
+	 */
+	private static RawListing gapsOnly(Listing l, RawListing d) {
+		if (d.site() != Site.MARKETPLACE) {
+			return d;
+		}
+		return new RawListing(d.site(), d.externalId(), d.url(), d.title(), d.priceEur(), d.make(), d.model(),
+				d.version(), l.getYear() != null ? null : d.year(), d.month(), l.getKm() != null ? null : d.km(),
+				d.fuel(), d.cc(), d.powerCv(), d.gearbox(), d.doors(), d.sellerType(), d.district(), d.city(),
+				d.photoCount(), d.description(), d.imported(), d.parts());
 	}
 
 	@EventListener(ApplicationReadyEvent.class)
@@ -194,6 +213,7 @@ public class SearchService {
 			Preset anyPreset = Preset.BALANCED; // the filter does not depend on weights
 			int attempted = 0;
 			int failed = 0;
+			int walled = 0;
 			Site failedSite = null;
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
@@ -208,12 +228,18 @@ public class SearchService {
 				}
 
 				Set<Listing> dropped = Collections.newSetFromMap(new IdentityHashMap<>());
-				scoring.rank(saved, pool(), limits, anyPreset, null).excluded().stream().map(Excluded::listing)
-						.forEach(dropped::add);
+				ScoringService.Ranking pre = scoring.rank(saved, pool(), limits, anyPreset, null);
+				pre.excluded().stream().map(Excluded::listing).forEach(dropped::add);
+				// best pre-filter rank first, so a page budget is spent on the likeliest ads; duplicates go last
+				Map<Listing, Integer> order = new IdentityHashMap<>();
+				for (int i = 0; i < pre.ranked().size(); i++) {
+					order.put(pre.ranked().get(i).listing(), i);
+				}
 				Instant stale = clock.instant().minus(DETAILS_AGE);
 				List<Listing> toRead = saved.stream().filter(l -> !dropped.contains(l))
 						.filter(l -> l.getDetailFetchedAt() == null || l.getDetailFetchedAt().isBefore(stale))
-						.toList();
+						.sorted(Comparator.comparingInt(l -> order.getOrDefault(l, Integer.MAX_VALUE)))
+						.limit(source.maxDetailsPerRun()).toList();
 				for (int i = 0; i < toRead.size(); i++) {
 					Listing l = toRead.get(i);
 					String msg = site + ": a ler anúncio " + (i + 1) + " de " + toRead.size();
@@ -221,7 +247,14 @@ public class SearchService {
 					attempted++;
 					try {
 						RawListing details = waitingForUser(id, () -> source.details(l.getUrl()));
-						store.applyDetails(l, details);
+						store.applyDetails(l, gapsOnly(l, details));
+					}
+					catch (SoldOrReservedException e) {
+						store.markUnavailable(site, l.getExternalId()); // excluded "vendido ou reservado" from now on
+					}
+					catch (LoginWallException e) {
+						// the page needs a login: the ad keeps its imported data; says nothing about the parser
+						walled++;
 					}
 					catch (SourceException e) {
 						// a removed ad (404) keeps its search-page data
@@ -232,12 +265,13 @@ public class SearchService {
 				}
 			}
 			// Every advert page failing is a broken parser, not a few removed ads.
-			if (attempted >= 3 && failed == attempted) {
+			if (attempted - walled >= 3 && failed == attempted - walled) {
 				throw new SourceException(failedSite.formatChangedPt());
 			}
 			int collected = runs.findById(id).orElseThrow().getCollected();
+			int unread = failed + walled;
 			String done = "Pesquisa concluída: " + collected + (collected == 1 ? " anúncio recolhido." : " anúncios recolhidos.")
-					+ (failed == 0 ? "" : " Não foi possível ler " + failed + (failed == 1 ? " anúncio" : " anúncios")
+					+ (unread == 0 ? "" : " Não foi possível ler " + unread + (unread == 1 ? " anúncio" : " anúncios")
 							+ " em detalhe; ficam com os dados da pesquisa.");
 			finish(id, RunStatus.DONE, done);
 		}

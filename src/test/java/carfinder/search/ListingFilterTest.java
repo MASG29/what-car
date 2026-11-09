@@ -82,6 +82,17 @@ class ListingFilterTest {
 	}
 
 	@Test
+	void detailsWithoutPhotoCount_notDroppedAsSemFotos() {
+		Listing marketplace = TestListings.of(new RawListing(Site.MARKETPLACE, "m", "https://example.test/m", "t",
+				1500, "Volkswagen", "Polo", null, 2010, null, 150000, Fuel.PETROL, null, null, null, null, null,
+				"Braga", null, 0, "Bom estado.", null, false), true);
+		Listing standvirtual = ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, "Braga", 0, true, false);
+
+		assertThat(apply(marketplace).keep()).isTrue();
+		assertThat(apply(standvirtual).notesPt()).contains("sem fotos");
+	}
+
+	@Test
 	void plainAd_kept() {
 		FilterResult r = apply(ok());
 		assertThat(r.keep()).isTrue();

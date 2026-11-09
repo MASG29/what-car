@@ -90,6 +90,7 @@ class SearchServiceTest {
 		runs.deleteAll();
 		listings.deleteAll();
 		when(source.site()).thenReturn(Site.STANDVIRTUAL);
+		when(source.maxDetailsPerRun()).thenReturn(Integer.MAX_VALUE); // a mock skips the interface default
 	}
 
 	@org.junit.jupiter.api.AfterEach
@@ -455,5 +456,120 @@ class SearchServiceTest {
 		assertThat(s.whileIdle(() -> 7)).isEqualTo(7);
 		// an import in progress blocks a search the same way
 		assertThatThrownBy(() -> s.whileIdle(() -> start(s))).isInstanceOf(IllegalStateException.class);
+	}
+
+	private SearchService withMarketplace(ListingSource mp) {
+		when(mp.site()).thenReturn(Site.MARKETPLACE);
+		when(mp.maxDetailsPerRun()).thenReturn(20);
+		return new SearchService(List.of(source, mp), store, listings, runs, scoring, JsonMapper.builder().build(),
+				Clock.systemUTC(), Runnable::run, LONG, Duration.ofMillis(10), PLACES);
+	}
+
+	@Test
+	void budget_readsAtMost20_bestRankFirst() {
+		for (int i = 21; i >= 0; i--) { // stored dearest first, so storage order is not rank order
+			RawListing m = marketplace("m" + i, 2000 + 10 * i);
+			store.upsert(new RawListing(m.site(), m.externalId(), m.url(), m.title(), m.priceEur(), m.make(),
+					m.model(), null, m.year(), null, 100000 + 10000 * i, null, null, null, null, null, null, null,
+					m.city(), 0, null, null, false)); // km apart, so no two are the same car
+		}
+		ListingSource mp = mock(ListingSource.class);
+		List<String> read = new ArrayList<>();
+		when(mp.details(anyString())).thenAnswer(inv -> {
+			read.add(inv.getArgument(0));
+			throw new SourceException("Marketplace respondeu com erro HTTP 404");
+		});
+		List<String> expected = scoring.rank(listings.findBySite(Site.MARKETPLACE), listings.findAll(), LIMITS,
+				Preset.BALANCED, null).ranked().stream().limit(20).map(x -> x.listing().getUrl()).toList();
+		SearchService s = withMarketplace(mp);
+
+		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		assertThat(expected).hasSize(20).isNotEqualTo(listings.findBySite(Site.MARKETPLACE).stream().limit(20)
+				.map(Listing::getUrl).toList());
+		assertThat(read).containsExactlyElementsOf(expected);
+	}
+
+	@Test
+	void allPagesHitLoginWall_runIsDoneNotFailed() {
+		for (int i = 0; i < 3; i++) {
+			store.upsert(marketplace("w" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.DONE);
+		assertThat(v.messagePt()).contains("Não foi possível ler 3 anúncios em detalhe");
+		assertThat(listings.findAll()).allMatch(l -> l.getDetailFetchedAt() == null);
+	}
+
+	@Test
+	void marketplaceDetails_fillGapsOnly_importedKmAndYearKept() {
+		store.upsert(marketplace("g1", 2000)); // imported: 2008, 150000 km
+		RawListing noKm = marketplace("g2", 2100);
+		store.upsert(new RawListing(noKm.site(), noKm.externalId(), noKm.url(), noKm.title(), noKm.priceEur(),
+				noKm.make(), noKm.model(), null, null, null, null, null, null, null, null, null, null, null,
+				noKm.city(), 0, null, null, false));
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(anyString())).thenAnswer(inv -> {
+			String url = inv.getArgument(0);
+			RawListing m = marketplace(url.contains("g1") ? "g1" : "g2", 2000);
+			// "revisão aos 500 km" in a description must not replace the imported km
+			return new RawListing(m.site(), m.externalId(), m.url(), m.title(), m.priceEur(), m.make(), m.model(),
+					null, 2011, null, 500, Fuel.DIESEL, null, null, "manual", null, null, null, m.city(), 4,
+					"Revisão aos 500 km.", null, false);
+		});
+		SearchService s = withMarketplace(mp);
+
+		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		Listing g1 = listings.findBySiteAndExternalId(Site.MARKETPLACE, "g1").orElseThrow();
+		assertThat(g1.getDetailFetchedAt()).isNotNull();
+		assertThat(g1.getKm()).isEqualTo(150000);
+		assertThat(g1.getYear()).isEqualTo(2008);
+		assertThat(g1.getGearbox()).isEqualTo("manual");
+		Listing g2 = listings.findBySiteAndExternalId(Site.MARKETPLACE, "g2").orElseThrow();
+		assertThat(g2.getKm()).isEqualTo(500);
+		assertThat(g2.getYear()).isEqualTo(2011);
+	}
+
+	@Test
+	void scoreLink_marketplaceKeepsImportedKm() {
+		RawListing imported = marketplace("p1", 2000);
+		store.upsert(imported);
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(imported.url())).thenReturn(new RawListing(imported.site(), "p1", imported.url(),
+				imported.title(), 2000, "Renault", "Clio", null, 2011, null, 500, null, null, null, null, null, null,
+				null, "Braga", 4, "Revisão aos 500 km.", null, false));
+
+		withMarketplace(mp).scoreLink(Site.MARKETPLACE, imported.url(), null, null, null);
+
+		Listing p1 = listings.findBySiteAndExternalId(Site.MARKETPLACE, "p1").orElseThrow();
+		assertThat(p1.getKm()).isEqualTo(150000);
+		assertThat(p1.getYear()).isEqualTo(2008);
+		assertThat(p1.getDescription()).isEqualTo("Revisão aos 500 km.");
+	}
+
+	@Test
+	void soldPage_marksAdUnavailable_notAFailure() {
+		for (int i = 0; i < 3; i++) {
+			store.upsert(marketplace("v" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.SoldOrReservedException());
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.DONE);
+		assertThat(v.messagePt()).doesNotContain("Não foi possível ler");
+		ScoringService.Ranking r = s.results(id);
+		assertThat(r.ranked()).isEmpty();
+		assertThat(r.excluded()).hasSize(3).allSatisfy(e -> assertThat(e.reasonsPt()).contains("vendido ou reservado"));
 	}
 }

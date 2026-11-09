@@ -4,7 +4,7 @@ import type { LimitsForm } from '../limits'
 import { importSummaryPt, marketplaceSearchUrl } from '../marketplace'
 import { HelpSteps } from './HelpSteps'
 
-/** Import only: the user browses Marketplace and saves a HAR; the app never requests anything from Facebook. */
+/** The user browses Marketplace and saves a HAR; the app only reads item pages of imported ads, logged out. */
 export function MarketplacePanel({ form, disabled }: { form: LimitsForm; disabled: boolean }) {
   const [file, setFile] = useState<File | null>(null)
   const [busy, setBusy] = useState(false)

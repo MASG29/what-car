@@ -16,6 +16,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Consumer;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /** Reads public Standvirtual search and advert pages over plain HTTP, slowly and within a page budget. */
@@ -34,7 +35,7 @@ public class StandvirtualSource implements ListingSource {
 	private final StandvirtualAdvertParser advertParser = new StandvirtualAdvertParser();
 	private boolean requested;
 
-	public StandvirtualSource(StandvirtualProperties props, Pace pace) {
+	public StandvirtualSource(StandvirtualProperties props, @Qualifier("standvirtualPace") Pace pace) {
 		this.props = props;
 		this.pace = pace;
 	}

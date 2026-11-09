@@ -54,8 +54,9 @@ public class ListingFilter {
 				drop.add("precisa de reparação (" + String.join(", ", condition.damagePt()) + ")");
 			}
 		}
-		// photoCount 0 is only real once the advert page was read; search pages leave it at 0
-		if (l.getPhotoCount() == 0 && l.getDetailFetchedAt() != null) {
+		// photoCount 0 is only real once the advert page was read; search pages leave it at 0. Marketplace never
+		// drops for it: a logged-out page may not carry the photos, and Facebook requires one to list an item.
+		if (l.getPhotoCount() == 0 && l.getDetailFetchedAt() != null && l.getSite() != Site.MARKETPLACE) {
 			drop.add("sem fotos");
 		}
 		Integer price = l.getPriceEur();

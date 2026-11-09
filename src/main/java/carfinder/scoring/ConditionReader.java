@@ -27,7 +27,7 @@ public final class ConditionReader {
 			"amolgadelas", "amolgad\\w*",
 			"pintura danificada", "pintura (estalada|queimada|a descascar)",
 			"ferrugem", "ferrugem",
-			"embraiagem gasta", "embraiagem (a patinar|gasta|a dar sinal)",
+			"embraiagem gasta", "embr[ae]i?agem (a patinar|gasta|a dar sinal)",
 			"luz do airbag", "luz do airbag|airbag acesa",
 			"luz do motor", "luz do motor",
 			"fumo", "fumo",
@@ -38,11 +38,16 @@ public final class ConditionReader {
 	public static final String BELT_DONE = "distribuição";
 
 	private static final String DONE = "(nova|novo|mudada|mudado|substituida|substituido|trocada|trocado|feita|feito)";
+	private static final String DONE_PLURAL = "(novos|mudados|substituidos|trocados)";
+	// "embreagem" is the Brazilian spelling, common in ads
 	private static final Map<String, Pattern> MAINTENANCE = phrases(
-			"embraiagem", "embraiagem " + DONE,
+			"embraiagem", "embr[ae]i?agem " + DONE,
 			"bomba de água", "bomba de agua " + DONE,
 			"amortecedores", "amortecedores (novos|mudados|substituidos|trocados)",
-			BELT_DONE, "(kit de distribuicao|correia( de distribuicao)?) " + DONE);
+			BELT_DONE, "(kit de distribuicao|correia( de distribuicao)?) " + DONE,
+			"revisão", "revisao " + DONE,
+			"pneus", "(?<!precisa de |precisa de \\d )pneus " + DONE_PLURAL,
+			"seletores", "selec?tores " + DONE_PLURAL);
 
 	/** Repair or accident phrases; an ad with one is dropped unless the user asked to see damaged cars. */
 	private static final Map<String, Pattern> DAMAGE = phrases(
@@ -52,13 +57,20 @@ public final class ConditionReader {
 			"não pega", "nao pega",
 			"não anda", "nao anda",
 			"motor gripado", "motor (gripado|partido|rebentado)",
+			"motor a bater", "motor a ?bater",
 			"caixa partida", "caixa (partida|avariada)",
 			"junta da cabeça", "junta (da|de) cabeca",
 			"batido", "batido",
 			"sinistrado", "sinistrado",
 			"acidentado", "acidentado");
 	private static final Set<String> NEVER_NEGATED = Set.of("não pega", "não anda");
-	private static final Pattern PARTS = Pattern.compile("\\b(so )?(vende se )?para pecas\\b");
+	/**
+	 * "para peças"; a sale of parts ("vendo peças", "vendo Clio às peças"); or a title or sentence that starts with
+	 * "peças" ("Peças VW Polo"), unless it praises them ("Peças novas", "Peças originais").
+	 */
+	private static final Pattern PARTS = Pattern.compile("\\b(so )?(vende se )?para pecas\\b"
+			+ "|\\b(vendo|vende-?se|vende se) pecas\\b|\\b(vendo|vende-?se|vende se)( [^ .!?]+){0,3} as pecas\\b"
+			+ "|(^|[.!?] )pecas\\b(?! (novas|originais|de origem|todas))");
 
 	private static final Set<String> NEGATIONS = Set.of("sem", "nao", "nunca", "zero");
 	/** A new verb ("tem", "tinha", "apresenta", "com") ends the scope unless a negation sits right before it. */

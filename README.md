@@ -48,7 +48,7 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   slowly, with a random pause of 4 to 9 seconds between requests and a page budget per run. It
   never requests `/api/`, `/ajax/`, `/account/` or `/ad/contact/`, it fetches only
   `www.standvirtual.com`, and it does not follow redirects.
-- **Facebook Marketplace** (imported ads): the app never requests anything from Facebook. You
+- **Facebook Marketplace** (imported ads): the app never loads Marketplace searches. You
   browse Marketplace in your own browser, save the network traffic as a HAR file, and upload it.
   The app reads the ads from it in memory and never writes the file to disk. It reads only the
   ad fields it needs, never the seller's name or id, headers or cookies. Steps (the same as in
@@ -69,8 +69,17 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   **The HAR file holds your Facebook session: do not share it, and delete it after the import.**
   Each search that includes Marketplace ranks every imported ad, marked "importado há X dias",
   because a HAR cannot tell when an ad was removed; an ad seen sold or reserved in a later import
-  is excluded. Facebook's terms forbid collecting data by automated means; this import only reads
-  what your browser already showed you.
+  is excluded.
+
+  **Ad pages:** during a search, the app then opens the public page of every imported ad that
+  passes your limits (best first, a random pause of 6 to 12 seconds between them, so 200 ads take
+  about half an hour; a page read is not read again for 7 days) to read the
+  description, which often gives the year, km, fuel, gearbox and condition. It does this logged
+  out: no account, no cookies, plain HTTP with the headers a browser sends, only
+  `https://www.facebook.com/marketplace/item/<id>/`, and it does not follow redirects. An ad that
+  Facebook shows only after login keeps its imported data. Facebook's terms forbid collecting
+  data by automated means, so this part is an automated request that you run at your own risk
+  (the usual one is an IP block).
 
 Each site has its own terms of use. Standvirtual's terms, for example, ask for consent before
 content is downloaded and forbid aggregating listings for third parties. This tool keeps results
@@ -163,8 +172,8 @@ frontend.
   anúncio devagar, com uma pausa aleatória de 4 a 9 segundos entre pedidos e um limite de páginas
   por pesquisa. Nunca pede `/api/`, `/ajax/`, `/account/` nem `/ad/contact/`, só acede a
   `www.standvirtual.com` e não segue redirecionamentos.
-- **Facebook Marketplace** (anúncios importados): a aplicação nunca pede nada ao Facebook. Vês o
-  Marketplace no teu browser, gravas o tráfego de rede num ficheiro HAR e carregas esse ficheiro.
+- **Facebook Marketplace** (anúncios importados): a aplicação nunca abre pesquisas do
+  Marketplace. Vês o Marketplace no teu browser, gravas o tráfego de rede num ficheiro HAR e carregas esse ficheiro.
   A aplicação lê os anúncios em memória e nunca grava o ficheiro em disco. Lê só os campos do
   anúncio de que precisa, nunca o nome nem o id do vendedor, cabeçalhos ou cookies. Passos (os
   mesmos da aplicação, com capturas, em "Como gravar o ficheiro HAR"):
@@ -185,8 +194,17 @@ frontend.
   **O ficheiro HAR tem a tua sessão do Facebook: não o partilhes e apaga-o depois de importar.**
   Cada pesquisa que inclui o Marketplace ordena todos os anúncios importados, com a indicação
   "importado há X dias", porque um HAR não diz quando um anúncio foi retirado; um anúncio visto
-  como vendido ou reservado numa importação seguinte é excluído. Os termos do Facebook proíbem
-  recolher dados por meios automáticos; esta importação só lê o que o teu browser já te mostrou.
+  como vendido ou reservado numa importação seguinte é excluído.
+
+  **Páginas dos anúncios:** durante a pesquisa, a aplicação abre depois a página pública de
+  cada anúncio importado que passa os teus limites (os melhores primeiro, com uma pausa aleatória
+  de 6 a 12 segundos entre eles, por isso 200 anúncios demoram cerca de meia hora; uma página lida
+  não volta a ser aberta durante 7 dias) para ler a descrição, que muitas vezes diz o ano, os km, o combustível, a
+  caixa e o estado. Fá-lo sem sessão: sem conta, sem cookies, por HTTP simples com os cabeçalhos
+  que um browser envia, só `https://www.facebook.com/marketplace/item/<id>/`, e não segue
+  redirecionamentos. Um anúncio que o Facebook só mostra com login fica com os dados
+  importados. Os termos do Facebook proíbem recolher dados por meios automáticos; esta parte é
+  um pedido automático que fazes por tua conta e risco (o mais comum é um bloqueio do IP).
 
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,
 pedem consentimento antes de se descarregar conteúdo e proíbem agregar anúncios para terceiros.
