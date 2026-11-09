@@ -33,6 +33,8 @@ public class ScoringService {
 	private static final int AGE_UNKNOWN = -1;
 	/** Builder's call, not a sourced figure: heavier than any cosmetic problem, applied when damaged ads are shown. */
 	static final double DAMAGE_PENALTY = 0.15;
+	/** Builder's call, not a sourced figure: a price well below comparable ads makes every other figure less sure. */
+	static final double SUSPECT_CONFIDENCE = 0.8;
 
 	static final String SEVERAL_ENGINES = "várias motorizações possíveis";
 	private final CarMatcher matcher;
@@ -68,7 +70,8 @@ public class ScoringService {
 	record Totals(double total, double confidence, double rank) {
 	}
 
-	private record Kept(CarMatch match, Map<Criterion, SubScore> subs, RealCost cost, List<String> notes) {
+	private record Kept(CarMatch match, Map<Criterion, SubScore> subs, RealCost cost, List<String> notes,
+			boolean suspect) {
 	}
 
 	public Ranking rank(List<Listing> candidates, List<Listing> pricePool, SearchLimits s, Preset preset,
@@ -94,7 +97,7 @@ public class ScoringService {
 				excluded.add(new Excluded(l, f.notesPt()));
 				continue;
 			}
-			kept.put(l, new Kept(m, subs, rc, f.notesPt()));
+			kept.put(l, new Kept(m, subs, rc, f.notesPt(), p.wellBelow()));
 			keptOrder.add(l);
 		}
 
@@ -102,7 +105,7 @@ public class ScoringService {
 		for (List<Listing> group : Deduplicator.group(keptOrder)) {
 			Listing l = group.getFirst();
 			Kept k = kept.get(l);
-			Totals t = combine(k.subs(), w);
+			Totals t = combine(k.subs(), w, k.suspect() ? SUSPECT_CONFIDENCE : 1.0);
 			ConditionResult condition = ConditionReader.read(l.getTitle(), l.getDescription());
 			List<String> warnings = Stream.concat(k.subs().values().stream().flatMap(x -> x.warningsPt().stream()),
 					Stream.concat(condition.problemsPt().stream().map(p -> "O anúncio menciona: " + p),
@@ -114,16 +117,20 @@ public class ScoringService {
 					condition.maintenancePt().stream().map(m -> "Manutenção recente: " + m)).flatMap(x -> x).toList();
 			List<String> alsoOn = group.subList(1, group.size()).stream().map(Listing::getUrl).toList();
 			scored.add(new ScoredListing(l, alsoOn, Collections.unmodifiableMap(k.subs()), t.total(), t.confidence(),
-					Math.max(0, t.rank() + condition.rankAdjustment() - damagePenalty(condition)), false, warnings, notes, k.cost(),
+					Math.max(0, t.rank() + condition.rankAdjustment() - damagePenalty(condition)), false, k.suspect(), warnings, notes, k.cost(),
 					checklist.build(l, k.match()), condition, null));
 		}
 		scored.sort(Comparator.comparingDouble(ScoredListing::rank).reversed());
 		List<ScoredListing> ranked = new ArrayList<>();
-		for (int i = 0; i < scored.size(); i++) {
-			ScoredListing x = scored.get(i);
+		// Suspect ads are listed apart (the UI's Suspeitos tab), so each list counts its own places.
+		int clean = 0;
+		int suspects = 0;
+		for (ScoredListing x : scored) {
+			int place = x.suspect() ? ++suspects : ++clean;
+			boolean top5 = !x.suspect() && place <= 5;
 			ranked.add(new ScoredListing(x.listing(), x.alsoOnUrls(), x.subs(), x.total(), x.confidence(), x.rank(),
-					i < 5, x.warningsPt(), x.notesPt(), x.realCost(), x.checklist(), x.condition(),
-					WhyText.build(x, i + 1)));
+					top5, x.suspect(), x.warningsPt(), x.notesPt(), x.realCost(), x.checklist(), x.condition(),
+					WhyText.build(x, place)));
 		}
 		return new Ranking(List.copyOf(ranked), List.copyOf(excluded));
 	}
@@ -138,6 +145,11 @@ public class ScoringService {
 	 * outrank a documented one just because data is missing.
 	 */
 	static Totals combine(Map<Criterion, SubScore> subs, Weights w) {
+		return combine(subs, w, 1.0);
+	}
+
+	/** confidenceFactor scales the combined confidence (and so the rank) for ads whose figures are less sure. */
+	static Totals combine(Map<Criterion, SubScore> subs, Weights w, double confidenceFactor) {
 		double weighted = 0;
 		double presentWeight = 0;
 		double conf = 0;
@@ -156,7 +168,7 @@ public class ScoringService {
 			}
 		}
 		double total = presentWeight > 0 ? weighted / presentWeight : 0;
-		double confidence = allWeight > 0 ? conf / allWeight : 0;
+		double confidence = allWeight > 0 ? conf / allWeight * confidenceFactor : 0;
 		double rankBase = allWeight > 0 ? weighted / allWeight : 0;
 		return new Totals(total, confidence, rankBase * (0.5 + 0.5 * confidence));
 	}

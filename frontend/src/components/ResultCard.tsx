@@ -25,18 +25,19 @@ export function adFacts(l: Ad): string {
 export function ResultCard({ s, position }: { s: Scored; position: number }) {
   const l = s.listing
   return (
-    <article className={s.top5 ? 'card top5' : 'card'}>
-      <header>
+    <details className={s.top5 ? 'card top5' : 'card'}>
+      <summary>
         <h3>
           {position}. <Source url={l.url} label={l.title} />
+          {s.top5 && <span className="badge">Top 5</span>}
         </h3>
-        <p>{s.whyPt}</p>
         <p>{adFacts(l)}</p>
         <p className="score">
           Pontuação {pct(s.total)} · confiança {pct(s.confidence)} · ordenação {pct(s.rank)}
-          {s.top5 && <span className="badge">Top 5</span>}
+          {s.warningsPt.length > 0 && <span className="warn"> · {s.warningsPt.length} avisos</span>}
         </p>
-      </header>
+      </summary>
+      <p>{s.whyPt}</p>
 
       <table className="subs">
         <thead>
@@ -103,6 +104,6 @@ export function ResultCard({ s, position }: { s: Scored; position: number }) {
       )}
       <RealCostPanel cost={s.realCost} />
       <ChecklistPanel checklist={s.checklist} />
-    </article>
+    </details>
   )
 }

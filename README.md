@@ -117,7 +117,8 @@ chosen.
 - The app does not look at photos. Damage that shows only in the pictures (dents, scratches, a
   repainted panel) is missed unless the title or description mentions it. Telling it from photos
   would need an image-recognition model, which this project does not use. When an ad costs 80% or
-  less of the median of comparable ads, the app warns you to check its photos closely.
+  less of the median of comparable ads, the app lists it in a separate "Suspeitos" tab, lowers its
+  confidence, keeps it out of the top 5 and warns you to check its photos closely.
 - The knowledge base covers B and C segment cars built up to about 2012. Other cars are dropped
   or shown without reliability data.
 
@@ -248,8 +249,8 @@ valores de consumo.
 - A aplicação não olha para as fotos. Danos que só se veem nas imagens (amolgadelas, riscos, uma
   peça repintada) passam despercebidos se o título ou a descrição não os referirem. Detetá-los nas
   fotos exigiria um modelo de reconhecimento de imagem, que este projeto não usa. Quando um anúncio
-  custa 80% ou menos da mediana dos anúncios comparáveis, a aplicação avisa para veres as fotos com
-  atenção.
+  custa 80% ou menos da mediana dos anúncios comparáveis, a aplicação põe-no num separador à parte,
+  "Suspeitos", baixa a confiança nele, deixa-o fora do Top 5 e avisa para veres as fotos com atenção.
 - A base de conhecimento cobre carros dos segmentos B e C fabricados até cerca de 2012. Os outros são
   excluídos ou aparecem sem dados de fiabilidade.
 

@@ -11,7 +11,7 @@ import org.junit.jupiter.api.Test;
 class WhyTextTest {
 
 	static ScoredListing scored(Map<Criterion, SubScore> present, double confidence, ConditionResult condition) {
-		return new ScoredListing(null, List.of(), subs(present), 0.7, confidence, 0.5, false, List.of(), List.of(),
+		return new ScoredListing(null, List.of(), subs(present), 0.7, confidence, 0.5, false, false, List.of(), List.of(),
 				null, null, condition, null);
 	}
 

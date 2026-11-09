@@ -71,6 +71,8 @@ export type Scored = {
   confidence: number
   rank: number
   top5: boolean
+  /** price well below comparable ads: listed in the Suspeitos tab, confidence lowered, never top 5 */
+  suspect: boolean
   warningsPt: string[]
   notesPt: string[]
   realCost: { totalEur: number; itemsPt: Record<string, number>; insuranceRangePt: string }

@@ -183,7 +183,7 @@ class SearchControllerTest {
 		SubScore some = new SubScore(OptionalDouble.of(0.7), 0.8, "bom", List.of("https://example.test/s"),
 				List.of("km não indicados"));
 		ScoredListing kept = new ScoredListing(ad("k"), List.of(), Map.of(Criterion.PRICE, some,
-				Criterion.RELIABILITY, none), 0.7, 0.5, 0.52, true, List.of("km não indicados"), List.of(),
+				Criterion.RELIABILITY, none), 0.7, 0.5, 0.52, true, false, List.of("km não indicados"), List.of(),
 				new RealCost(2500, Map.of("Preço pedido", 2000.0), "800 a 1500 €/ano"),
 				new Checklist(List.of(new Checklist.Link("IMT", "https://example.test/imt")), List.of("Revisões?")),
 				new ConditionResult(List.of(), List.of()), "1.º lugar: preço 70 %; confiança 50 %.");

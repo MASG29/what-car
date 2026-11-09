@@ -38,6 +38,15 @@ button.link { border: none; padding: 0; background: none; color: var(--accent); 
 .banner.done { border-color: #2e7d32; }
 .banner.failed { border-color: var(--bad); background: #fdf0ef; }
 .banner.needs_user { border: 3px solid var(--warn); background: #fff4e0; font-size: 1.2rem; }
+.card > summary { list-style: none; margin: 0; }
+.card > summary::-webkit-details-marker { display: none; }
+.card > summary > h3::before { content: '▸ '; color: #888; }
+.card[open] > summary > h3::before { content: '▾ '; }
+.card > summary p { margin: 0.2rem 0; }
+.card { padding: 0.6rem 1rem; margin-bottom: 0.5rem; }
+.tabs { display: flex; gap: 0.25rem; margin-bottom: 0.75rem; border-bottom: 1px solid var(--line); }
+.tabs button { border: none; border-bottom: 3px solid transparent; border-radius: 0; background: none; }
+.tabs button[aria-selected='true'] { border-bottom-color: var(--accent); font-weight: 600; }
 .card.top5 { border: 2px solid var(--accent); box-shadow: 0 2px 8px rgb(31 95 139 / 15%); }
 .badge { background: var(--accent); color: #fff; border-radius: 4px; padding: 0 0.4rem; margin-left: 0.5rem; font-size: 0.8rem; }
 .score { font-weight: 600; }

@@ -107,7 +107,7 @@ class ScoringServiceTest {
 	void rank_top5Flagged() {
 		List<Listing> ads = new ArrayList<>();
 		for (int i = 0; i < 7; i++) {
-			ads.add(clio(Site.STANDVIRTUAL, "c" + i, 1000 + i * 100, 2008, 100000 + i * 10000, false));
+			ads.add(clio(Site.STANDVIRTUAL, "c" + i, 1000 + i * 50, 2008, 100000 + i * 10000, false)); // none suspect: >= 0.87 of median
 		}
 		List<ScoredListing> ranked = service.rank(ads, ads, LIMITS, Preset.BALANCED, null).ranked();
 		assertThat(ranked).hasSize(7);
@@ -118,6 +118,28 @@ class ScoringServiceTest {
 		assertThat(ranked.getFirst().subs()).containsOnlyKeys(Criterion.values());
 		assertThat(ranked.getFirst().realCost().itemsPt()).containsEntry("Preço pedido", 1000.0);
 		assertThat(ranked.getFirst().checklist().links()).isNotEmpty();
+	}
+
+	@Test
+	void rank_priceWellBelowComparables_suspect_lowerConfidence_neverTop5() {
+		List<Listing> ads = new ArrayList<>();
+		ads.add(clio(Site.STANDVIRTUAL, "cheap", 1000, 2008, 100000, false)); // 1000/1500 = 0.67 of the median
+		for (int i = 1; i <= 6; i++) {
+			ads.add(clio(Site.STANDVIRTUAL, "c" + i, 1500, 2008, 100000 + i * 8000, false));
+		}
+
+		List<ScoredListing> ranked = service.rank(ads, ads, LIMITS, Preset.BALANCED, null).ranked();
+
+		ScoredListing cheap = ranked.stream().filter(x -> x.listing().getExternalId().equals("cheap")).findFirst()
+				.orElseThrow();
+		assertThat(cheap.suspect()).isTrue();
+		assertThat(cheap.top5()).isFalse();
+		assertThat(cheap.confidence()).isCloseTo(
+				ScoringService.combine(cheap.subs(), Preset.BALANCED.weights(null)).confidence()
+						* ScoringService.SUSPECT_CONFIDENCE, within(1e-9));
+		assertThat(ranked).filteredOn(x -> x != cheap).extracting(ScoredListing::suspect).containsOnly(false);
+		assertThat(ranked).filteredOn(ScoredListing::top5).hasSize(5).doesNotContain(cheap);
+		assertThat(cheap.whyPt()).startsWith("1.º lugar"); // first of the suspects, numbered apart
 	}
 
 	@Test
