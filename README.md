@@ -44,11 +44,33 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
 
 ### Sites
 
-- **Standvirtual** is the only active source. The app reads public search and advert pages
+- **Standvirtual**: the app reads public search and advert pages
   slowly, with a random pause of 4 to 9 seconds between requests and a page budget per run. It
   never requests `/api/`, `/ajax/`, `/account/` or `/ad/contact/`, it fetches only
   `www.standvirtual.com`, and it does not follow redirects.
-- **Facebook Marketplace** is paused. It appears in the UI as "Em pausa" and cannot be selected.
+- **Facebook Marketplace** (imported ads): the app never requests anything from Facebook. You
+  browse Marketplace in your own browser, save the network traffic as a HAR file, and upload it.
+  The app reads the ads from it in memory and never writes the file to disk. It reads only the
+  ad fields it needs, never the seller's name or id, headers or cookies. Steps (the same as in
+  the app, with screenshots, under "Como gravar o ficheiro HAR"):
+  1. "Abrir pesquisa no Marketplace" opens the vehicles search with your maximum price (Facebook
+     ignores year and km in the link; the app filters them after the import).
+  2. In Facebook's "Location" filter, set the same centre and radius as in the app.
+  3. Press F12 and open the "Network" tab before reloading the page.
+  4. Turn on the "Doc" and "Fetch/XHR" filters (Ctrl+click) and tick "Keep log" ("Preserve log"
+     in some versions; "Persist Logs" in Firefox).
+  5. Press F5 and scroll down: hold Page Down (or End). In Firefox you can use autoscroll instead:
+     turn on "Settings > General > Browsing > Use autoscrolling", then middle-click and move the
+     mouse down; click to stop.
+  6. Save the HAR: the down-arrow "Export HAR" button in the Network toolbar, or right-click the
+     list and "Save all as HAR".
+  7. Click "Importar HAR" in the app and choose the file.
+
+  **The HAR file holds your Facebook session: do not share it, and delete it after the import.**
+  Each search that includes Marketplace ranks every imported ad, marked "importado há X dias",
+  because a HAR cannot tell when an ad was removed; an ad seen sold or reserved in a later import
+  is excluded. Facebook's terms forbid collecting data by automated means; this import only reads
+  what your browser already showed you.
 
 Each site has its own terms of use. Standvirtual's terms, for example, ask for consent before
 content is downloaded and forbid aggregating listings for third parties. This tool keeps results
@@ -137,12 +159,34 @@ frontend.
 
 ### Sites
 
-- O **Standvirtual** é a única fonte ativa. A aplicação lê páginas públicas de pesquisa e de
+- **Standvirtual**: a aplicação lê páginas públicas de pesquisa e de
   anúncio devagar, com uma pausa aleatória de 4 a 9 segundos entre pedidos e um limite de páginas
   por pesquisa. Nunca pede `/api/`, `/ajax/`, `/account/` nem `/ad/contact/`, só acede a
   `www.standvirtual.com` e não segue redirecionamentos.
-- O **Facebook Marketplace** está em pausa. Aparece na interface como "Em pausa" e não pode ser
-  escolhido.
+- **Facebook Marketplace** (anúncios importados): a aplicação nunca pede nada ao Facebook. Vês o
+  Marketplace no teu browser, gravas o tráfego de rede num ficheiro HAR e carregas esse ficheiro.
+  A aplicação lê os anúncios em memória e nunca grava o ficheiro em disco. Lê só os campos do
+  anúncio de que precisa, nunca o nome nem o id do vendedor, cabeçalhos ou cookies. Passos (os
+  mesmos da aplicação, com capturas, em "Como gravar o ficheiro HAR"):
+  1. "Abrir pesquisa no Marketplace" abre a pesquisa de veículos com o teu preço máximo (o
+     Facebook ignora o ano e os km no link; a aplicação filtra-os depois de importares).
+  2. No filtro "Localização" do Facebook, põe o mesmo centro e raio que puseste na aplicação.
+  3. Carrega em F12 e abre o separador "Network" (Rede) antes de recarregar a página.
+  4. Liga os filtros "Doc" e "Fetch/XHR" (Ctrl+clique) e marca "Keep log" ("Preserve log" nalgumas
+     versões; "Persist Logs" no Firefox).
+  5. Carrega em F5 e desce a página: mantém a tecla Page Down (ou End) carregada. No Firefox
+     podes usar o deslocamento automático: liga "Definições > Geral > Navegação > Usar
+     deslocamento automático", depois clica com o botão do meio e move o rato para baixo; clica
+     outra vez para parar.
+  6. Grava o HAR: o botão da seta para baixo ("Export HAR") na barra do Network, ou botão direito
+     na lista e "Save all as HAR".
+  7. Carrega em "Importar HAR" na aplicação e escolhe o ficheiro.
+
+  **O ficheiro HAR tem a tua sessão do Facebook: não o partilhes e apaga-o depois de importar.**
+  Cada pesquisa que inclui o Marketplace ordena todos os anúncios importados, com a indicação
+  "importado há X dias", porque um HAR não diz quando um anúncio foi retirado; um anúncio visto
+  como vendido ou reservado numa importação seguinte é excluído. Os termos do Facebook proíbem
+  recolher dados por meios automáticos; esta importação só lê o que o teu browser já te mostrou.
 
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,
 pedem consentimento antes de se descarregar conteúdo e proíbem agregar anúncios para terceiros.

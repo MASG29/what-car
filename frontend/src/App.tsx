@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import { type ApiError, getResults, getRun, pollFailure, type Preset, type Ranking, type RunView, type Scoring, startSearch } from './api'
+import { type ApiError, getResults, getRun, pollFailure, type Preset, type Ranking, type RunView, type Scoring, type Site, startSearch } from './api'
 import { LinkScorer } from './components/LinkScorer'
 import { PresetPicker } from './components/PresetPicker'
 import { Results } from './components/Results'
@@ -31,8 +31,9 @@ export default function App() {
   const [run, setRun] = useState<RunView | null>(null)
   const [ranking, setRanking] = useState<Ranking | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [sites, setSites] = useState<Site[]>(['STANDVIRTUAL'])
 
-  const errors = validateLimits(form)
+  const errors = [...validateLimits(form), ...(sites.length === 0 ? ['Escolhe pelo menos um site.'] : [])]
   const scoring: Scoring = { preset, customWeights: preset === 'CUSTOM' ? toWeights(sliders) : null }
   const running = run?.status === 'RUNNING' || run?.status === 'NEEDS_USER'
 
@@ -72,7 +73,7 @@ export default function App() {
     setRanking(null)
     setRun(null)
     try {
-      const { id } = await startSearch({ ...scoring, limits: toSearchLimits(form), sites: ['STANDVIRTUAL'] })
+      const { id } = await startSearch({ ...scoring, limits: toSearchLimits(form), sites })
       localStorage.setItem(LAST_LIMITS, JSON.stringify(form))
       localStorage.setItem(RUN_ID, id)
       setLastUsed(form)
@@ -92,7 +93,7 @@ export default function App() {
       <h1>Procura de carro usado</h1>
       <SearchForm form={form} onChange={setForm} lastUsed={lastUsed} />
       <PresetPicker preset={preset} sliders={sliders} onPreset={setPreset} onSliders={changeSliders} />
-      <SitesPanel />
+      <SitesPanel sites={sites} onChange={setSites} form={form} running={running} />
 
       <div className="actions">
         <button className="primary" disabled={errors.length > 0 || running} onClick={search}>
@@ -111,7 +112,7 @@ export default function App() {
       {run && <StatusBanner run={run} />}
       {ranking && <Results ranking={ranking} />}
 
-      <LinkScorer scoring={scoring} limits={errors.length === 0 ? toSearchLimits(form) : null} />
+      <LinkScorer scoring={scoring} limits={validateLimits(form).length === 0 ? toSearchLimits(form) : null} />
     </main>
   )
 }

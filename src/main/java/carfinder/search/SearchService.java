@@ -52,6 +52,7 @@ public class SearchService {
 
 	static final String UNSUPPORTED = "Site ainda não suportado";
 	static final String TIMEOUT = "Tempo esgotado à espera do login/verificação";
+	static final String BUSY = "Já há uma pesquisa a decorrer";
 	static final String STALE = "A aplicação foi fechada durante a pesquisa";
 	private static final Duration POOL_AGE = Duration.ofDays(30);
 	private static final Duration DETAILS_AGE = Duration.ofDays(7);
@@ -107,7 +108,8 @@ public class SearchService {
 		if (sites.isEmpty()) {
 			throw new IllegalArgumentException("Escolhe pelo menos um site");
 		}
-		if (!sources.keySet().containsAll(sites)) {
+		// Marketplace ranks the imported ads, so it needs no source bean
+		if (!sites.stream().allMatch(s -> s == Site.MARKETPLACE || sources.containsKey(s))) {
 			throw new IllegalArgumentException(UNSUPPORTED);
 		}
 		if (limits.centre() == null || limits.centre().isBlank() || limits.radiusKm() == null
@@ -116,7 +118,7 @@ public class SearchService {
 		}
 		places.centre(limits.centre()); // unknown or ambiguous centre fails before the run starts
 		if (!busy.compareAndSet(false, true)) {
-			throw new IllegalStateException("Já há uma pesquisa a decorrer");
+			throw new IllegalStateException(BUSY);
 		}
 		try {
 			UUID id = UUID.randomUUID();
@@ -128,6 +130,19 @@ public class SearchService {
 		catch (RuntimeException e) {
 			busy.set(false);
 			throw e;
+		}
+	}
+
+	/** Runs work (an import) in the same slot as a search, so the two never overlap. */
+	public <T> T whileIdle(Supplier<T> work) {
+		if (!busy.compareAndSet(false, true)) {
+			throw new IllegalStateException(BUSY);
+		}
+		try {
+			return work.get();
+		}
+		finally {
+			busy.set(false);
 		}
 	}
 
@@ -182,10 +197,15 @@ public class SearchService {
 			Site failedSite = null;
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
-				List<RawListing> found = waitingForUser(id,
-						() -> source.search(query, msg -> change(id, r -> r.update(RunStatus.RUNNING, msg))));
-				List<Listing> saved = found.stream().map(store::upsert).toList();
+				// Marketplace: every imported ad, however old (a HAR cannot tell when an ad was removed)
+				List<Listing> saved = site == Site.MARKETPLACE ? listings.findBySite(site)
+						: waitingForUser(id,
+								() -> source.search(query, msg -> change(id, r -> r.update(RunStatus.RUNNING, msg))))
+								.stream().map(store::upsert).toList();
 				change(id, r -> r.addListings(saved.stream().map(Listing::getId).toList()));
+				if (source == null) {
+					continue; // advert pages need a source for the site
+				}
 
 				Set<Listing> dropped = Collections.newSetFromMap(new IdentityHashMap<>());
 				scoring.rank(saved, pool(), limits, anyPreset, null).excluded().stream().map(Excluded::listing)

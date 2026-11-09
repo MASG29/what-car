@@ -83,4 +83,18 @@ class ListingStoreTest {
 
 		assertThat(again.isParts()).isTrue();
 	}
+
+	@Test
+	void markUnavailable_onlyExistingRows_andUpsertClearsIt() {
+		store.upsert(raw("a4", 8000, null));
+
+		store.markUnavailable(Site.STANDVIRTUAL, "a4");
+		store.markUnavailable(Site.STANDVIRTUAL, "missing");
+
+		assertThat(repository.findBySiteAndExternalId(Site.STANDVIRTUAL, "a4").orElseThrow().isUnavailable()).isTrue();
+		assertThat(repository.count()).isEqualTo(1);
+		assertThat(repository.findBySite(Site.STANDVIRTUAL)).hasSize(1);
+		assertThat(repository.findBySite(Site.MARKETPLACE)).isEmpty();
+		assertThat(store.upsert(raw("a4", 8000, null)).isUnavailable()).isFalse();
+	}
 }

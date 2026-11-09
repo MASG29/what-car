@@ -10,4 +10,6 @@ public interface ListingRepository extends JpaRepository<Listing, Long> {
 	Optional<Listing> findBySiteAndExternalId(Site site, String externalId);
 
 	List<Listing> findByLastSeenAfter(Instant since);
+
+	List<Listing> findBySite(Site site);
 }

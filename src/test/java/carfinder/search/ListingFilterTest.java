@@ -89,6 +89,22 @@ class ListingFilterTest {
 	}
 
 	@Test
+	void unavailable_dropped() {
+		FilterResult r = apply(TestListings.unavailable(ok()));
+		assertThat(r.keep()).isFalse();
+		assertThat(r.notesPt()).contains("vendido ou reservado");
+	}
+
+	@Test
+	void marketplaceWithoutRecognisedModel_saysSo() {
+		Listing l = TestListings.of(new RawListing(Site.MARKETPLACE, "m", "https://www.facebook.com/marketplace/item/1/",
+				"2008 Opel Corsa 1.2", 1500, null, null, null, 2008, null, null, null, null, null, null, null, null,
+				null, null, 0, null, null, false), false);
+
+		assertThat(apply(l).notesPt()).contains("marca ou modelo não reconhecidos no título");
+	}
+
+	@Test
 	void filter_dropsParts() {
 		dropped(apply(ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, "Braga", 8, true, true)));
 	}

@@ -34,6 +34,7 @@ public class ScoringService {
 	/** Builder's call, not a sourced figure: heavier than any cosmetic problem, applied when damaged ads are shown. */
 	static final double DAMAGE_PENALTY = 0.15;
 
+	static final String SEVERAL_ENGINES = "várias motorizações possíveis";
 	private final CarMatcher matcher;
 	private final ReliabilityScorer reliability;
 	private final PriceScorer price;
@@ -108,8 +109,9 @@ public class ScoringService {
 							condition.damagePt().isEmpty() ? Stream.<String>empty()
 									: Stream.of("Precisa de reparação: " + String.join(", ", condition.damagePt()))))
 					.distinct().toList();
-			List<String> notes = Stream.concat(k.notes().stream(),
-					condition.maintenancePt().stream().map(m -> "Manutenção recente: " + m)).toList();
+			List<String> notes = Stream.of(k.notes().stream(),
+					k.match().severalEngines() ? Stream.of(SEVERAL_ENGINES) : Stream.<String>empty(),
+					condition.maintenancePt().stream().map(m -> "Manutenção recente: " + m)).flatMap(x -> x).toList();
 			List<String> alsoOn = group.subList(1, group.size()).stream().map(Listing::getUrl).toList();
 			scored.add(new ScoredListing(l, alsoOn, Collections.unmodifiableMap(k.subs()), t.total(), t.confidence(),
 					Math.max(0, t.rank() + condition.rankAdjustment() - damagePenalty(condition)), false, warnings, notes, k.cost(),

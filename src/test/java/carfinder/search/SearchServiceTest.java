@@ -92,6 +92,12 @@ class SearchServiceTest {
 		when(source.site()).thenReturn(Site.STANDVIRTUAL);
 	}
 
+	@org.junit.jupiter.api.AfterEach
+	void cleanUp() {
+		runs.deleteAll(); // writes commit here; other test classes share the database
+		listings.deleteAll();
+	}
+
 	private SearchService service(java.util.concurrent.Executor executor, Duration timeout) {
 		return new SearchService(List.of(source), store, listings, runs, scoring, JsonMapper.builder().build(),
 				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10), PLACES);
@@ -375,8 +381,6 @@ class SearchServiceTest {
 	void start_siteWithoutSource_rejected() {
 		SearchService s = service();
 
-		assertThatThrownBy(() -> s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE)))
-				.isInstanceOf(IllegalArgumentException.class).hasMessage("Site ainda não suportado");
 		assertThatThrownBy(() -> s.start(LIMITS, Preset.BALANCED, null, Set.of()))
 				.isInstanceOf(IllegalArgumentException.class);
 		assertThatThrownBy(() -> s.start(LIMITS, Preset.CUSTOM, null, Set.of(Site.STANDVIRTUAL)))
@@ -396,5 +400,60 @@ class SearchServiceTest {
 		assertThat(l.getDetailFetchedAt()).isNotNull();
 		assertThat(l.getPhotoCount()).isEqualTo(8);
 		assertThat(listings.count()).isEqualTo(1);
+	}
+
+	private static RawListing marketplace(String id, int price) {
+		return new RawListing(Site.MARKETPLACE, id, "https://www.facebook.com/marketplace/item/" + id + "/",
+				"2008 Renault Clio 1.2", price, "Renault", "Clio", null, 2008, null, 150000, null, null, null, null,
+				null, null, null, "Braga", 0, null, null, false);
+	}
+
+	@Test
+	void marketplaceRunRanksAllStoredMarketplaceAds_noSourceBean() {
+		store.upsert(marketplace("m1", 2000));
+		store.upsert(marketplace("m2", 1)); // "1.00" in the HAR: placeholder price
+		store.upsert(clio("s1", 2000, 150000)); // another site's ad is not part of a Marketplace-only run
+		SearchService s = service();
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		assertThat(s.status(id).status()).isEqualTo(RunStatus.DONE);
+		assertThat(s.status(id).collected()).isEqualTo(2);
+		verify(source, never()).search(any(), any());
+		verify(source, never()).details(anyString());
+		ScoringService.Ranking r = s.results(id);
+		assertThat(r.ranked()).extracting(x -> x.listing().getExternalId()).containsExactly("m1");
+		assertThat(r.excluded()).singleElement().satisfies(e -> {
+			assertThat(e.listing().getExternalId()).isEqualTo("m2");
+			assertThat(e.reasonsPt()).anyMatch(x -> x.startsWith("preço simbólico"));
+		});
+	}
+
+	@Test
+	void whileIdle_sharesTheRunSlot() throws Exception {
+		CountDownLatch inside = new CountDownLatch(1);
+		CountDownLatch release = new CountDownLatch(1);
+		ExecutorService pool = Executors.newSingleThreadExecutor();
+		SearchService s = service(pool, LONG);
+		try {
+			when(source.search(any(), any())).thenAnswer(inv -> {
+				inside.countDown();
+				release.await(5, TimeUnit.SECONDS);
+				return List.of();
+			});
+			start(s);
+			assertThat(inside.await(5, TimeUnit.SECONDS)).isTrue();
+
+			assertThatThrownBy(() -> s.whileIdle(() -> 1)).isInstanceOf(IllegalStateException.class)
+					.hasMessage("Já há uma pesquisa a decorrer");
+		}
+		finally {
+			release.countDown();
+			pool.shutdown();
+			pool.awaitTermination(5, TimeUnit.SECONDS);
+		}
+		assertThat(s.whileIdle(() -> 7)).isEqualTo(7);
+		// an import in progress blocks a search the same way
+		assertThatThrownBy(() -> s.whileIdle(() -> start(s))).isInstanceOf(IllegalStateException.class);
 	}
 }

@@ -48,6 +48,8 @@ public class Listing {
 	private int photoCount;
 	private Boolean imported;
 	private boolean parts;
+	/** Seen sold or reserved in a later import; the next upsert clears it. */
+	private boolean unavailable;
 
 	private Instant firstSeen;
 	private Instant lastSeen;
@@ -123,7 +125,12 @@ public class Listing {
 		}
 		// false means "unknown" on search pages, so it never clears a parts flag set from details.
 		parts = parts || raw.parts();
+		unavailable = false;
 		lastSeen = now;
+	}
+
+	void markUnavailable() {
+		unavailable = true;
 	}
 
 	void markDetailFetched(Instant now) {
@@ -224,6 +231,10 @@ public class Listing {
 
 	public boolean isParts() {
 		return parts;
+	}
+
+	public boolean isUnavailable() {
+		return unavailable;
 	}
 
 	public Instant getFirstSeen() {

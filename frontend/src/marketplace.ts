@@ -1,0 +1,31 @@
+import type { LimitsForm } from './limits'
+
+/**
+ * Facebook's vehicles search, opened by the user in their own browser. Only maxPrice is honoured by the link
+ * (checked by hand on 2026-11-09); year and km are filtered by the app after the import.
+ */
+export function marketplaceSearchUrl(form: LimitsForm): string {
+  const url = new URL('https://www.facebook.com/marketplace/category/vehicles')
+  if (form.maxPriceEur.trim()) url.searchParams.set('maxPrice', form.maxPriceEur.trim())
+  url.searchParams.set('exact', 'false')
+  return url.toString()
+}
+
+export type ImportResult = { read: number; added: number; unavailable: number }
+
+const DAY_MS = 24 * 60 * 60 * 1000
+
+export function importedAgoPt(lastSeen: string, now: Date = new Date()): string {
+  const days = Math.floor((now.getTime() - new Date(lastSeen).getTime()) / DAY_MS)
+  if (days <= 0) return 'importado hoje'
+  return `importado há ${days} ${days === 1 ? 'dia' : 'dias'}`
+}
+
+export function importSummaryPt(r: ImportResult): string {
+  const parts = [
+    `${r.read} ${r.read === 1 ? 'anúncio lido' : 'anúncios lidos'}`,
+    `${r.added} ${r.added === 1 ? 'novo' : 'novos'}`,
+  ]
+  if (r.unavailable > 0) parts.push(`${r.unavailable} ${r.unavailable === 1 ? 'vendido ou reservado' : 'vendidos ou reservados'}`)
+  return parts.join(', ') + '.'
+}

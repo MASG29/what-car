@@ -253,4 +253,26 @@ class ScoringServiceTest {
 		assertThat(Preset.ECONOMICAL.weights(null)).isEqualTo(new Weights(0.40, 0.15, 0.30, 0.10, 0.05));
 		assertThat(Preset.RELIABLE.weights(null)).isEqualTo(new Weights(0.20, 0.50, 0.10, 0.15, 0.05));
 	}
+
+	@Test
+	void severalPossibleEngines_noted() {
+		KnowledgeBase real = KnowledgeLoader.loadClasspath();
+		ScoringService s = new ScoringService(new CarMatcher(real), new ReliabilityScorer(real),
+				new PriceScorer(new PriceProperties(1.25, 0.80)), new ConsumptionScorer(real), new CompletenessScorer(),
+				new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(real, new Places()),
+				Clock.fixed(Instant.parse("2026-10-31T00:00:00Z"), ZoneOffset.UTC));
+		Listing vague = TestListings.of(new RawListing(Site.MARKETPLACE, "v", "https://example.test/v", "Toyota Yaris",
+				1500, "Toyota", "Yaris", null, 2004, null, null, null, null, null, null, null, null, null, null, 0,
+				null, null, false), false);
+		Listing hinted = TestListings.of(new RawListing(Site.MARKETPLACE, "h", "https://example.test/h",
+				"Toyota Yaris 1.3", 1500, "Toyota", "Yaris", null, 2004, null, null, null, null, null, null, null,
+				null, null, null, 0, null, null, false), false);
+
+		List<ScoredListing> r = s.rank(List.of(vague, hinted), List.of(), LIMITS, Preset.BALANCED, null).ranked();
+
+		assertThat(r).filteredOn(x -> x.listing() == vague).singleElement()
+				.satisfies(x -> assertThat(x.notesPt()).contains("várias motorizações possíveis"));
+		assertThat(r).filteredOn(x -> x.listing() == hinted).singleElement()
+				.satisfies(x -> assertThat(x.notesPt()).doesNotContain("várias motorizações possíveis"));
+	}
 }

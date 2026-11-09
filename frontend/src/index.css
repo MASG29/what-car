@@ -45,3 +45,5 @@ table { border-collapse: collapse; width: 100%; font-size: 0.9rem; margin: 0.5re
 th, td { text-align: left; vertical-align: top; padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--line); }
 td.num { text-align: right; white-space: nowrap; }
 .sources { font-size: 0.85rem; color: #555; }
+.subpanel { margin-top: 0.75rem; }
+.help-shot { display: block; max-width: 100%; border: 1px solid var(--line); border-radius: 4px; margin: 0.25rem 0 0.75rem; }

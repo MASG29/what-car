@@ -1,4 +1,5 @@
 import type { Fuel, RealCostSettings } from './limits'
+import type { ImportResult } from './marketplace'
 
 export type Criterion = 'PRICE' | 'RELIABILITY' | 'CONSUMPTION' | 'COMPLETENESS' | 'PHOTOS'
 export const CRITERIA: Criterion[] = ['PRICE', 'RELIABILITY', 'CONSUMPTION', 'COMPLETENESS', 'PHOTOS']
@@ -58,6 +59,8 @@ export type Ad = {
   city: string | null
   photoCount: number
   detailFetched: boolean
+  /** last time the ad was seen (ISO); for Marketplace, the last import that held it */
+  lastSeen: string
 }
 
 export type Scored = {
@@ -118,6 +121,14 @@ export const pollFailure = (e: ApiError) =>
 
 export const scoreLink = (req: Scoring & { url: string; limits: SearchLimits | null }) =>
   post<Ranking>('/api/score-link', req)
+
+/** The HAR goes as the raw request body: the server parses it as it streams and never stores the file. */
+export const importMarketplace = (file: File) =>
+  call<ImportResult>('/api/imports/marketplace', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
+    body: file,
+  })
 
 /** Some sources are report paths, not URLs: only http(s) becomes a link. */
 export const isHttp = (u: string) => /^https?:\/\//i.test(u)

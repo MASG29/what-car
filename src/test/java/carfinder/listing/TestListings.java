@@ -23,4 +23,10 @@ public final class TestListings {
 		}
 		return l;
 	}
+
+	/** The ad was seen sold or reserved in a later import. */
+	public static Listing unavailable(Listing l) {
+		l.markUnavailable();
+		return l;
+	}
 }

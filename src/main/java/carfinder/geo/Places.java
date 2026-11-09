@@ -41,6 +41,8 @@ public class Places {
 
 	private final Map<String, List<Row>> byName = new HashMap<>();
 	private final Map<String, Place> capitals = new HashMap<>();
+	/** Normalised district name to the name as written in the file. */
+	private final Map<String, String> districts = new HashMap<>();
 
 	@Autowired
 	public Places() {
@@ -75,6 +77,7 @@ public class Places {
 			Row r = new Row(new Place(c[0], c[1], Double.parseDouble(c[2]), Double.parseDouble(c[3])), c[4],
 					Long.parseLong(c[5]));
 			byName.computeIfAbsent(normalise(c[0]), k -> new ArrayList<>()).add(r);
+			districts.putIfAbsent(normalise(c[1]), c[1]);
 			if (r.capital()) {
 				bestCapital.merge(normalise(c[1]), r, (a, b) -> b.population() > a.population() ? b : a);
 			}
@@ -95,6 +98,11 @@ public class Places {
 					"Localidade ambígua: " + name.trim() + ". Escreve \"" + name.trim() + ", Distrito\".");
 			default -> throw new IllegalArgumentException("Localidade desconhecida: " + t);
 		};
+	}
+
+	/** The district's own spelling when the text names one of the districts, in any case or accents. */
+	public Optional<String> district(String name) {
+		return name == null ? Optional.empty() : Optional.ofNullable(districts.get(normalise(name)));
 	}
 
 	/** Where an ad is: its city if found once, else the district capital, else nothing. Never guesses. */

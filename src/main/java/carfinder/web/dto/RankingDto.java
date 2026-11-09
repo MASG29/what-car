@@ -11,6 +11,7 @@ import carfinder.scoring.Excluded;
 import carfinder.scoring.ScoredListing;
 import carfinder.scoring.ScoringService;
 import carfinder.scoring.SubScore;
+import java.time.Instant;
 import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -30,7 +31,7 @@ public record RankingDto(List<Scored> ranked, List<Dropped> excluded, Map<String
 	public record Ad(Site site, String url, String title, Integer priceEur, String make, String model, String version,
 			Integer year, Integer month, Integer km, Fuel fuel, Integer cc, Integer powerCv, String gearbox,
 			Integer doors, SellerType sellerType, String district, String city, int photoCount, String description,
-			Boolean imported, boolean parts, boolean detailFetched) {
+			Boolean imported, boolean parts, boolean detailFetched, Instant lastSeen) {
 	}
 
 	public record Scored(Ad listing, List<String> alsoOnUrls, Map<Criterion, Sub> subs, double total,
@@ -71,6 +72,6 @@ public record RankingDto(List<Scored> ranked, List<Dropped> excluded, Map<String
 		return new Ad(l.getSite(), l.getUrl(), l.getTitle(), l.getPriceEur(), l.getMake(), l.getModel(),
 				l.getVersion(), l.getYear(), l.getMonth(), l.getKm(), l.getFuel(), l.getCc(), l.getPowerCv(),
 				l.getGearbox(), l.getDoors(), l.getSellerType(), l.getDistrict(), l.getCity(), l.getPhotoCount(),
-				l.getDescription(), l.getImported(), l.isParts(), l.getDetailFetchedAt() != null);
+				l.getDescription(), l.getImported(), l.isParts(), l.getDetailFetchedAt() != null, l.getLastSeen());
 	}
 }

@@ -10,6 +10,9 @@ import carfinder.knowledge.KnowledgeLoader;
 import carfinder.knowledge.Tier;
 import carfinder.listing.Fuel;
 import carfinder.listing.Listing;
+import carfinder.listing.RawListing;
+import carfinder.listing.Site;
+import carfinder.listing.TestListings;
 import java.nio.file.Paths;
 import org.junit.jupiter.api.Test;
 
@@ -257,5 +260,33 @@ class CarMatcherTest {
 		assertThat(dci.generation()).isEmpty();
 		assertThat(dci.mixed()).isTrue();
 		assertThat(dci.candidates()).extracting(Generation::id).containsExactlyInAnyOrder("clio-ii", "clio-iii");
+	}
+
+	private static final CarMatcher REAL = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+	private static Listing marketplace(String title) {
+		return TestListings.of(new RawListing(Site.MARKETPLACE, "1", "https://www.facebook.com/marketplace/item/1/",
+				title, 1500, "Toyota", "Yaris", null, 2004, null, null, null, null, null, null, null, null, null, null,
+				0, null, null, false), false);
+	}
+
+	@Test
+	void litresHint_picksEngine() {
+		// real KB: both Yaris XP10 engines have no cc; their family names say 1.0 and 1.3
+		assertThat(REAL.match(marketplace("Toyota Yaris 1.3")).engine()).map(Engine::id).hasValue("toyota-xp10-1.3");
+		assertThat(REAL.match(marketplace("Toyota Yaris 1,0 vvti")).engine()).map(Engine::id)
+				.hasValue("toyota-xp10-1.0");
+		assertThat(REAL.match(marketplace("Toyota Yaris 1.3vvti")).engine()).map(Engine::id)
+				.hasValue("toyota-xp10-1.3");
+	}
+
+	@Test
+	void noLitresHint_severalEngines_noEngine() {
+		CarMatch m = REAL.match(marketplace("Toyota Yaris"));
+
+		assertThat(m.engine()).isEmpty();
+		assertThat(m.engineOptions()).isEqualTo(2);
+		assertThat(REAL.match(marketplace("Toyota Yaris 1.3")).engineOptions()).isEqualTo(1);
+		assertThat(REAL.match(marketplace("Toyota Yaris 2.0")).engine()).isEmpty(); // no 2.0 in this generation
 	}
 }

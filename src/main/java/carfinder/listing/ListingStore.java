@@ -24,6 +24,15 @@ public class ListingStore {
 		return repository.save(l);
 	}
 
+	/** Only rows already stored change; an id never seen live is ignored. */
+	@Transactional
+	public void markUnavailable(Site site, String externalId) {
+		repository.findBySiteAndExternalId(site, externalId).ifPresent(l -> {
+			l.markUnavailable();
+			repository.save(l);
+		});
+	}
+
 	@Transactional
 	public Listing applyDetails(Listing l, RawListing details) {
 		Instant now = Instant.now();

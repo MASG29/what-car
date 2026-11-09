@@ -32,6 +32,30 @@ class KnowledgeDataTest {
 			List.of("civic-8", "Honda", "Civic"),
 			List.of("mazda3-bk", "Mazda", "3"));
 
+	private static List<String> recognised(String title) {
+		return KB.recogniseMakeModel(title).map(g -> List.of(g.make(), g.model())).orElse(null);
+	}
+
+	@Test
+	void recogniseMakeModel_returnsCanonicalNames() {
+		assertThat(recognised("2006 VW Polo 1.2")).containsExactly("Volkswagen", "Polo");
+		assertThat(recognised("Citroen C3 1.1 de 2005")).containsExactly("Citroën", "C3");
+		assertThat(recognised("RENAULT MEGANE 1.5 dCi")).containsExactly("Renault", "Mégane");
+		assertThat(recognised("2009 Fiat Grande Punto 1.2")).containsExactly("Fiat", "Grande Punto");
+		assertThat(recognised("Fiat Punto 1.2 2004")).containsExactly("Fiat", "Punto");
+		assertThat(recognised("Mazda2 1.4 2008")).containsExactly("Mazda", "2");
+		assertThat(recognised("Mazda 3 1.6 2 donos")).containsExactly("Mazda", "3");
+		assertThat(recognised("Peugeot 206 1.1")).containsExactly("Peugeot", "206");
+	}
+
+	@Test
+	void recogniseMakeModel_noMakeOrUnknown_empty() {
+		assertThat(recognised("Polo 1.2 bom estado")).isNull(); // model alone is not enough
+		assertThat(recognised("2007 Opel Corsa 1.2")).isNull();
+		assertThat(recognised("Peugeot 2060")).isNull(); // whole words only
+		assertThat(recognised("")).isNull();
+	}
+
 	@Test
 	void realDataLoads() {
 		assertThat(KB.generationsFor("Renault", "Clio")).isNotEmpty();

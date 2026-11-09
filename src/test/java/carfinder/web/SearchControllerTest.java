@@ -195,6 +195,7 @@ class SearchControllerTest {
 		mvc.perform(get("/api/searches/" + id + "/results")).andExpect(status().isOk())
 				.andExpect(jsonPath("$.ranked[0].listing.title").value("Clio k"))
 				.andExpect(jsonPath("$.ranked[0].listing.sellerType").doesNotExist())
+				.andExpect(jsonPath("$.ranked[0].listing.lastSeen").isString())
 				.andExpect(jsonPath("$.ranked[0].subs.PRICE.value").value(0.7))
 				.andExpect(jsonPath("$.ranked[0].subs.RELIABILITY.value").doesNotExist())
 				.andExpect(jsonPath("$.ranked[0].subs.RELIABILITY.explanationPt").value("sem dados"))

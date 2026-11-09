@@ -12,9 +12,13 @@ import carfinder.listing.Listing;
 import java.time.YearMonth;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -29,6 +33,9 @@ public class CarMatcher {
 	private static final GearboxRule AUTOMATIC_RULE = new GearboxRule("autom", GearboxType.ROBOTISED, Tier.HIGH,
 			AUTOMATIC_SOURCE, "I");
 	private static final int EDGE_MONTHS = 6;
+	/** "1.3", "1,4", "1.4tdci"; not "1.500" or "11.3". */
+	private static final Pattern LITRES_HINT = Pattern.compile("(?<![\\d.,])(\\d)[.,](\\d)(?![\\d])");
+	private static final Pattern LITRES_FAMILY = Pattern.compile("(\\d)\\.(\\d)");
 	/** A word in the version or title that names one generation among several (the Clio II Campus was sold until 2012). */
 	private static final Map<String, String> GENERATION_KEYWORDS = Map.of("campus", "clio-ii");
 
@@ -50,13 +57,14 @@ public class CarMatcher {
 				&& !candidates.getFirst().changeoverYears().contains(reg.getYear())
 						? Optional.of(candidates.getFirst()) : Optional.empty();
 
-		Optional<Engine> engine = engine(l, candidates);
+		EngineChoice choice = engine(l, candidates);
+		Optional<Engine> engine = choice.engine();
 		List<FaultHit> faults = reg == null ? List.of()
 				: engine.stream().flatMap(e -> kb.faultsFor(e.id()).stream())
 						.map(f -> hit(f, reg, monthKnown)).flatMap(Optional::stream).toList();
 
 		return new CarMatch(generation, candidates, generation.isEmpty() && !candidates.isEmpty(), engine, faults,
-				gearbox(l, candidates), faults.stream().anyMatch(FaultHit::uncertain));
+				gearbox(l, candidates), faults.stream().anyMatch(FaultHit::uncertain), choice.options());
 	}
 
 	private static List<Generation> byKeyword(Listing l, List<Generation> candidates) {
@@ -72,14 +80,17 @@ public class CarMatcher {
 				.matcher(normalisedText).find();
 	}
 
-	private Optional<Engine> engine(Listing l, List<Generation> candidates) {
+	private record EngineChoice(Optional<Engine> engine, int options) {
+	}
+
+	private EngineChoice engine(Listing l, List<Generation> candidates) {
 		Stream<Engine> pool;
 		if (!candidates.isEmpty()) {
 			pool = candidates.stream().flatMap(g -> kb.enginesFor(g.id()).stream()).distinct();
 		} else if (l.getMake() != null) {
 			pool = kb.enginesForMake(l.getMake()).stream();
 		} else {
-			return Optional.empty();
+			return new EngineChoice(Optional.empty(), 0);
 		}
 		Integer kw = l.getPowerCv() == null ? null : (int) Math.round(l.getPowerCv() / 1.36);
 		List<Engine> kept = pool
@@ -87,13 +98,48 @@ public class CarMatcher {
 				.filter(e -> e.cc() == null || l.getCc() == null || Math.abs(e.cc() - l.getCc()) <= 5)
 				.filter(e -> e.kwList().isEmpty() || kw == null || e.kwList().stream().anyMatch(k -> Math.abs(k - kw) <= 2))
 				.toList();
+		// Without a cc, a displacement in the text ("1.3", "1.4tdci") narrows; engines with no known litres stay in.
+		Set<String> hint = l.getCc() == null ? hintLitres(l) : Set.of();
+		if (!hint.isEmpty()) {
+			kept = kept.stream().filter(e -> litres(e).isEmpty() || litres(e).stream().anyMatch(hint::contains))
+					.toList();
+		}
 		if (kept.size() == 1) {
-			return Optional.of(kept.getFirst());
+			return new EngineChoice(Optional.of(kept.getFirst()), 1);
 		}
 		// Engines with unknown cc and kW pass every check; prefer the one survivor matched on a known value.
 		List<Engine> onKnown = kept.stream()
-				.filter(e -> (e.cc() != null && l.getCc() != null) || (!e.kwList().isEmpty() && kw != null)).toList();
-		return onKnown.size() == 1 ? Optional.of(onKnown.getFirst()) : Optional.empty();
+				.filter(e -> (e.cc() != null && l.getCc() != null) || (!e.kwList().isEmpty() && kw != null)
+						|| litres(e).stream().anyMatch(hint::contains))
+				.toList();
+		return onKnown.size() == 1 ? new EngineChoice(Optional.of(onKnown.getFirst()), 1)
+				: new EngineChoice(Optional.empty(), kept.size());
+	}
+
+	private static Set<String> hintLitres(Listing l) {
+		Set<String> found = new HashSet<>();
+		for (String t : new String[] {l.getVersion(), l.getTitle()}) {
+			if (t != null) {
+				Matcher m = LITRES_HINT.matcher(t);
+				while (m.find()) {
+					found.add(m.group(1) + "." + m.group(2));
+				}
+			}
+		}
+		return found;
+	}
+
+	/** From cc when known ("1298" -> 1.3), else every "d.d" in the sourced family name ("1.4/1.6 VVT-i" -> 1.4, 1.6). */
+	private static Set<String> litres(Engine e) {
+		if (e.cc() != null) {
+			return Set.of(String.format(Locale.ROOT, "%.1f", Math.round(e.cc() / 100.0) / 10.0));
+		}
+		Set<String> found = new HashSet<>();
+		Matcher m = LITRES_FAMILY.matcher(e.family() == null ? "" : e.family());
+		while (m.find()) {
+			found.add(m.group(1) + "." + m.group(2));
+		}
+		return found;
 	}
 
 	/** With an unknown month the fault hits (uncertain) if its window overlaps any month of the year. */
