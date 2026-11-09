@@ -14,12 +14,13 @@ import java.util.Set;
  * items to the report's values. models are "make model" strings; empty = every B/C model in the knowledge base.
  * minDoors is optional (null = any). centre and radiusKm are required to start a search (SearchService.start); null
  * means no location filter (runs saved before the centre existed, pasted links). Old JSON with "districts" still loads.
+ * showDamaged (null = false) keeps ads that need repair, with a warning and a rank penalty; by default they are dropped.
  */
 @JsonIgnoreProperties(ignoreUnknown = true)
 public record SearchLimits(@Positive int maxPriceEur, PriceCap priceCap, @Positive int maxKm, @Positive int minYear,
 		@NotEmpty Set<Fuel> fuels, String centre, Integer radiusKm,
 		List<String> models, @Valid RealCostSettings realCost,
-		@Positive Integer minDoors) {
+		@Positive Integer minDoors, Boolean showDamaged) {
 
 	public enum PriceCap { ASKING, REAL_COST }
 

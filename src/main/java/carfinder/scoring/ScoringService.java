@@ -31,6 +31,8 @@ public class ScoringService {
 
 	/** No age band applies when the year is unknown. */
 	private static final int AGE_UNKNOWN = -1;
+	/** Builder's call, not a sourced figure: heavier than any cosmetic problem, applied when damaged ads are shown. */
+	static final double DAMAGE_PENALTY = 0.15;
 
 	private final CarMatcher matcher;
 	private final ReliabilityScorer reliability;
@@ -100,14 +102,17 @@ public class ScoringService {
 			Listing l = group.getFirst();
 			Kept k = kept.get(l);
 			Totals t = combine(k.subs(), w);
-			ConditionResult condition = ConditionReader.read(l.getDescription());
+			ConditionResult condition = ConditionReader.read(l.getTitle(), l.getDescription());
 			List<String> warnings = Stream.concat(k.subs().values().stream().flatMap(x -> x.warningsPt().stream()),
-					condition.problemsPt().stream().map(p -> "O anúncio menciona: " + p)).distinct().toList();
+					Stream.concat(condition.problemsPt().stream().map(p -> "O anúncio menciona: " + p),
+							condition.damagePt().isEmpty() ? Stream.<String>empty()
+									: Stream.of("Precisa de reparação: " + String.join(", ", condition.damagePt()))))
+					.distinct().toList();
 			List<String> notes = Stream.concat(k.notes().stream(),
 					condition.maintenancePt().stream().map(m -> "Manutenção recente: " + m)).toList();
 			List<String> alsoOn = group.subList(1, group.size()).stream().map(Listing::getUrl).toList();
 			scored.add(new ScoredListing(l, alsoOn, Collections.unmodifiableMap(k.subs()), t.total(), t.confidence(),
-					Math.max(0, t.rank() + condition.rankAdjustment()), false, warnings, notes, k.cost(),
+					Math.max(0, t.rank() + condition.rankAdjustment() - damagePenalty(condition)), false, warnings, notes, k.cost(),
 					checklist.build(l, k.match()), condition, null));
 		}
 		scored.sort(Comparator.comparingDouble(ScoredListing::rank).reversed());
@@ -119,6 +124,10 @@ public class ScoringService {
 					WhyText.build(x, i + 1)));
 		}
 		return new Ranking(List.copyOf(ranked), List.copyOf(excluded));
+	}
+
+	static double damagePenalty(ConditionResult c) {
+		return c.damagePt().isEmpty() ? 0 : DAMAGE_PENALTY;
 	}
 
 	/**

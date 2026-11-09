@@ -52,4 +52,13 @@ class WhyTextTest {
 				new ConditionResult(List.of(), List.of("embraiagem", "amortecedores")));
 		assertThat(WhyText.build(s, 4)).endsWith("; +0,06 por manutenção recente (embraiagem, amortecedores).");
 	}
+
+	@Test
+	void damage_mentionedWithPenalty() {
+		ScoredListing s = scored(Map.of(Criterion.PRICE, sub(0.6), Criterion.RELIABILITY, sub(0.6),
+				Criterion.CONSUMPTION, sub(0.6), Criterion.COMPLETENESS, sub(0.6), Criterion.PHOTOS, sub(0.6)), 1.0,
+				new ConditionResult(List.of("riscos"), List.of(), List.of("batido", "avariado"), false));
+		assertThat(WhyText.build(s, 2)).endsWith("; −0,20 por riscos mencionados e precisa de reparação "
+				+ "(batido, avariado).");
+	}
 }

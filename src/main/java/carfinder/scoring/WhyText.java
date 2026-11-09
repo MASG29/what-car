@@ -47,13 +47,16 @@ public final class WhyText {
 	}
 
 	private static String condition(ConditionResult c) {
-		if (c.problemsPt().isEmpty() && c.maintenancePt().isEmpty()) {
+		if (c.problemsPt().isEmpty() && c.maintenancePt().isEmpty() && c.damagePt().isEmpty()) {
 			return null;
 		}
-		double adj = c.rankAdjustment();
+		double adj = c.rankAdjustment() - ScoringService.damagePenalty(c);
 		List<String> why = new ArrayList<>();
 		if (!c.problemsPt().isEmpty()) {
 			why.add(String.join(", ", c.problemsPt()) + " mencionados");
+		}
+		if (!c.damagePt().isEmpty()) {
+			why.add("precisa de reparação (" + String.join(", ", c.damagePt()) + ")");
 		}
 		if (!c.maintenancePt().isEmpty()) {
 			why.add("manutenção recente (" + String.join(", ", c.maintenancePt()) + ")");

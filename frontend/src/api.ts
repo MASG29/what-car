@@ -26,6 +26,8 @@ export type SearchLimits = {
   realCost: RealCostSettings
   /** null = any number of doors */
   minDoors: number | null
+  /** true = keep ads that need repair (warning, lower rank); false = drop them */
+  showDamaged: boolean
 }
 
 /** value null = "sem dados". */

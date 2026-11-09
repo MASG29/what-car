@@ -75,6 +75,22 @@ export function SearchForm({ form, onChange, lastUsed }: Props) {
       <LocationFields form={form} onChange={set} />
 
       <fieldset>
+        <legend>Anúncios danificados</legend>
+        <label className="inline">
+          <input
+            type="checkbox"
+            checked={form.showDamaged ?? false}
+            onChange={(e) => set({ showDamaged: e.target.checked })}
+          />
+          Mostrar carros que precisam de reparação
+        </label>
+        <p className="muted">
+          Desligado, são excluídos. Ligado, aparecem com aviso e mais abaixo na lista; o custo da reparação não tem
+          dados. Anúncios «para peças» são sempre excluídos.
+        </p>
+      </fieldset>
+
+      <fieldset>
         <legend>O preço máximo aplica-se a</legend>
         <label className="inline">
           <input type="radio" checked={form.priceCap === 'ASKING'} onChange={() => set({ priceCap: 'ASKING' })} />

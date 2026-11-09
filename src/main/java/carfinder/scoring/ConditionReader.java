@@ -9,12 +9,16 @@ import java.util.Map;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Reads problem and maintenance phrases from an ad's description (normalised: no accents, lower case). A phrase
  * is ignored when "sem", "nao", "nunca" or "zero" comes before it in the same clause: a negation covers lists
  * joined by "," "e" "ou" "nem" and stops at . ! ? ; at "mas", "porem", "contudo", or at a new verb
- * ("tem", "tinha", "apresenta", "com"), so "Sem acidentes, tem riscos" counts "riscos".
+ * ("tem", "tinha", "apresenta", "com"), so "Sem acidentes, tem riscos" counts "riscos". The title and the
+ * description are read as two sentences, so a title never extends a description clause. "Não pega" and
+ * "não anda" are damage phrases themselves and are never negated.
  */
 public final class ConditionReader {
 
@@ -40,6 +44,22 @@ public final class ConditionReader {
 			"amortecedores", "amortecedores (novos|mudados|substituidos|trocados)",
 			BELT_DONE, "(kit de distribuicao|correia( de distribuicao)?) " + DONE);
 
+	/** Repair or accident phrases; an ad with one is dropped unless the user asked to see damaged cars. */
+	private static final Map<String, Pattern> DAMAGE = phrases(
+			"precisa de reparação", "precisa de (reparacao|arranjo)",
+			"para reparar", "para reparar",
+			"avariado", "avariad[oa]",
+			"não pega", "nao pega",
+			"não anda", "nao anda",
+			"motor gripado", "motor (gripado|partido|rebentado)",
+			"caixa partida", "caixa (partida|avariada)",
+			"junta da cabeça", "junta (da|de) cabeca",
+			"batido", "batido",
+			"sinistrado", "sinistrado",
+			"acidentado", "acidentado");
+	private static final Set<String> NEVER_NEGATED = Set.of("não pega", "não anda");
+	private static final Pattern PARTS = Pattern.compile("\\b(so )?(vende se )?para pecas\\b");
+
 	private static final Set<String> NEGATIONS = Set.of("sem", "nao", "nunca", "zero");
 	/** A new verb ("tem", "tinha", "apresenta", "com") ends the scope unless a negation sits right before it. */
 	private static final Pattern CLAUSE_END = Pattern.compile(
@@ -49,12 +69,24 @@ public final class ConditionReader {
 	}
 
 	public static ConditionResult read(String description) {
-		if (description == null) {
+		return read(null, description);
+	}
+
+	/** Either text may be null. */
+	public static ConditionResult read(String title, String description) {
+		String joined = Stream.of(title, description).filter(t -> t != null && !t.isBlank())
+				.collect(Collectors.joining(". "));
+		if (joined.isEmpty()) {
 			return new ConditionResult(List.of(), List.of());
 		}
 		// "nao fumador" is about the owner, not a negation of what follows ("Não fumador, riscos na porta")
-		String text = Text.normalise(description).replaceAll("\\bnao fumador", "fumador");
-		return new ConditionResult(found(PROBLEMS, text), found(MAINTENANCE, text));
+		String text = Text.normalise(joined).replaceAll("\\bnao fumador", "fumador");
+		Matcher parts = PARTS.matcher(text);
+		boolean isParts = false;
+		while (parts.find() && !isParts) {
+			isParts = !negated(text.substring(0, parts.start()));
+		}
+		return new ConditionResult(found(PROBLEMS, text), found(MAINTENANCE, text), found(DAMAGE, text), isParts);
 	}
 
 	private static List<String> found(Map<String, Pattern> phrases, String text) {
@@ -62,7 +94,7 @@ public final class ConditionReader {
 		phrases.forEach((label, p) -> {
 			Matcher m = p.matcher(text);
 			while (m.find()) {
-				if (!negated(text.substring(0, m.start()))) {
+				if (NEVER_NEGATED.contains(label) || !negated(text.substring(0, m.start()))) {
 					labels.add(label);
 					break;
 				}

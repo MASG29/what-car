@@ -11,6 +11,8 @@ import carfinder.knowledge.Generation;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.listing.Listing;
 import carfinder.matching.CarMatch;
+import carfinder.scoring.ConditionReader;
+import carfinder.scoring.ConditionResult;
 import carfinder.scoring.PriceResult;
 import carfinder.search.SearchLimits.PriceCap;
 import java.util.ArrayList;
@@ -37,8 +39,16 @@ public class ListingFilter {
 	public FilterResult apply(Listing l, CarMatch m, PriceResult p, RealCost rc, SearchLimits s) {
 		List<String> drop = new ArrayList<>();
 		List<String> notes = new ArrayList<>();
-		if (l.isParts()) {
+		ConditionResult condition = ConditionReader.read(l.getTitle(), l.getDescription());
+		if (l.isParts() || condition.parts()) {
 			drop.add("anúncio de peças");
+		}
+		if (!condition.damagePt().isEmpty()) {
+			if (Boolean.TRUE.equals(s.showDamaged())) {
+				notes.add("custo da reparação: sem dados");
+			} else {
+				drop.add("precisa de reparação (" + String.join(", ", condition.damagePt()) + ")");
+			}
 		}
 		// photoCount 0 is only real once the advert page was read; search pages leave it at 0
 		if (l.getPhotoCount() == 0 && l.getDetailFetchedAt() != null) {

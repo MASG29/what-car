@@ -1,5 +1,5 @@
 import { expect, test } from 'vitest'
-import { type LimitsForm, SHORTLIST, toSearchLimits, validateLimits } from './limits'
+import { emptyForm, type LimitsForm, SHORTLIST, toSearchLimits, validateLimits } from './limits'
 
 const costs = {
   paperworkEur: 105, ipoEur: 37.47, iucPre2007Eur: 40, iucPost2007Eur: 149,
@@ -68,4 +68,14 @@ test('toSearchLimits_sendsTrimmedCentreAndNumericRadius', () => {
 test('oldSavedFormWithDistricts_validatesWithoutThrowing', () => {
   const old = { ...filled, districts: 'Braga', centre: undefined, radiusKm: undefined } as unknown as LimitsForm
   expect(validateLimits(old)).toEqual(['Indica o centro da pesquisa.', 'Indica o raio em km.'])
+})
+
+test('showDamaged_defaultsToFalse_andIsSent', () => {
+  expect(emptyForm().showDamaged).toBe(false)
+  expect(toSearchLimits(filled).showDamaged).toBe(false)
+  expect(toSearchLimits({ ...filled, showDamaged: true }).showDamaged).toBe(true)
+  // forms saved before the field existed have no showDamaged
+  const old = { ...filled, showDamaged: undefined } as unknown as LimitsForm
+  expect(validateLimits(old)).toEqual([])
+  expect(toSearchLimits(old).showDamaged).toBe(false)
 })

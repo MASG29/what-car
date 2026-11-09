@@ -25,6 +25,8 @@ export type LimitsForm = {
   radiusKm: string
   /** optional; absent in forms saved before the field existed */
   minDoors: string
+  /** keep ads that need repair, with a warning; absent in forms saved before the field existed */
+  showDamaged?: boolean
   /** true = every B/C model in the knowledge base; absent in forms saved before the field existed */
   allBC?: boolean
   realCost: RealCostSettings
@@ -68,7 +70,7 @@ export const DEFAULT_REAL_COST: RealCostSettings = {
 /** Price, km, year, fuel, centre and radius start empty: no hidden defaults. */
 export const emptyForm = (): LimitsForm => ({
   maxPriceEur: '', maxKm: '', minYear: '', fuels: [], priceCap: 'ASKING',
-  centre: '', radiusKm: '', minDoors: '', realCost: { ...DEFAULT_REAL_COST },
+  centre: '', radiusKm: '', minDoors: '', showDamaged: false, realCost: { ...DEFAULT_REAL_COST },
 })
 
 /** Only call with a form that validateLimits accepts. Empty doors = any. */
@@ -77,4 +79,5 @@ export const toSearchLimits = (f: LimitsForm): SearchLimits => ({
   fuels: f.fuels, priceCap: f.priceCap, models: f.allBC ? [] : SHORTLIST, realCost: f.realCost,
   centre: (f.centre ?? '').trim(), radiusKm: Number(f.radiusKm),
   minDoors: (f.minDoors ?? '').trim() === '' ? null : Number(f.minDoors),
+  showDamaged: f.showDamaged ?? false,
 })

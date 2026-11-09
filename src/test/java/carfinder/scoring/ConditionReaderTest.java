@@ -146,4 +146,77 @@ class ConditionReaderTest {
 		assertThat(new ConditionResult(List.of("a", "b", "c", "d", "e"), List.of("a", "b", "c", "d"))
 				.rankAdjustment()).isCloseTo(0.09 - 0.15, within(1e-9));
 	}
+
+	@Test
+	void parts_inTitle() {
+		assertThat(ConditionReader.read("Polo 1.4 para peças", null).parts()).isTrue();
+	}
+
+	@Test
+	void parts_inDescription() {
+		assertThat(ConditionReader.read("Polo 1.4", "Vende-se para peças, motor bom.").parts()).isTrue();
+		assertThat(ConditionReader.read("Polo 1.4", "Vendo só para peças.").parts()).isTrue();
+		assertThat(ConditionReader.read("Polo 1.4", "Vendo em bom estado.").parts()).isFalse();
+	}
+
+	@Test
+	void parts_negated() {
+		assertThat(ConditionReader.read("Polo 1.4", "Não é para peças, anda bem.").parts()).isFalse();
+	}
+
+	@Test
+	void damage_eachLabelOnce() {
+		assertThat(ConditionReader.read("Precisa de reparação").damagePt()).containsExactly("precisa de reparação");
+		assertThat(ConditionReader.read("Precisa de arranjo").damagePt()).containsExactly("precisa de reparação");
+		assertThat(ConditionReader.read("Carro para reparar").damagePt()).containsExactly("para reparar");
+		assertThat(ConditionReader.read("Está avariada").damagePt()).containsExactly("avariado");
+		assertThat(ConditionReader.read("Carro avariado").damagePt()).containsExactly("avariado");
+		assertThat(ConditionReader.read("O carro não pega").damagePt()).containsExactly("não pega");
+		assertThat(ConditionReader.read("O carro não anda").damagePt()).containsExactly("não anda");
+		assertThat(ConditionReader.read("Motor gripado").damagePt()).containsExactly("motor gripado");
+		assertThat(ConditionReader.read("Motor partido").damagePt()).containsExactly("motor gripado");
+		assertThat(ConditionReader.read("Motor rebentado").damagePt()).containsExactly("motor gripado");
+		assertThat(ConditionReader.read("Caixa partida").damagePt()).containsExactly("caixa partida");
+		assertThat(ConditionReader.read("Caixa avariada").damagePt()).contains("caixa partida");
+		assertThat(ConditionReader.read("Junta da cabeça queimada").damagePt()).containsExactly("junta da cabeça");
+		assertThat(ConditionReader.read("Junta de cabeça").damagePt()).containsExactly("junta da cabeça");
+		assertThat(ConditionReader.read("Carro batido").damagePt()).containsExactly("batido");
+		assertThat(ConditionReader.read("Carro sinistrado").damagePt()).containsExactly("sinistrado");
+		assertThat(ConditionReader.read("Carro acidentado").damagePt()).containsExactly("acidentado");
+		assertThat(ConditionReader.read("Carro batido, batido na frente").damagePt()).containsExactly("batido");
+	}
+
+	@Test
+	void damage_negated() {
+		assertThat(ConditionReader.read("Nunca foi batido").damagePt()).isEmpty();
+		assertThat(ConditionReader.read("Sem acidentes, não sinistrado").damagePt()).isEmpty();
+		assertThat(ConditionReader.read("Não precisa de reparação").damagePt()).isEmpty();
+	}
+
+	@Test
+	void naoPega_isDamage() {
+		assertThat(ConditionReader.read("o carro não pega").damagePt()).containsExactly("não pega");
+		// the negation of an earlier clause does not cancel it
+		assertThat(ConditionReader.read("Sem riscos, não pega").damagePt()).containsExactly("não pega");
+		assertThat(ConditionReader.read("Nunca teve problemas mas não anda").damagePt()).containsExactly("não anda");
+	}
+
+	@Test
+	void titleDoesNotNegateDescription() {
+		assertThat(ConditionReader.read("Sem riscos", "batido na frente").damagePt()).containsExactly("batido");
+		assertThat(ConditionReader.read("Sem riscos", "riscos na porta").problemsPt()).containsExactly("riscos");
+	}
+
+	@Test
+	void titleAndDescription_bothRead() {
+		ConditionResult r = ConditionReader.read("Clio avariado", "Embraiagem nova.");
+		assertThat(r.damagePt()).containsExactly("avariado");
+		assertThat(r.maintenancePt()).containsExactly("embraiagem");
+	}
+
+	@Test
+	void damageAndParts_doNotChangeRankAdjustment() {
+		assertThat(new ConditionResult(List.of(), List.of(), List.of("batido"), true).rankAdjustment()).isZero();
+		assertThat(ConditionReader.read(null, null)).isEqualTo(new ConditionResult(List.of(), List.of()));
+	}
 }

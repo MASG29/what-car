@@ -43,12 +43,12 @@ class ListingFilterTest {
 
 	static SearchLimits limits(PriceCap cap, List<String> models, String centre) {
 		return new SearchLimits(2500, cap, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), centre,
-				centre == null ? null : 65, models, RealCostSettings.defaults(), null);
+				centre == null ? null : 65, models, RealCostSettings.defaults(), null, null);
 	}
 
 	static SearchLimits minDoors(Integer n) {
 		return new SearchLimits(2500, PriceCap.ASKING, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), null,
-				null, List.of(), RealCostSettings.defaults(), n);
+				null, List.of(), RealCostSettings.defaults(), n, null);
 	}
 
 	static Listing withDoors(Integer doors) {
@@ -275,5 +275,58 @@ class ListingFilterTest {
 		FilterResult r = filter.apply(withDoors(null), NO_MATCH, PLAIN, COST, minDoors(5));
 		assertThat(r.keep()).isTrue();
 		assertThat(r.notesPt()).containsExactly("portas não indicadas");
+	}
+
+	private static Listing saying(String title, String description) {
+		return TestListings.of(new RawListing(Site.STANDVIRTUAL, "x", "https://example.test/x", title, 1500,
+				"Volkswagen", "Polo", null, 2010, 6, 150000, Fuel.PETROL, null, null, null, null, null, "Braga", null,
+				8, description, null, false), true);
+	}
+
+	private static SearchLimits showDamaged(Boolean show) {
+		return new SearchLimits(2500, PriceCap.ASKING, 200000, 2005, EnumSet.of(Fuel.PETROL, Fuel.DIESEL), null, null,
+				List.of(), RealCostSettings.defaults(), null, show);
+	}
+
+	@Test
+	void partsInTitleOrDescription_dropped_withTheSameTextAsIsParts() {
+		FilterResult title = apply(saying("Polo para peças", null));
+		assertThat(title.keep()).isFalse();
+		assertThat(title.notesPt()).containsExactly("anúncio de peças");
+		assertThat(apply(saying("Polo", "Vende-se para peças.")).notesPt()).containsExactly("anúncio de peças");
+		assertThat(apply(ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, "Braga", 8, true, true))
+				.notesPt()).containsExactly("anúncio de peças");
+		assertThat(apply(saying("Polo", "Não é para peças.")).keep()).isTrue();
+	}
+
+	@Test
+	void parts_droppedEvenWhenDamagedAdsAreShown() {
+		FilterResult r = filter.apply(saying("Polo para peças", null), NO_MATCH, PLAIN, COST, showDamaged(true));
+		assertThat(r.keep()).isFalse();
+		assertThat(r.notesPt()).containsExactly("anúncio de peças");
+	}
+
+	@Test
+	void damage_droppedByDefault_withReasonListingTheLabels() {
+		for (Boolean show : new Boolean[] { null, false }) {
+			FilterResult r = filter.apply(saying("Polo", "Motor gripado e caixa partida."), NO_MATCH, PLAIN, COST,
+					showDamaged(show));
+			assertThat(r.keep()).isFalse();
+			assertThat(r.notesPt()).containsExactly("precisa de reparação (motor gripado, caixa partida)");
+		}
+		assertThat(apply(saying("Polo avariado", null)).notesPt())
+				.containsExactly("precisa de reparação (avariado)");
+	}
+
+	@Test
+	void damage_keptWhenShown_withRepairCostNote() {
+		FilterResult r = filter.apply(saying("Polo", "O carro não pega."), NO_MATCH, PLAIN, COST, showDamaged(true));
+		assertThat(r.keep()).isTrue();
+		assertThat(r.notesPt()).containsExactly("custo da reparação: sem dados");
+	}
+
+	@Test
+	void damage_negated_notDropped() {
+		assertThat(apply(saying("Polo", "Nunca foi batido.")).keep()).isTrue();
 	}
 }

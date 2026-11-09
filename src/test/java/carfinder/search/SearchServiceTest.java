@@ -68,7 +68,7 @@ class SearchServiceTest {
 	private static final KnowledgeBase KB = KnowledgeLoader
 			.load(Paths.get("src/test/resources/fixtures/knowledge-reliability"));
 	private static final SearchLimits LIMITS = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
-			EnumSet.allOf(Fuel.class), "Ponte de Lima", 500, List.of(), null, null);
+			EnumSet.allOf(Fuel.class), "Ponte de Lima", 500, List.of(), null, null, null);
 	private static final Places PLACES = new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv"));
 	private static final Duration LONG = Duration.ofMinutes(10);
 
@@ -355,7 +355,7 @@ class SearchServiceTest {
 
 	private static SearchLimits withCentre(String centre, Integer radius) {
 		return new SearchLimits(5000, PriceCap.ASKING, 300000, 1995, EnumSet.allOf(Fuel.class), centre, radius,
-				List.of(), null, null);
+				List.of(), null, null, null);
 	}
 
 	@Test

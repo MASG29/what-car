@@ -57,7 +57,7 @@ public class SearchService {
 	private static final Duration DETAILS_AGE = Duration.ofDays(7);
 	/** Pasted links are scored without the user's caps; only the ad's own problems exclude it. */
 	private static final SearchLimits NO_LIMITS = new SearchLimits(Integer.MAX_VALUE, null, Integer.MAX_VALUE, 1,
-			EnumSet.allOf(Fuel.class), null, null, null, null, null);
+			EnumSet.allOf(Fuel.class), null, null, null, null, null, null);
 	private static final Logger log = LoggerFactory.getLogger(SearchService.class);
 
 	private final Map<Site, ListingSource> sources;

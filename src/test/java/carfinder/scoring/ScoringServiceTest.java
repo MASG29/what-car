@@ -41,7 +41,7 @@ class ScoringServiceTest {
 			new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(KB, new Places()),
 			Clock.fixed(Instant.parse("2026-10-31T00:00:00Z"), ZoneOffset.UTC));
 	private static final SearchLimits LIMITS = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
-			EnumSet.allOf(Fuel.class), null, null, List.of(), RealCostSettings.defaults(), null);
+			EnumSet.allOf(Fuel.class), null, null, List.of(), RealCostSettings.defaults(), null, null);
 
 	static Listing clio(Site site, String id, Integer price, Integer year, Integer km, boolean parts) {
 		return TestListings.of(new RawListing(site, id, "https://example.test/" + id, "Clio " + id, price, "Renault",
@@ -192,6 +192,45 @@ class ScoringServiceTest {
 		Listing bad = clioSaying("bad", "riscos, amolgadelas, ferrugem, fumo", 1); // photos 0.1, rank 0.1
 		ScoringService.Ranking r = service.rank(List.of(bad), List.of(), LIMITS,
 				Preset.CUSTOM, new Weights(0, 0, 0, 0, 1));
+		assertThat(r.ranked().getFirst().rank()).isZero();
+	}
+
+	private static SearchLimits showingDamaged() {
+		return new SearchLimits(5000, PriceCap.ASKING, 300000, 1995, EnumSet.allOf(Fuel.class), null, null,
+				List.of(), RealCostSettings.defaults(), null, true);
+	}
+
+	@Test
+	void rank_damagedAd_droppedByDefault() {
+		Listing bad = clioSaying("bad", "Motor gripado.");
+		ScoringService.Ranking r = service.rank(List.of(bad), List.of(), LIMITS, Preset.BALANCED, null);
+		assertThat(r.ranked()).isEmpty();
+		assertThat(r.excluded()).singleElement().satisfies(e -> assertThat(e.reasonsPt())
+				.containsExactly("precisa de reparação (motor gripado)"));
+	}
+
+	@Test
+	void rank_damagedAdShown_penalisedWithWarningAndNote() {
+		Listing plain = clioSaying("plain", null);
+		Listing bad = clioSaying("bad", "Motor gripado.");
+		List<ScoredListing> ranked = service.rank(List.of(plain, bad), List.of(), showingDamaged(), Preset.BALANCED,
+				null).ranked();
+
+		assertThat(ranked).extracting(x -> x.listing().getExternalId()).containsExactly("plain", "bad");
+		ScoredListing p = ranked.get(0);
+		ScoredListing x = ranked.get(1);
+		assertThat(x.total()).isEqualTo(p.total());
+		assertThat(x.rank()).isCloseTo(Math.max(0, p.rank() - 0.15), within(1e-9));
+		assertThat(x.warningsPt()).contains("Precisa de reparação: motor gripado");
+		assertThat(x.notesPt()).contains("custo da reparação: sem dados");
+		assertThat(x.whyPt()).endsWith("−0,15 por precisa de reparação (motor gripado).");
+	}
+
+	@Test
+	void rank_damagePenaltyAddsToProblems_flooredAtZero() {
+		Listing bad = clioSaying("bad", "Batido, riscos, ferrugem.", 1);
+		ScoringService.Ranking r = service.rank(List.of(bad), List.of(), showingDamaged(), Preset.CUSTOM,
+				new Weights(0, 0, 0, 0, 1));
 		assertThat(r.ranked().getFirst().rank()).isZero();
 	}
 
