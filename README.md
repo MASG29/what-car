@@ -77,7 +77,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   description, which often gives the year, km, fuel, gearbox and condition. It does this logged
   out: no account, no cookies, plain HTTP with the headers a browser sends, only
   `https://www.facebook.com/marketplace/item/<id>/`, and it does not follow redirects. An ad that
-  Facebook shows only after login keeps its imported data. Facebook's terms forbid collecting
+  Facebook shows only after login keeps its imported data; after 3 login walls in a row the app
+  stops opening ad pages for the rest of that search (no retries). Facebook's terms forbid collecting
   data by automated means, so this part is an automated request that you run at your own risk
   (the usual one is an IP block).
 
@@ -209,7 +210,8 @@ frontend.
   caixa e o estado. Fá-lo sem sessão: sem conta, sem cookies, por HTTP simples com os cabeçalhos
   que um browser envia, só `https://www.facebook.com/marketplace/item/<id>/`, e não segue
   redirecionamentos. Um anúncio que o Facebook só mostra com login fica com os dados
-  importados. Os termos do Facebook proíbem recolher dados por meios automáticos; esta parte é
+  importados; depois de 3 pedidos de login seguidos, a aplicação deixa de abrir páginas de
+  anúncios até ao fim dessa pesquisa (sem novas tentativas). Os termos do Facebook proíbem recolher dados por meios automáticos; esta parte é
   um pedido automático que fazes por tua conta e risco (o mais comum é um bloqueio do IP).
 
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,

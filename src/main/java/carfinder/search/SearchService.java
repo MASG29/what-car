@@ -59,6 +59,8 @@ public class SearchService {
 	static final String STALE = "A aplicação foi fechada durante a pesquisa";
 	private static final Duration POOL_AGE = Duration.ofDays(30);
 	private static final Duration DETAILS_AGE = Duration.ofDays(7);
+	/** Login walls in a row after which a run stops opening that site's ad pages (no retries). */
+	static final int WALL_LIMIT = 3;
 	/** Pasted links are scored without the user's caps; only the ad's own problems exclude it. */
 	private static final SearchLimits NO_LIMITS = new SearchLimits(Integer.MAX_VALUE, null, Integer.MAX_VALUE, 1,
 			EnumSet.allOf(Fuel.class), null, null, null, null, null, null);
@@ -215,6 +217,7 @@ public class SearchService {
 			int failed = 0;
 			int walled = 0;
 			Site failedSite = null;
+			Site backedOff = null;
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
 				// Marketplace: every imported ad, however old (a HAR cannot tell when an ad was removed)
@@ -240,7 +243,13 @@ public class SearchService {
 						.filter(l -> l.getDetailFetchedAt() == null || l.getDetailFetchedAt().isBefore(stale))
 						.sorted(Comparator.comparingInt(l -> order.getOrDefault(l, Integer.MAX_VALUE)))
 						.limit(source.maxDetailsPerRun()).toList();
+				int wallsInARow = 0;
 				for (int i = 0; i < toRead.size(); i++) {
+					if (wallsInARow == WALL_LIMIT) {
+						walled += toRead.size() - i; // the rest stay unread
+						backedOff = site;
+						break;
+					}
 					Listing l = toRead.get(i);
 					String msg = site + ": a ler anúncio " + (i + 1) + " de " + toRead.size();
 					change(id, r -> r.update(RunStatus.RUNNING, msg));
@@ -248,17 +257,21 @@ public class SearchService {
 					try {
 						RawListing details = waitingForUser(id, () -> source.details(l.getUrl()));
 						store.applyDetails(l, gapsOnly(l, details));
+						wallsInARow = 0;
 					}
 					catch (SoldOrReservedException e) {
 						store.markUnavailable(site, l.getExternalId()); // excluded "vendido ou reservado" from now on
+						wallsInARow = 0;
 					}
 					catch (LoginWallException e) {
 						// the page needs a login: the ad keeps its imported data; says nothing about the parser
 						walled++;
+						wallsInARow++;
 					}
 					catch (SourceException e) {
 						// a removed ad (404) keeps its search-page data
 						log.info("Advert page failed for {}: {}", l.getUrl(), e.getMessage());
+						wallsInARow = 0;
 						failed++;
 						failedSite = site;
 					}
@@ -272,7 +285,9 @@ public class SearchService {
 			int unread = failed + walled;
 			String done = "Pesquisa concluída: " + collected + (collected == 1 ? " anúncio recolhido." : " anúncios recolhidos.")
 					+ (unread == 0 ? "" : " Não foi possível ler " + unread + (unread == 1 ? " anúncio" : " anúncios")
-							+ " em detalhe; ficam com os dados da pesquisa.");
+							+ " em detalhe; ficam com os dados da pesquisa.")
+					+ (backedOff == null ? "" : " O " + backedOff.label + " pediu login " + WALL_LIMIT
+							+ " vezes seguidas; parei de abrir anúncios desse site nesta pesquisa.");
 			finish(id, RunStatus.DONE, done);
 		}
 		catch (SourceException e) {

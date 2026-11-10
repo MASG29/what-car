@@ -508,6 +508,43 @@ class SearchServiceTest {
 	}
 
 	@Test
+	void backOff_afterThreeWallsInARow() {
+		for (int i = 0; i < 5; i++) {
+			store.upsert(marketplace("b" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		verify(mp, org.mockito.Mockito.times(3)).details(anyString());
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.DONE);
+		assertThat(v.messagePt()).contains("Não foi possível ler 5 anúncios em detalhe").contains("3 vezes seguidas");
+	}
+
+	@Test
+	void backOff_streakResetByReadPage() {
+		for (int i = 0; i < 5; i++) {
+			store.upsert(marketplace("r" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		var wall = new carfinder.source.marketplace.LoginWallException();
+		when(mp.details(anyString())).thenThrow(wall, wall)
+				.thenAnswer(a -> marketplace(a.<String>getArgument(0).replaceAll(".*/item/([^/]+)/$", "$1"), 2000))
+				.thenThrow(wall, wall);
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		verify(mp, org.mockito.Mockito.times(5)).details(anyString());
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.DONE);
+		assertThat(v.messagePt()).contains("Não foi possível ler 4 anúncios em detalhe").doesNotContain("seguidas");
+	}
+
+	@Test
 	void marketplaceDetails_fillGapsOnly_importedKmAndYearKept() {
 		store.upsert(marketplace("g1", 2000)); // imported: 2008, 150000 km
 		RawListing noKm = marketplace("g2", 2100);
