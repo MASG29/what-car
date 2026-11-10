@@ -44,6 +44,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
 - The REST API is documented at http://127.0.0.1:8090/swagger-ui.html.
 - Tests: `./mvnw verify`. Database tests use Testcontainers, so Docker must be running.
 - Frontend development: `cd frontend && npm run dev`. Vite proxies `/api` to 127.0.0.1:8090.
+- "Dados guardados" (bottom of the page) lists each HAR import and deletes one import (only the
+  ads no other import holds), all saved searches, or all data. Your limits and weights stay.
 
 ### Sites
 
@@ -179,6 +181,9 @@ frontend.
   de estar a correr.
 - Desenvolvimento do frontend: `cd frontend && npm run dev`. O Vite encaminha `/api` para
   127.0.0.1:8090.
+- "Dados guardados" (no fim da página) mostra cada importação de HAR e apaga uma importação (só
+  os anúncios que nenhuma outra tem), todas as pesquisas guardadas ou todos os dados. Os teus
+  limites e pesos ficam.
 
 ### Sites
 

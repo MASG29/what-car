@@ -145,3 +145,10 @@ export const formatEur = (n: number) => eur.format(n)
 export const formatInt = (n: number) =>
   Math.abs(n) < 10000 ? String(n) : String(n).replace(/\B(?=(\d{3})+(?!\d))/g, '\u00a0')
 export const pct = (x: number) => `${Math.round(x * 100)}\u00a0%`
+
+export type ImportBatch = { id: number; site: Site; importedAt: string; read: number; added: number; listings: number }
+const del = (url: string) => call<{ deleted: number }>(url, { method: 'DELETE' })
+export const listImports = () => call<ImportBatch[]>('/api/imports')
+export const deleteImport = (id: number) => del(`/api/imports/${id}`)
+export const deleteSearches = () => del('/api/searches')
+export const deleteAllData = () => del('/api/data')

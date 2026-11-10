@@ -57,23 +57,29 @@ class ImportControllerTest {
 	ListingStore store;
 	@Autowired
 	ListingRepository listings;
+	@Autowired
+	org.springframework.jdbc.core.JdbcTemplate jdbc;
 
 	private final SearchService search = mock(SearchService.class);
 	private MockMvc mvc;
+	private carfinder.data.DataStore data;
 
 	@BeforeEach
 	@SuppressWarnings("unchecked")
 	void setUp() {
+		jdbc.update("DELETE FROM import_batch");
 		listings.deleteAll();
 		when(search.whileIdle(any())).thenAnswer(inv -> ((Supplier<Object>) inv.getArgument(0)).get());
 		MarketplaceFeedParser parser = new MarketplaceFeedParser(
 				new MarketplaceTitle(KnowledgeLoader.loadClasspath()),
 				new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
-		mvc = MockMvcBuilders.standaloneSetup(new ImportController(parser, store, listings, search)).build();
+		data = new carfinder.data.DataStore(jdbc, java.time.Clock.systemUTC());
+		mvc = MockMvcBuilders.standaloneSetup(new ImportController(parser, store, listings, search, data)).build();
 	}
 
 	@AfterEach
 	void tearDown() {
+		jdbc.update("DELETE FROM import_batch");
 		listings.deleteAll(); // writes commit here; other test classes share the database
 	}
 
@@ -94,6 +100,19 @@ class ImportControllerTest {
 		mvc.perform(post("/api/imports/marketplace").contentType(MediaType.APPLICATION_OCTET_STREAM)
 				.content(Files.readAllBytes(FIXTURE))).andExpect(status().isOk())
 				.andExpect(jsonPath("$.read").value(6)).andExpect(jsonPath("$.added").value(0));
+	}
+
+	@Test
+	void importRecordsBatch() throws Exception {
+		importFixture();
+		importFixture();
+
+		assertThat(data.imports()).hasSize(2).allSatisfy(b -> {
+			assertThat(b.site()).isEqualTo(Site.MARKETPLACE);
+			assertThat(b.read()).isEqualTo(6);
+			assertThat(b.listings()).isEqualTo(4);
+		});
+		assertThat(data.imports()).extracting(b -> b.added()).containsExactly(0, 4);
 	}
 
 	@Test

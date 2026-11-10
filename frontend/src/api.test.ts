@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { formatInt, getRun, pct, pollFailure, startSearch } from './api'
+import { deleteImport, formatInt, getRun, pct, pollFailure, startSearch } from './api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -37,4 +37,11 @@ test('startSearch_400WithSuggestion_carriesIt', async () => {
   const err = await startSearch({} as never).catch((e) => e)
   expect(err.status).toBe(400)
   expect(err.suggestion).toBe('Ford Fiesta')
+})
+
+test('deleteImport_sendsDeleteToImportId', async () => {
+  const fetchMock = vi.fn(async () => new Response(JSON.stringify({ deleted: 3 }), { status: 200 }))
+  vi.stubGlobal('fetch', fetchMock)
+  expect(await deleteImport(7)).toEqual({ deleted: 3 })
+  expect(fetchMock).toHaveBeenCalledWith('/api/imports/7', { method: 'DELETE' })
 })

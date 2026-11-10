@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react'
 import { type ApiError, getResults, getRun, pollFailure, type Preset, type Ranking, type RunView, type Scoring, type Site, startSearch } from './api'
+import { DataPanel } from './components/DataPanel'
 import { LinkScorer } from './components/LinkScorer'
 import { PresetPicker } from './components/PresetPicker'
 import { Results } from './components/Results'
@@ -86,6 +87,14 @@ export default function App() {
     }
   }
 
+  /** Saved searches are gone: forget the run reloaded on start and its results. */
+  function forgetRun() {
+    localStorage.removeItem(RUN_ID)
+    setRunId(null)
+    setRun(null)
+    setRanking(null)
+  }
+
   function changeSliders(s: number[]) {
     setSliders(s)
     localStorage.setItem(SLIDERS, JSON.stringify(s))
@@ -132,6 +141,7 @@ export default function App() {
       {ranking && <Results ranking={ranking} />}
 
       <LinkScorer scoring={scoring} limits={validateLimits(form).length === 0 ? toSearchLimits(form) : null} />
+      <DataPanel disabled={running} onCleared={forgetRun} />
     </main>
   )
 }
