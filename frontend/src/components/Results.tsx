@@ -2,6 +2,7 @@ import { useState } from 'react'
 import type { Ranking } from '../api'
 import { adFacts, ResultCard } from './ResultCard'
 import { Source } from './Source'
+import { unreadMarketplace } from '../marketplace'
 
 /**
  * Ranked ads in two tabs: the normal list (top 5 first, highlighted) and the suspect ones (price well below
@@ -41,6 +42,7 @@ export function Results({ ranking }: { ranking: Ranking }) {
         <ResultCard key={s.listing.url} s={s} position={i + 1} />
       ))}
       <Excluded ranking={ranking} />
+      <Unread ranking={ranking} />
     </section>
   )
 }
@@ -62,6 +64,28 @@ export function Excluded({ ranking }: { ranking: Ranking }) {
           <li key={e.listing.url}>
             <Source url={e.listing.url} label={e.listing.title} /> — {adFacts(e.listing)}
             <div className="muted">{e.reasonsPt.join('; ')}</div>
+          </li>
+        ))}
+      </ul>
+    </details>
+  )
+}
+
+/** Marketplace ads whose page Facebook only shows after login: the user opens them in their own browser. */
+function Unread({ ranking }: { ranking: Ranking }) {
+  const ads = unreadMarketplace(ranking)
+  if (ads.length === 0) return null
+  return (
+    <details className="panel">
+      <summary>Anúncios que não consegui abrir ({ads.length})</summary>
+      <p className="muted">
+        A aplicação não conseguiu ler a página destes anúncios (quase sempre porque o Facebook pediu login), por isso
+        estão ordenados só com os dados importados. Abre-os tu e confirma a descrição.
+      </p>
+      <ul>
+        {ads.map((a) => (
+          <li key={a.url}>
+            <Source url={a.url} label={a.title} /> — {adFacts(a)}
           </li>
         ))}
       </ul>

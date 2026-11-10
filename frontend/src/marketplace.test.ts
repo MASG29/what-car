@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { emptyForm } from './limits'
-import { importedAgoPt, importSummaryPt, marketplaceSearchUrl } from './marketplace'
+import type { Ranking, Scored } from './api'
+import { importedAgoPt, importSummaryPt, marketplaceSearchUrl, unreadMarketplace } from './marketplace'
 
 describe('marketplaceSearchUrl', () => {
   it('holds the max price only (Facebook ignores year and km in the link)', () => {
@@ -27,5 +28,23 @@ describe('importSummaryPt', () => {
       '6 anúncios lidos, 4 novos, 2 vendidos ou reservados.',
     )
     expect(importSummaryPt({ read: 1, added: 1, unavailable: 0 })).toBe('1 anúncio lido, 1 novo.')
+  })
+})
+
+describe('unreadMarketplace', () => {
+  const scored = (site: 'MARKETPLACE' | 'STANDVIRTUAL', url: string, detailFetched: boolean, suspect = false) =>
+    ({ listing: { site, url, detailFetched }, suspect }) as unknown as Scored
+  it('lists Marketplace ads whose page was not read, in rank order, suspects included', () => {
+    const ranking = {
+      ranked: [
+        scored('MARKETPLACE', 'a', false),
+        scored('STANDVIRTUAL', 'b', false),
+        scored('MARKETPLACE', 'c', true),
+        scored('MARKETPLACE', 'd', false, true),
+      ],
+      excluded: [],
+      excludedByReason: {},
+    } as Ranking
+    expect(unreadMarketplace(ranking).map((a) => a.url)).toEqual(['a', 'd'])
   })
 })

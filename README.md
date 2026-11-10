@@ -81,7 +81,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   out: no account, no cookies, plain HTTP with the headers a browser sends, only
   `https://www.facebook.com/marketplace/item/<id>/`, and it does not follow redirects. An ad that
   Facebook shows only after login keeps its imported data; after 3 login walls in a row the app
-  stops opening ad pages for the rest of that search (no retries). Facebook's terms forbid collecting
+  stops opening ad pages for the rest of that search (no retries). Below the results, "Anúncios que
+  não consegui abrir" lists those ads with their links so you can open them yourself. Facebook's terms forbid collecting
   data by automated means, so this part is an automated request that you run at your own risk
   (the usual one is an IP block).
 
@@ -217,7 +218,8 @@ frontend.
   que um browser envia, só `https://www.facebook.com/marketplace/item/<id>/`, e não segue
   redirecionamentos. Um anúncio que o Facebook só mostra com login fica com os dados
   importados; depois de 3 pedidos de login seguidos, a aplicação deixa de abrir páginas de
-  anúncios até ao fim dessa pesquisa (sem novas tentativas). Os termos do Facebook proíbem recolher dados por meios automáticos; esta parte é
+  anúncios até ao fim dessa pesquisa (sem novas tentativas). Abaixo dos resultados, "Anúncios que
+  não consegui abrir" mostra esses anúncios com o link, para os abrires tu. Os termos do Facebook proíbem recolher dados por meios automáticos; esta parte é
   um pedido automático que fazes por tua conta e risco (o mais comum é um bloqueio do IP).
 
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,

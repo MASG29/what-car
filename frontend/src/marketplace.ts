@@ -1,3 +1,4 @@
+import type { Ad, Ranking } from './api'
 import type { LimitsForm } from './limits'
 
 /**
@@ -10,6 +11,10 @@ export function marketplaceSearchUrl(form: LimitsForm): string {
   url.searchParams.set('exact', 'false')
   return url.toString()
 }
+
+/** Ranked Marketplace ads whose page the app could not open (login wall or back-off), best first. */
+export const unreadMarketplace = (r: Ranking): Ad[] =>
+  r.ranked.filter((s) => s.listing.site === 'MARKETPLACE' && !s.listing.detailFetched).map((s) => s.listing)
 
 export type ImportResult = { read: number; added: number; unavailable: number }
 
