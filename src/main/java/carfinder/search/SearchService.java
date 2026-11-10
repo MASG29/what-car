@@ -236,6 +236,7 @@ public class SearchService {
 			int walled = 0;
 			Site failedSite = null;
 			Site backedOff = null;
+			int skipped = 0; // left unread after a back-off; not part of the broken-parser rule
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
 				// Marketplace: every imported ad, however old (a HAR cannot tell when an ad was removed)
@@ -264,7 +265,7 @@ public class SearchService {
 				int wallsInARow = 0;
 				for (int i = 0; i < toRead.size(); i++) {
 					if (wallsInARow == WALL_LIMIT) {
-						walled += toRead.size() - i; // the rest stay unread
+						skipped += toRead.size() - i; // the rest stay unread
 						backedOff = site;
 						break;
 					}
@@ -300,7 +301,7 @@ public class SearchService {
 				throw new SourceException(failedSite.formatChangedPt());
 			}
 			int collected = runs.findById(id).orElseThrow().getCollected();
-			int unread = failed + walled;
+			int unread = failed + walled + skipped;
 			String done = "Pesquisa concluída: " + collected + (collected == 1 ? " anúncio recolhido." : " anúncios recolhidos.")
 					+ (unread == 0 ? "" : " Não foi possível ler " + unread + (unread == 1 ? " anúncio" : " anúncios")
 							+ " em detalhe; ficam com os dados da pesquisa.")

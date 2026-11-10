@@ -561,6 +561,24 @@ class SearchServiceTest {
 	}
 
 	@Test
+	void backOff_skippedAdsDoNotHideABrokenParser() {
+		for (int i = 0; i < 8; i++) {
+			store.upsert(marketplace("p" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		var wall = new carfinder.source.marketplace.LoginWallException();
+		var broken = new SourceException("parse");
+		when(mp.details(anyString())).thenThrow(broken, broken, broken, wall, wall, wall);
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.FAILED);
+		assertThat(v.messagePt()).isEqualTo(Site.MARKETPLACE.formatChangedPt());
+	}
+
+	@Test
 	void backOff_streakResetByReadPage() {
 		for (int i = 0; i < 5; i++) {
 			store.upsert(marketplace("r" + i, 2000 + i));
