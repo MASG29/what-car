@@ -126,17 +126,8 @@ public class SearchService {
 			throw new IllegalArgumentException("Indica o centro e o raio da pesquisa");
 		}
 		places.centre(limits.centre()); // unknown or ambiguous centre fails before the run starts
-		Generation typed = null;
-		String text = limits.makeModel();
-		if (text != null) {
-			typed = kb.recogniseTyped(text).orElseThrow(
-					() -> new UnknownMakeModelException(text, kb.closestMakeModel(text).orElse(null)));
-			// the typed model replaces the shortlist / every B/C model (Marco, 2026-11-09)
-			String name = typed.make() + " " + typed.model();
-			limits = new SearchLimits(limits.maxPriceEur(), limits.priceCap(), limits.maxKm(), limits.minYear(),
-					limits.fuels(), limits.centre(), limits.radiusKm(), List.of(name), limits.realCost(),
-					limits.minDoors(), limits.showDamaged(), name);
-		}
+		Generation typed = typed(limits);
+		limits = narrowed(limits, typed);
 		if (!busy.compareAndSet(false, true)) {
 			throw new IllegalStateException(BUSY);
 		}
@@ -188,13 +179,32 @@ public class SearchService {
 		if (source == null) {
 			throw new IllegalArgumentException(UNSUPPORTED);
 		}
+		SearchLimits caps = limits == null ? NO_LIMITS : narrowed(limits, typed(limits));
 		Preset p = preset == null ? Preset.BALANCED : preset;
 		p.weights(custom);
 		RawListing fetched = source.details(url);
 		RawListing raw = listings.findBySiteAndExternalId(site, fetched.externalId()).map(l -> gapsOnly(l, fetched))
 				.orElse(fetched);
-		Listing l = store.applyDetails(store.upsert(raw), raw);
-		return scoring.rank(List.of(l), pool(), limits == null ? NO_LIMITS : limits, p, custom);
+		Listing stored = store.applyDetails(store.upsert(raw), raw);
+		return scoring.rank(List.of(stored), pool(), caps, p, custom);
+	}
+
+	/** The typed make and model, or null when none was typed; unknown text fails with a suggestion. */
+	private Generation typed(SearchLimits limits) {
+		String text = limits.makeModel();
+		return text == null ? null : kb.recogniseTyped(text).orElseThrow(
+				() -> new UnknownMakeModelException(text, kb.closestMakeModel(text).orElse(null)));
+	}
+
+	/** The typed model replaces the shortlist / every B/C model (Marco, 2026-11-09). */
+	private static SearchLimits narrowed(SearchLimits limits, Generation typed) {
+		if (typed == null) {
+			return limits;
+		}
+		String name = typed.make() + " " + typed.model();
+		return new SearchLimits(limits.maxPriceEur(), limits.priceCap(), limits.maxKm(), limits.minYear(),
+				limits.fuels(), limits.centre(), limits.radiusKm(), List.of(name), limits.realCost(), limits.minDoors(),
+				limits.showDamaged(), name);
 	}
 
 	/**

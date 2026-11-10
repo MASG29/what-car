@@ -390,6 +390,18 @@ class SearchServiceTest {
 	}
 
 	@Test
+	void scoreLink_typedModelReplacesModelScope() {
+		RawListing a = clio("t", 2000, 150000);
+		when(source.details(a.url())).thenReturn(detailed(a));
+		SearchLimits shortlistPlusTyped = new SearchLimits(5000, PriceCap.ASKING, 300000, 1995,
+				EnumSet.allOf(Fuel.class), null, null, List.of("Ford Fiesta"), null, null, null, "renault clio");
+
+		ScoringService.Ranking r = service().scoreLink(Site.STANDVIRTUAL, a.url(), shortlistPlusTyped, null, null);
+
+		assertThat(r.ranked()).hasSize(1);
+	}
+
+	@Test
 	void scoreLink_readsAdvertAndRanksItAlone() {
 		RawListing a = clio("a", 2000, 150000);
 		when(source.details(a.url())).thenReturn(detailed(a));
