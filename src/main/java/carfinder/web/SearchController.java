@@ -2,6 +2,7 @@ package carfinder.web;
 
 import carfinder.search.RunView;
 import carfinder.search.SearchService;
+import carfinder.search.UnknownMakeModelException;
 import carfinder.web.dto.ErrorDto;
 import carfinder.web.dto.RankingDto;
 import carfinder.web.dto.SearchStarted;
@@ -50,6 +51,12 @@ public class SearchController {
 	@ResponseStatus(HttpStatus.CONFLICT)
 	ErrorDto busy(IllegalStateException e) {
 		return new ErrorDto(e.getMessage());
+	}
+
+	@ExceptionHandler(UnknownMakeModelException.class)
+	@ResponseStatus(HttpStatus.BAD_REQUEST)
+	ErrorDto unknownMakeModel(UnknownMakeModelException e) {
+		return new ErrorDto(e.getMessage(), e.suggestion());
 	}
 
 	@ExceptionHandler(IllegalArgumentException.class)

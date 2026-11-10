@@ -1,6 +1,8 @@
 package carfinder.search;
 
 import carfinder.geo.Places;
+import carfinder.knowledge.Generation;
+import carfinder.knowledge.KnowledgeBase;
 import carfinder.listing.Fuel;
 import carfinder.listing.Listing;
 import carfinder.listing.ListingRepository;
@@ -74,6 +76,7 @@ public class SearchService {
 	private final JsonMapper json;
 	private final Clock clock;
 	private final Places places;
+	private final KnowledgeBase kb;
 	private final Executor executor;
 	private final Duration needsUserTimeout;
 	private final Duration needsUserRetry;
@@ -83,15 +86,16 @@ public class SearchService {
 	public SearchService(List<ListingSource> sources, ListingStore store, ListingRepository listings,
 			SearchRunRepository runs, ScoringService scoring, JsonMapper json, Clock clock,
 			@Value("${carfinder.needs-user-timeout}") Duration needsUserTimeout,
-			@Value("${carfinder.needs-user-retry}") Duration needsUserRetry, Places places) {
+			@Value("${carfinder.needs-user-retry}") Duration needsUserRetry, Places places, KnowledgeBase kb) {
 		this(sources, store, listings, runs, scoring, json, clock, Executors.newSingleThreadExecutor(),
-				needsUserTimeout, needsUserRetry, places);
+				needsUserTimeout, needsUserRetry, places, kb);
 	}
 
 	SearchService(List<ListingSource> sources, ListingStore store, ListingRepository listings,
 			SearchRunRepository runs, ScoringService scoring, JsonMapper json, Clock clock, Executor executor,
-			Duration needsUserTimeout, Duration needsUserRetry, Places places) {
+			Duration needsUserTimeout, Duration needsUserRetry, Places places, KnowledgeBase kb) {
 		this.places = places;
+		this.kb = kb;
 		this.sources = sources.stream().collect(Collectors.toMap(ListingSource::site, Function.identity()));
 		this.store = store;
 		this.listings = listings;
@@ -122,6 +126,17 @@ public class SearchService {
 			throw new IllegalArgumentException("Indica o centro e o raio da pesquisa");
 		}
 		places.centre(limits.centre()); // unknown or ambiguous centre fails before the run starts
+		Generation typed = null;
+		String text = limits.makeModel();
+		if (text != null) {
+			typed = kb.recogniseTyped(text).orElseThrow(
+					() -> new UnknownMakeModelException(text, kb.closestMakeModel(text).orElse(null)));
+			// the typed model replaces the shortlist / every B/C model (Marco, 2026-11-09)
+			String name = typed.make() + " " + typed.model();
+			limits = new SearchLimits(limits.maxPriceEur(), limits.priceCap(), limits.maxKm(), limits.minYear(),
+					limits.fuels(), limits.centre(), limits.radiusKm(), List.of(name), limits.realCost(),
+					limits.minDoors(), limits.showDamaged(), name);
+		}
 		if (!busy.compareAndSet(false, true)) {
 			throw new IllegalStateException(BUSY);
 		}
@@ -129,7 +144,9 @@ public class SearchService {
 			UUID id = UUID.randomUUID();
 			runs.save(new SearchRun(id, json.writeValueAsString(limits), preset,
 					custom == null ? null : json.writeValueAsString(custom), sites, clock.instant()));
-			executor.execute(() -> run(id, limits, sites));
+			SearchLimits l = limits;
+			Generation g = typed;
+			executor.execute(() -> run(id, l, sites, g));
 			return id;
 		}
 		catch (RuntimeException e) {
@@ -209,9 +226,10 @@ public class SearchService {
 		}
 	}
 
-	private void run(UUID id, SearchLimits limits, Set<Site> sites) {
+	private void run(UUID id, SearchLimits limits, Set<Site> sites, Generation typed) {
 		try {
-			SearchQuery query = new SearchQuery(limits.maxPriceEur(), limits.maxKm(), limits.minYear());
+			SearchQuery query = new SearchQuery(limits.maxPriceEur(), limits.maxKm(), limits.minYear(),
+					typed == null ? null : typed.make(), typed == null ? null : typed.model());
 			Preset anyPreset = Preset.BALANCED; // the filter does not depend on weights
 			int attempted = 0;
 			int failed = 0;

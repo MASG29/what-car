@@ -47,7 +47,7 @@ class StandvirtualSourceTest {
 			String path = ex.getRequestURI().getPath();
 			int status = 200;
 			String body;
-			if (path.equals("/carros")) {
+			if (path.equals("/carros") || path.equals("/carros/toyota/yaris")) {
 				String q = ex.getRequestURI().getQuery();
 				boolean later = emptyAfterFirstPage && q != null && q.matches(".*page=([2-9]|\\d\\d+).*");
 				body = later ? withoutEdges(searchHtml) : searchHtml;
@@ -92,6 +92,13 @@ class StandvirtualSourceTest {
 
 	private static long searchRequests(List<String> requests) {
 		return requests.stream().filter(r -> r.startsWith("/carros?")).count();
+	}
+
+	@Test
+	void search_withMakeModel_requestsModelPath() {
+		source(1).search(new SearchQuery(2500, null, null, "Toyota", "Yaris"), p -> { });
+
+		assertThat(requests).first().asString().startsWith("/carros/toyota/yaris?");
 	}
 
 	@Test

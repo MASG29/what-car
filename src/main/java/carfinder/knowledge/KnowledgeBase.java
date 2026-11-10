@@ -65,6 +65,60 @@ public final class KnowledgeBase {
 		return Optional.ofNullable(best);
 	}
 
+	/**
+	 * What the user typed as "make model": as in a title, or a model alone that only one make has ("fiesta"). A bare
+	 * digit ("2") is never a model on its own.
+	 */
+	public Optional<Generation> recogniseTyped(String text) {
+		Optional<Generation> g = recogniseMakeModel(text);
+		if (g.isPresent()) {
+			return g;
+		}
+		String t = word(text);
+		if (t.strip().matches("\\d")) {
+			return Optional.empty();
+		}
+		List<Generation> same = generations.stream().filter(x -> word(x.model()).equals(t)).toList();
+		return same.stream().map(Generation::make).distinct().count() == 1 ? Optional.of(same.get(0)) : Optional.empty();
+	}
+
+	/**
+	 * The known "Make Model" closest to a typo ("ford fiesa" → "Ford Fiesta"), matched against "make model" and the
+	 * model alone. At most 1 edit for short names, 2 from 8 characters, so unrelated words get no suggestion.
+	 */
+	public Optional<String> closestMakeModel(String text) {
+		String t = word(text).strip();
+		String best = null;
+		int bestDistance = Integer.MAX_VALUE;
+		for (Generation g : generations) {
+			for (String candidate : List.of(word(g.make() + " " + g.model()).strip(), word(g.model()).strip())) {
+				int d = levenshtein(t, candidate);
+				if (d <= (candidate.length() >= 8 ? 2 : 1) && candidate.length() > 2 && d < bestDistance) {
+					best = g.make() + " " + g.model();
+					bestDistance = d;
+				}
+			}
+		}
+		return Optional.ofNullable(best);
+	}
+
+	private static int levenshtein(String a, String b) {
+		int[] prev = new int[b.length() + 1];
+		for (int j = 0; j <= b.length(); j++) {
+			prev[j] = j;
+		}
+		for (int i = 1; i <= a.length(); i++) {
+			int[] cur = new int[b.length() + 1];
+			cur[0] = i;
+			for (int j = 1; j <= b.length(); j++) {
+				int sub = prev[j - 1] + (a.charAt(i - 1) == b.charAt(j - 1) ? 0 : 1);
+				cur[j] = Math.min(sub, Math.min(prev[j] + 1, cur[j - 1] + 1));
+			}
+			prev = cur;
+		}
+		return prev[b.length()];
+	}
+
 	private static String word(String s) {
 		return " " + Text.normalise(s).replaceAll("[^a-z0-9]+", " ").strip() + " ";
 	}

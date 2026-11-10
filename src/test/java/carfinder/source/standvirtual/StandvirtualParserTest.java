@@ -78,6 +78,19 @@ class StandvirtualParserTest {
 	}
 
 	@Test
+	void searchUrl_withMakeModel_pathHasSlugs() {
+		URI base = URI.create("https://www.standvirtual.com");
+		assertThat(StandvirtualUrls.search(base, 2500, 1, "Toyota", "Yaris").getPath()).isEqualTo("/carros/toyota/yaris");
+		assertThat(StandvirtualUrls.search(base, 2500, 1, "Volkswagen", "Golf").getPath()).isEqualTo("/carros/vw/golf");
+		assertThat(StandvirtualUrls.search(base, 2500, 1, "Citroën", "C3").getPath()).isEqualTo("/carros/citroen/c3");
+		assertThat(StandvirtualUrls.search(base, 2500, 1, "Fiat", "Grande Punto").getPath())
+				.isEqualTo("/carros/fiat/grande-punto");
+		assertThat(StandvirtualUrls.search(base, 2500, 1, null, null).getPath()).isEqualTo("/carros");
+		assertThat(StandvirtualUrls.search(base, 2500, 2, "Toyota", "Yaris").getQuery())
+				.contains("search[filter_float_price:to]=2500").contains("page=2");
+	}
+
+	@Test
 	void searchUrl_containsPriceAndPage() {
 		URI uri = StandvirtualUrls.search(URI.create("https://www.standvirtual.com"), 2500, 3);
 

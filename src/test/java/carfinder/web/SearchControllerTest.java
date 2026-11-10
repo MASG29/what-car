@@ -69,6 +69,25 @@ class SearchControllerTest {
 	}
 
 	@Test
+	void unknownMakeModel_400WithSuggestion() throws Exception {
+		when(service.start(any(), any(), any(), any()))
+				.thenThrow(new carfinder.search.UnknownMakeModelException("Ford Fiesa", "Ford Fiesta"));
+
+		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))
+				.andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.messagePt").value(org.hamcrest.Matchers.startsWith("Marca e modelo desconhecidos")))
+				.andExpect(jsonPath("$.suggestion").value("Ford Fiesta"));
+	}
+
+	@Test
+	void plainBadRequest_hasNoSuggestionField() throws Exception {
+		when(service.start(any(), any(), any(), any())).thenThrow(new IllegalArgumentException("x"));
+
+		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))
+				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.suggestion").doesNotExist());
+	}
+
+	@Test
 	void postSearch_minDoors_optionalAndPassedOn() throws Exception {
 		when(service.start(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
 		String withDoors = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "

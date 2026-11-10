@@ -29,6 +29,8 @@ export type SearchLimits = {
   minDoors: number | null
   /** true = keep ads that need repair (warning, lower rank); false = drop them */
   showDamaged: boolean
+  /** typed "make model", null = none; replaces models and goes into the site searches */
+  makeModel: string | null
 }
 
 /** value null = "sem dados". */
@@ -94,7 +96,8 @@ export type Scoring = { preset: Preset; customWeights: Weights | null }
 
 const GENERIC_ERROR = 'O pedido não foi aceite. Revê os dados e tenta de novo.'
 
-export type ApiError = Error & { status?: number }
+/** suggestion: what the server thinks the user meant ("Ford Fiesta"), when it has one. */
+export type ApiError = Error & { status?: number; suggestion?: string }
 
 /** Errors carry the HTTP status and the server's messagePt when it sends one; Spring's default 400 body has none. */
 async function call<T>(url: string, init?: RequestInit): Promise<T> {
@@ -107,7 +110,8 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
   if (res.ok) return res.json()
   const body = await res.json().catch(() => null)
   const message = typeof body?.messagePt === 'string' && body.messagePt ? body.messagePt : GENERIC_ERROR
-  throw Object.assign(new Error(message), { status: res.status })
+  const suggestion = typeof body?.suggestion === 'string' ? body.suggestion : undefined
+  throw Object.assign(new Error(message), { status: res.status, suggestion })
 }
 
 const post = <T>(url: string, body: unknown) =>

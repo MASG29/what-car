@@ -29,6 +29,8 @@ export type LimitsForm = {
   showDamaged?: boolean
   /** true = every B/C model in the knowledge base; absent in forms saved before the field existed */
   allBC?: boolean
+  /** typed "make model"; empty = none; absent in forms saved before the field existed */
+  makeModel?: string
   realCost: RealCostSettings
 }
 
@@ -80,4 +82,5 @@ export const toSearchLimits = (f: LimitsForm): SearchLimits => ({
   centre: (f.centre ?? '').trim(), radiusKm: Number(f.radiusKm),
   minDoors: (f.minDoors ?? '').trim() === '' ? null : Number(f.minDoors),
   showDamaged: f.showDamaged ?? false,
+  makeModel: (f.makeModel ?? '').trim() || null,
 })

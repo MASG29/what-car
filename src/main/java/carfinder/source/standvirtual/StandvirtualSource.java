@@ -51,7 +51,8 @@ public class StandvirtualSource implements ListingSource {
 		int page = 1;
 		while (true) {
 			SearchPage result = searchParser.parseSearchPage(
-					get(StandvirtualUrls.search(URI.create(props.baseUrl()), query.maxPriceEur(), page)));
+					get(StandvirtualUrls.search(URI.create(props.baseUrl()), query.maxPriceEur(), page,
+							query.make(), query.model())));
 			result.listings().forEach(l -> byId.putIfAbsent(l.externalId(), l));
 			int totalPages = (int) Math.ceil((double) result.totalCount() / result.pageSize());
 			progress.accept("Standvirtual: página " + page + " de " + Math.min(totalPages, props.maxPages())

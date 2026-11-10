@@ -1,5 +1,5 @@
 import { afterEach, expect, test, vi } from 'vitest'
-import { formatInt, getRun, pct, pollFailure } from './api'
+import { formatInt, getRun, pct, pollFailure, startSearch } from './api'
 
 afterEach(() => vi.unstubAllGlobals())
 
@@ -28,4 +28,13 @@ test('formatInt_separatorOnlyFromTenThousand', () => {
 
 test('pct_usesPtFormWithSpaceBeforePercent', () => {
   expect(pct(0.8)).toBe('80\u00a0%')
+})
+
+test('startSearch_400WithSuggestion_carriesIt', async () => {
+  vi.stubGlobal('fetch', vi.fn(async () => new Response(
+    JSON.stringify({ messagePt: 'Marca e modelo desconhecidos: Ford Fiesa. Será que querias dizer «Ford Fiesta»?', suggestion: 'Ford Fiesta' }),
+    { status: 400 })))
+  const err = await startSearch({} as never).catch((e) => e)
+  expect(err.status).toBe(400)
+  expect(err.suggestion).toBe('Ford Fiesta')
 })

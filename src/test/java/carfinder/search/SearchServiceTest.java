@@ -101,7 +101,7 @@ class SearchServiceTest {
 
 	private SearchService service(java.util.concurrent.Executor executor, Duration timeout) {
 		return new SearchService(List.of(source), store, listings, runs, scoring, JsonMapper.builder().build(),
-				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10), PLACES);
+				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10), PLACES, KB);
 	}
 
 	private SearchService service() {
@@ -462,7 +462,7 @@ class SearchServiceTest {
 		when(mp.site()).thenReturn(Site.MARKETPLACE);
 		when(mp.maxDetailsPerRun()).thenReturn(20);
 		return new SearchService(List.of(source, mp), store, listings, runs, scoring, JsonMapper.builder().build(),
-				Clock.systemUTC(), Runnable::run, LONG, Duration.ofMillis(10), PLACES);
+				Clock.systemUTC(), Runnable::run, LONG, Duration.ofMillis(10), PLACES, KB);
 	}
 
 	@Test
@@ -505,6 +505,42 @@ class SearchServiceTest {
 		assertThat(v.status()).isEqualTo(RunStatus.DONE);
 		assertThat(v.messagePt()).contains("Não foi possível ler 3 anúncios em detalhe");
 		assertThat(listings.findAll()).allMatch(l -> l.getDetailFetchedAt() == null);
+	}
+
+	private static SearchLimits typed(String makeModel) {
+		return new SearchLimits(5000, PriceCap.ASKING, 300000, 1995, EnumSet.allOf(Fuel.class), "Ponte de Lima", 500,
+				List.of(), null, null, null, makeModel);
+	}
+
+	@Test
+	void start_makeModel_narrowsModelsAndQuery() {
+		when(source.search(any(), any())).thenReturn(List.of());
+		SearchService s = service();
+
+		UUID id = s.start(typed(" ford fiesta "), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL));
+
+		verify(source).search(org.mockito.ArgumentMatchers.eq(new SearchQuery(5000, 300000, 1995, "Ford", "Fiesta")),
+				any());
+		SearchLimits stored = JsonMapper.builder().build().readValue(runs.findById(id).orElseThrow().getLimitsJson(),
+				SearchLimits.class);
+		assertThat(stored.models()).containsExactly("Ford Fiesta");
+		assertThat(stored.makeModel()).isEqualTo("Ford Fiesta");
+	}
+
+	@Test
+	void start_unknownMakeModel_rejectedWithSuggestion() {
+		SearchService s = service();
+
+		assertThatThrownBy(() -> s.start(typed("Ford Fiesa"), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL)))
+				.isInstanceOf(UnknownMakeModelException.class)
+				.hasMessageStartingWith("Marca e modelo desconhecidos")
+				.hasMessageContaining("Será que querias dizer «Ford Fiesta»?")
+				.extracting(e -> ((UnknownMakeModelException) e).suggestion()).isEqualTo("Ford Fiesta");
+		assertThatThrownBy(() -> s.start(typed("xyz"), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL)))
+				.isInstanceOf(UnknownMakeModelException.class)
+				.hasMessageContaining("por exemplo, Ford Fiesta")
+				.extracting(e -> ((UnknownMakeModelException) e).suggestion()).isNull();
+		assertThat(runs.findAll()).isEmpty();
 	}
 
 	@Test

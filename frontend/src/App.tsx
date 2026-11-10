@@ -31,6 +31,7 @@ export default function App() {
   const [run, setRun] = useState<RunView | null>(null)
   const [ranking, setRanking] = useState<Ranking | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const [suggestion, setSuggestion] = useState<string | null>(null)
   const [sites, setSites] = useState<Site[]>(['STANDVIRTUAL'])
 
   const errors = [...validateLimits(form), ...(sites.length === 0 ? ['Escolhe pelo menos um site.'] : [])]
@@ -70,6 +71,7 @@ export default function App() {
 
   async function search() {
     setError(null)
+    setSuggestion(null)
     setRanking(null)
     setRun(null)
     try {
@@ -80,6 +82,7 @@ export default function App() {
       setRunId(id)
     } catch (e) {
       setError((e as Error).message)
+      setSuggestion((e as ApiError).suggestion ?? null)
     }
   }
 
@@ -108,7 +111,23 @@ export default function App() {
         )}
       </div>
 
-      {error && <p className="error">{error}</p>}
+      {error && (
+        <p className="error">
+          {error}{' '}
+          {suggestion && (
+            <button
+              type="button"
+              onClick={() => {
+                setForm({ ...form, makeModel: suggestion })
+                setSuggestion(null)
+                setError(null)
+              }}
+            >
+              Usar «{suggestion}»
+            </button>
+          )}
+        </p>
+      )}
       {run && <StatusBanner run={run} />}
       {ranking && <Results ranking={ranking} />}
 

@@ -79,3 +79,9 @@ test('showDamaged_defaultsToFalse_andIsSent', () => {
   expect(validateLimits(old)).toEqual([])
   expect(toSearchLimits(old).showDamaged).toBe(false)
 })
+
+test('makeModel_trimmedOrNull', () => {
+  expect(toSearchLimits(filled).makeModel).toBeNull()
+  expect(toSearchLimits({ ...filled, makeModel: '  ' }).makeModel).toBeNull()
+  expect(toSearchLimits({ ...filled, makeModel: ' ford fiesta ' }).makeModel).toBe('ford fiesta')
+})

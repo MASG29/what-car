@@ -70,6 +70,19 @@ export function SearchForm({ form, onChange, lastUsed }: Props) {
             ? 'Todos os modelos dos segmentos B e C da base de conhecimento.'
             : `Lista do relatório: ${SHORTLIST.join(', ')}.`}
         </p>
+        <label>
+          Marca e modelo (opcional){' '}
+          <input
+            type="text"
+            placeholder="ex.: Ford Fiesta"
+            value={form.makeModel ?? ''}
+            onChange={(e) => set({ makeModel: e.target.value })}
+          />
+        </label>
+        <p className="muted">
+          Se escreveres um modelo, só esse modelo entra nos resultados (em vez da lista acima) e vai também na pesquisa
+          dos sites.
+        </p>
       </fieldset>
 
       <LocationFields form={form} onChange={set} />

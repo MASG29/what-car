@@ -57,6 +57,25 @@ class KnowledgeDataTest {
 	}
 
 	@Test
+	void recogniseTyped_modelAloneOrMakeModel() {
+		assertThat(KB.recogniseTyped("fiesta").map(g -> g.make() + " " + g.model())).hasValue("Ford Fiesta");
+		assertThat(KB.recogniseTyped("  ford   FIESTA ").map(g -> g.make() + " " + g.model())).hasValue("Ford Fiesta");
+		assertThat(KB.recogniseTyped("vw polo").map(g -> g.make() + " " + g.model())).hasValue("Volkswagen Polo");
+		assertThat(KB.recogniseTyped("c3").map(g -> g.make() + " " + g.model())).hasValue("Citroën C3");
+		assertThat(KB.recogniseTyped("toyota")).isEmpty();
+		assertThat(KB.recogniseTyped("2")).isEmpty(); // a bare digit is not a model
+	}
+
+	@Test
+	void closestMakeModel_suggestsForTypos() {
+		assertThat(KB.closestMakeModel("ford fiesa")).hasValue("Ford Fiesta");
+		assertThat(KB.closestMakeModel("fiessta")).hasValue("Ford Fiesta");
+		assertThat(KB.closestMakeModel("toyota yaros")).hasValue("Toyota Yaris");
+		assertThat(KB.closestMakeModel("abc")).isEmpty();
+		assertThat(KB.closestMakeModel("opel corsa")).isEmpty();
+	}
+
+	@Test
 	void realDataLoads() {
 		assertThat(KB.generationsFor("Renault", "Clio")).isNotEmpty();
 		assertThat(KB.gearboxRules()).isNotEmpty();
