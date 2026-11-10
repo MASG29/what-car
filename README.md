@@ -23,7 +23,7 @@ By default it searches the shortlist of models from the underlying research (Col
 Mazda2, Fiesta, Fusion, Polo, Golf, Corolla, Auris, Civic, Mazda3). The "Todos os B/C" option
 widens it to every B and C segment model in the knowledge base. Typing a make and model (for
 example "Ford Fiesta", or just "Fiesta") narrows the results to that model and puts it in
-Standvirtual's search address; a typo gets a "did you mean" suggestion. The UI is in European
+Standvirtual's search address and in the "Abrir pesquisa no Marketplace" link; a typo gets a "did you mean" suggestion. The UI is in European
 Portuguese.
 
 ### Local use only
@@ -155,7 +155,7 @@ Por omissão, pesquisa a lista curta de modelos da investigação de base (Colt,
 Mazda2, Fiesta, Fusion, Polo, Golf, Corolla, Auris, Civic, Mazda3). A opção "Todos os B/C"
 alarga a pesquisa a todos os modelos dos segmentos B e C da base de conhecimento. Se escreveres
 uma marca e modelo (por exemplo "Ford Fiesta", ou só "Fiesta"), os resultados ficam só com esse
-modelo e ele vai no endereço de pesquisa do Standvirtual; um erro de escrita dá a sugestão "Será
+modelo e ele vai no endereço de pesquisa do Standvirtual e no link "Abrir pesquisa no Marketplace"; um erro de escrita dá a sugestão "Será
 que querias dizer".
 
 ### Só para uso local

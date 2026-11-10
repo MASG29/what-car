@@ -13,6 +13,15 @@ describe('marketplaceSearchUrl', () => {
   })
 })
 
+describe('marketplaceSearchUrl with a typed make and model', () => {
+  it('adds the trimmed text as query, on the vehicles category', () => {
+    const url = new URL(marketplaceSearchUrl({ ...emptyForm(), maxPriceEur: '2500', makeModel: ' ford fiesta ' }))
+    expect(url.pathname).toBe('/marketplace/category/vehicles')
+    expect(url.searchParams.get('query')).toBe('ford fiesta')
+    expect(new URL(marketplaceSearchUrl({ ...emptyForm(), makeModel: '  ' })).searchParams.has('query')).toBe(false)
+  })
+})
+
 describe('importedAgoPt', () => {
   const now = new Date('2026-11-09T12:00:00Z')
   it('counts whole days since the last import', () => {

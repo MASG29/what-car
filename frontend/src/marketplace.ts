@@ -2,12 +2,15 @@ import type { Ad, Ranking } from './api'
 import type { LimitsForm } from './limits'
 
 /**
- * Facebook's vehicles search, opened by the user in their own browser. Only maxPrice is honoured by the link
- * (checked by hand on 2026-11-09); year and km are filtered by the app after the import.
+ * Facebook's vehicles search, opened by the user in their own browser. Only maxPrice and query (the typed make and
+ * model) are honoured by the link (checked by hand on 2026-11-09/10); year and km are filtered by the app after the
+ * import.
  */
 export function marketplaceSearchUrl(form: LimitsForm): string {
   const url = new URL('https://www.facebook.com/marketplace/category/vehicles')
   if (form.maxPriceEur.trim()) url.searchParams.set('maxPrice', form.maxPriceEur.trim())
+  const typed = (form.makeModel ?? '').trim()
+  if (typed) url.searchParams.set('query', typed)
   url.searchParams.set('exact', 'false')
   return url.toString()
 }
