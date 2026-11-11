@@ -56,7 +56,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-docker-compose</artifactId>
 			<scope>runtime</scope>
-			<optional>true</optional>
 		</dependency>
 		<dependency>
 			<groupId>org.postgresql</groupId>
@@ -105,6 +104,10 @@
 			<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
+				<configuration>
+					<!-- java -jar starts Postgres from compose.yaml, like spring-boot:run -->
+					<excludeDockerCompose>false</excludeDockerCompose>
+				</configuration>
 			</plugin>
 			<!-- Loads Mockito as a Java agent instead of letting it self-attach (JEP 451). -->
 			<plugin>
