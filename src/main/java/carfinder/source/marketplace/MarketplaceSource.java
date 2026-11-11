@@ -1,5 +1,6 @@
 package carfinder.source.marketplace;
 
+import carfinder.listing.ListingStore;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.source.ListingSource;
@@ -38,6 +39,7 @@ public class MarketplaceSource implements ListingSource {
 	private final MarketplaceAdvertParser parser;
 	private final MarketplaceFeedParser feedParser;
 	private final MarketplaceBrowser browser;
+	private final ListingStore store;
 	private final HttpClient http = HttpClient.newBuilder()
 			.followRedirects(HttpClient.Redirect.NEVER)
 			.connectTimeout(Duration.ofSeconds(15))
@@ -45,7 +47,9 @@ public class MarketplaceSource implements ListingSource {
 	private boolean requested;
 
 	public MarketplaceSource(MarketplaceProperties props, @Qualifier("marketplacePace") Pace pace,
-			MarketplaceAdvertParser parser, MarketplaceFeedParser feedParser, MarketplaceBrowser browser) {
+			MarketplaceAdvertParser parser, MarketplaceFeedParser feedParser, MarketplaceBrowser browser,
+			ListingStore store) {
+		this.store = store;
 		this.feedParser = feedParser;
 		this.browser = browser;
 		this.props = props;
@@ -67,8 +71,10 @@ public class MarketplaceSource implements ListingSource {
 		if (bodies.isEmpty()) {
 			throw new SourceException("A pesquisa automática não recebeu anúncios do Marketplace");
 		}
-		// ponytail: sold/reserved ids from the feed are dropped here; the HAR import marks them
-		return feedParser.parse(bodies.stream()).live();
+		MarketplaceFeedParser.FeedResult feed = feedParser.parse(bodies.stream());
+		// same as the HAR import: an ad seen sold or reserved is excluded from now on
+		feed.unavailableIds().forEach(id -> store.markUnavailable(Site.MARKETPLACE, id));
+		return feed.live();
 	}
 
 	/** The same vehicles link the HAR guide gives the user: only maxPrice and query are honoured by Facebook. */

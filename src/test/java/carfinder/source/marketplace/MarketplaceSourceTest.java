@@ -9,6 +9,7 @@ import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import carfinder.listing.ListingStore;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.source.Pace;
@@ -40,6 +41,7 @@ class MarketplaceSourceTest {
 	@TempDir
 	Path profile;
 	private MarketplaceBrowser browser;
+	private final ListingStore store = mock(ListingStore.class);
 
 	@BeforeEach
 	void realBrowser() {
@@ -96,7 +98,7 @@ class MarketplaceSourceTest {
 			}
 		};
 		return new MarketplaceSource(new MarketplaceProperties(base, 20, 0, 0, "test-agent"), pace,
-				MarketplaceAdvertParserTest.PARSER, MarketplaceFeedParserTest.PARSER, browser);
+				MarketplaceAdvertParserTest.PARSER, MarketplaceFeedParserTest.PARSER, browser, store);
 	}
 
 	private String item(String id) {
@@ -180,7 +182,7 @@ class MarketplaceSourceTest {
 	void noBudgetConfigured_readsEveryPage() {
 		MarketplaceSource s = new MarketplaceSource(new MarketplaceProperties(base, null, 0, 0, "test-agent"),
 				new Pace(0, 0, RandomGenerator.getDefault()), MarketplaceAdvertParserTest.PARSER,
-				MarketplaceFeedParserTest.PARSER, browser);
+				MarketplaceFeedParserTest.PARSER, browser, store);
 
 		assertThat(s.maxDetailsPerRun()).isEqualTo(Integer.MAX_VALUE);
 	}
@@ -209,6 +211,18 @@ class MarketplaceSourceTest {
 				base + "/marketplace/category/vehicles?maxPrice=2500&query=Toyota+Yaris&exact=false"),
 				any());
 		assertThat(requests).isEmpty(); // the source itself requests nothing
+	}
+
+	@Test
+	void automated_marksSoldAndReservedUnavailable() throws IOException {
+		browser = mock(MarketplaceBrowser.class);
+		when(browser.collect(anyString(), any())).thenReturn(HarReaderTest.bodies(HarReaderTest.FIXTURE));
+
+		List<RawListing> found = source().search(new SearchQuery(2500, null, null, null, null, true), p -> { });
+
+		verify(store).markUnavailable(Site.MARKETPLACE, "1004");
+		verify(store).markUnavailable(Site.MARKETPLACE, "1005");
+		assertThat(found).extracting(RawListing::externalId).doesNotContain("1004", "1005").isNotEmpty();
 	}
 
 	@Test
