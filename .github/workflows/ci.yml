@@ -10,4 +10,6 @@ jobs:
           distribution: temurin
           java-version: 21
           cache: maven
+      # MarketplaceBrowserTest drives a real Chromium against a local page
+      - run: ./mvnw -B exec:java -Dexec.mainClass=com.microsoft.playwright.CLI -Dexec.args="install --with-deps chromium"
       - run: ./mvnw -B verify
