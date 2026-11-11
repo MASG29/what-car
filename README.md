@@ -40,6 +40,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
 ```
 
 - Spring Boot starts Postgres from `compose.yaml` (host port **5433**) and stops it on exit.
+- The packaged jar works the same way: `./mvnw package`, then `java -jar target/car-finder-*.jar`
+  run from the repository folder (it needs `compose.yaml` there).
 - Open **http://127.0.0.1:8090**.
 - The REST API is documented at http://127.0.0.1:8090/swagger-ui.html.
 - Tests: `./mvnw verify`. Database tests use Testcontainers, so Docker must be running.
@@ -53,7 +55,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   slowly, with a random pause of 4 to 9 seconds between requests and a page budget per run. It
   never requests `/api/`, `/ajax/`, `/account/` or `/ad/contact/`, it fetches only
   `www.standvirtual.com`, and it does not follow redirects.
-- **Facebook Marketplace** (imported ads): the app never loads Marketplace searches. You
+- **Facebook Marketplace** (imported ads): the app never loads Marketplace searches, unless you
+  turn on the automated search (below). You
   browse Marketplace in your own browser, save the network traffic as a HAR file, and upload it.
   The app reads the ads from it in memory and never writes the file to disk. It reads only the
   ad fields it needs, never the seller's name or id, headers or cookies. Steps (the same as in
@@ -88,6 +91,18 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   data by automated means, so this part is an automated request that you run at your own risk
   (the usual one is an IP block).
 
+  **Automated search (optional, off by default):** "Pesquisar também automaticamente (conta
+  secundária)" makes a search open Marketplace itself in a visible Chromium window and scroll the
+  results (up to 15 times, with pauses), reading the ads the page receives, as an import would.
+  - Use a **secondary Facebook account only, never your main one.** Facebook's terms allow one
+    personal account and forbid automated collection; the account (and possibly accounts linked
+    to it) can be restricted. You run it at your own risk.
+  - You log in yourself in that window; the app never types or stores your password. The session
+    stays in the git-ignored `browser-profile/` folder.
+  - Any verification screen (checkpoint, CAPTCHA, "confirm it's you") stops the run and closes
+    the window; the app never tries to get past it.
+  - The window only reads the search; ad pages are still opened logged out, as above.
+
 Each site has its own terms of use. Standvirtual's terms, for example, ask for consent before
 content is downloaded and forbid aggregating listings for third parties. This tool keeps results
 on your own machine for your personal search and republishes nothing. **You are responsible for
@@ -118,7 +133,7 @@ chosen.
 - No `Host` header check: a malicious web page could use DNS rebinding to reach the app on
   127.0.0.1 while it runs. The risk is low for a personal tool, but do not run it next to
   untrusted browsing if that matters to you.
-- Only Standvirtual and Marketplace (through HAR import) are supported, and a change in their page
+- Only Standvirtual and Marketplace (through HAR import or the automated search) are supported, and a change in their page
   format stops searches until the parser is updated (the app says so instead of returning empty
   results).
 - The app does not look at photos. Damage that shows only in the pictures (dents, scratches, a
@@ -175,6 +190,8 @@ frontend.
 
 - O Spring Boot arranca o Postgres a partir do `compose.yaml` (porta **5433** no anfitrião) e
   para-o à saída.
+- O jar empacotado funciona da mesma forma: `./mvnw package` e depois
+  `java -jar target/car-finder-*.jar` na pasta do repositório (precisa do `compose.yaml` ali).
 - Abre **http://127.0.0.1:8090**.
 - A API REST está documentada em http://127.0.0.1:8090/swagger-ui.html.
 - Testes: `./mvnw verify`. Os testes de base de dados usam Testcontainers, por isso o Docker tem
@@ -192,7 +209,7 @@ frontend.
   por pesquisa. Nunca pede `/api/`, `/ajax/`, `/account/` nem `/ad/contact/`, só acede a
   `www.standvirtual.com` e não segue redirecionamentos.
 - **Facebook Marketplace** (anúncios importados): a aplicação nunca abre pesquisas do
-  Marketplace. Vês o Marketplace no teu browser, gravas o tráfego de rede num ficheiro HAR e carregas esse ficheiro.
+  Marketplace, a não ser que ligues a pesquisa automática (abaixo). Vês o Marketplace no teu browser, gravas o tráfego de rede num ficheiro HAR e carregas esse ficheiro.
   A aplicação lê os anúncios em memória e nunca grava o ficheiro em disco. Lê só os campos do
   anúncio de que precisa, nunca o nome nem o id do vendedor, cabeçalhos ou cookies. Passos (os
   mesmos da aplicação, com capturas, em "Como gravar o ficheiro HAR"):
@@ -227,6 +244,20 @@ frontend.
   não consegui abrir" mostra esses anúncios com o link, para os abrires tu. Os termos do Facebook proíbem recolher dados por meios automáticos; esta parte é
   um pedido automático que fazes por tua conta e risco (o mais comum é um bloqueio do IP).
 
+  **Pesquisa automática (opcional, desligada por omissão):** "Pesquisar também automaticamente
+  (conta secundária)" faz a pesquisa abrir o próprio Marketplace numa janela visível do Chromium e
+  descer os resultados (até 15 vezes, com pausas), lendo os anúncios que a página recebe, como numa
+  importação.
+  - Usa **só uma conta secundária do Facebook, nunca a tua conta principal.** Os termos do
+    Facebook permitem uma conta pessoal e proíbem a recolha automática; a conta (e talvez as
+    contas ligadas a ela) pode ser restringida. Fazes isto por tua conta e risco.
+  - És tu que fazes login nessa janela; a aplicação nunca escreve nem guarda a tua palavra-passe.
+    A sessão fica na pasta `browser-profile/`, ignorada pelo git.
+  - Qualquer ecrã de verificação (checkpoint, CAPTCHA, "confirma que és tu") para a pesquisa e
+    fecha a janela; a aplicação nunca tenta passá-lo.
+  - A janela só lê a pesquisa; as páginas dos anúncios continuam a ser abertas sem sessão, como
+    acima.
+
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,
 pedem consentimento antes de se descarregar conteúdo e proíbem agregar anúncios para terceiros.
 Esta ferramenta guarda os resultados no teu computador, para a tua pesquisa pessoal, e não
@@ -258,7 +289,7 @@ valores de consumo.
 - Não há verificação do cabeçalho `Host`: uma página maliciosa pode usar DNS rebinding para
   chegar à aplicação em 127.0.0.1 enquanto ela corre. O risco é baixo para uma ferramenta pessoal,
   mas não a deixes a correr junto de navegação pouco fiável se isso te preocupar.
-- Só o Standvirtual e o Marketplace (por importação de HAR) são suportados, e uma mudança no
+- Só o Standvirtual e o Marketplace (por importação de HAR ou pela pesquisa automática) são suportados, e uma mudança no
   formato das páginas para as pesquisas até o leitor ser atualizado (a aplicação avisa, em vez de
   devolver resultados vazios).
 - A aplicação não olha para as fotos. Danos que só se veem nas imagens (amolgadelas, riscos, uma
