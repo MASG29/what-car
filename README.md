@@ -41,7 +41,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
 
 - Spring Boot starts Postgres from `compose.yaml` (host port **5433**) and stops it on exit.
 - The packaged jar works the same way: `./mvnw package`, then `java -jar target/car-finder-*.jar`
-  run from the repository folder (it needs `compose.yaml` there).
+  run from the repository folder (it needs `compose.yaml` there). To use your own Postgres
+  instead, add `--spring.docker.compose.enabled=false` and the `--spring.datasource.*` properties.
 - Open **http://127.0.0.1:8090**.
 - The REST API is documented at http://127.0.0.1:8090/swagger-ui.html.
 - Tests: `./mvnw verify`. Database tests use Testcontainers, so Docker must be running.
@@ -192,6 +193,8 @@ frontend.
   para-o à saída.
 - O jar empacotado funciona da mesma forma: `./mvnw package` e depois
   `java -jar target/car-finder-*.jar` na pasta do repositório (precisa do `compose.yaml` ali).
+  Para usares o teu próprio Postgres, junta `--spring.docker.compose.enabled=false` e as
+  propriedades `--spring.datasource.*`.
 - Abre **http://127.0.0.1:8090**.
 - A API REST está documentada em http://127.0.0.1:8090/swagger-ui.html.
 - Testes: `./mvnw verify`. Os testes de base de dados usam Testcontainers, por isso o Docker tem
