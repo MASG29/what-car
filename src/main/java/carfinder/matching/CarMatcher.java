@@ -49,12 +49,17 @@ public class CarMatcher {
 		boolean monthKnown = l.getMonth() != null && l.getMonth() >= 1 && l.getMonth() <= 12;
 		YearMonth reg = l.getYear() == null ? null : YearMonth.of(l.getYear(), monthKnown ? l.getMonth() : 6);
 
-		List<Generation> candidates = reg == null || l.getMake() == null || l.getModel() == null ? List.of()
-				: kb.generationsFor(l.getMake(), l.getModel()).stream()
-						.filter(g -> g.covers(reg)).toList();
+		List<Generation> all = l.getMake() == null || l.getModel() == null ? List.of()
+				: kb.generationsFor(l.getMake(), l.getModel());
+		// a code in the title ("Golf IV", "Golf mk4") names the generation, unless the year rules it out
+		Optional<Generation> named = kb.namedGeneration(Stream.of(l.getTitle(), l.getVersion())
+				.filter(t -> t != null).collect(Collectors.joining(" "))).filter(all::contains)
+				.filter(g -> reg == null || g.covers(reg));
+		List<Generation> candidates = named.isPresent() ? List.of(named.get())
+				: reg == null ? List.of() : all.stream().filter(g -> g.covers(reg)).toList();
 		candidates = byKeyword(l, candidates);
 		Optional<Generation> generation = candidates.size() == 1
-				&& !candidates.getFirst().changeoverYears().contains(reg.getYear())
+				&& (named.isPresent() || !candidates.getFirst().changeoverYears().contains(reg.getYear()))
 						? Optional.of(candidates.getFirst()) : Optional.empty();
 
 		EngineChoice choice = engine(l, candidates);

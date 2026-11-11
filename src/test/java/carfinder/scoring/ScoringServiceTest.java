@@ -297,4 +297,21 @@ class ScoringServiceTest {
 		assertThat(r).filteredOn(x -> x.listing() == hinted).singleElement()
 				.satisfies(x -> assertThat(x.notesPt()).doesNotContain("várias motorizações possíveis"));
 	}
+
+	@Test
+	void noYearNamedGeneration_ranksWithItsReliability() {
+		KnowledgeBase real = KnowledgeLoader.loadClasspath();
+		ScoringService s = new ScoringService(new CarMatcher(real), new ReliabilityScorer(real),
+				new PriceScorer(new PriceProperties(1.25, 0.80)), new ConsumptionScorer(real), new CompletenessScorer(),
+				new PhotoScorer(), new RealCostCalculator(), new ChecklistBuilder(), new ListingFilter(real, new Places()),
+				Clock.fixed(Instant.parse("2026-10-31T00:00:00Z"), ZoneOffset.UTC));
+		Listing golf = TestListings.of(new RawListing(Site.MARKETPLACE, "g", "https://example.test/g",
+				"VW Golf V 1.9 tdi", 1500, "Volkswagen", "Golf", null, null, null, null, null, null, null, null, null,
+				null, null, null, 0, null, null, false), false);
+
+		List<ScoredListing> r = s.rank(List.of(golf), List.of(), LIMITS, Preset.BALANCED, null).ranked();
+
+		// no year: the survey rows of the generation named in the title (golf-v) still give a reliability score
+		assertThat(r).singleElement().satisfies(x -> assertThat(x.subs().get(Criterion.RELIABILITY).value()).isPresent());
+	}
 }

@@ -289,4 +289,31 @@ class CarMatcherTest {
 		assertThat(REAL.match(marketplace("Toyota Yaris 1.3")).engineOptions()).isEqualTo(1);
 		assertThat(REAL.match(marketplace("Toyota Yaris 2.0")).engine()).isEmpty(); // no 2.0 in this generation
 	}
+
+	private static Listing golfTitled(String title, Integer year) {
+		return TestListings.of(new RawListing(Site.MARKETPLACE, "g", "https://example.test/g", title, 1500,
+				"Volkswagen", "Golf", null, year, null, null, null, null, null, null, null, null, null, null, 0, null,
+				null, false), false);
+	}
+
+	@Test
+	void codeInTitle_picksGeneration() {
+		CarMatcher real = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+		// 2003 is a changeover year (IV and V); the title settles it
+		assertThat(real.match(golfTitled("VW Golf IV 1.4", 2003)).generation()).map(Generation::id).hasValue("golf-iv");
+		assertThat(real.match(golfTitled("Golf V 1.9 tdi", 2003)).generation()).map(Generation::id).hasValue("golf-v");
+		assertThat(real.match(golfTitled("VW Golf 1.4", 2003)).generation()).isEmpty();
+		assertThat(real.match(golfTitled("Golf mk4", null)).generation()).map(Generation::id).hasValue("golf-iv");
+		assertThat(real.match(golfTitled("VW Golf", null)).generation()).isEmpty();
+	}
+
+	@Test
+	void codeAgainstYear_yearWins() {
+		CarMatcher real = new CarMatcher(KnowledgeLoader.loadClasspath());
+
+		CarMatch m = real.match(golfTitled("VW Golf IV", 2010));
+
+		assertThat(m.generation()).map(Generation::id).hasValue("golf-vi");
+	}
 }

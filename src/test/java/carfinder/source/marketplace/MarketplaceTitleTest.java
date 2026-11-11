@@ -59,4 +59,13 @@ class MarketplaceTitleTest {
 		assertThat(title.read("Polo 1400 cc").year()).isNull();
 		assertThat(title.read("Clio 2099").year()).isNull(); // the future
 	}
+
+	@Test
+	void golfMk4_readsMakeModel() {
+		var f = title.read("Golf mk4 1.4 16v 2001");
+
+		assertThat(f.make()).isEqualTo("Volkswagen");
+		assertThat(f.model()).isEqualTo("Golf");
+		assertThat(f.year()).isEqualTo(2001);
+	}
 }

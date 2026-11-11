@@ -3,6 +3,7 @@ package carfinder.knowledge;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
@@ -62,7 +63,33 @@ public final class KnowledgeBase {
 				bestPos = pos;
 			}
 		}
-		return Optional.ofNullable(best);
+		return best != null ? Optional.of(best) : namedGeneration(text);
+	}
+
+	private static final List<String> ROMAN = List.of("i", "ii", "iii", "iv", "v", "vi", "vii", "viii", "ix", "x");
+
+	/**
+	 * A model followed by one of its generation codes ("Golf mk4", "Golf IV", "Clio III"), even without the make. Only
+	 * roman codes and Mk codes count: a bare digit ("Golf 4 portas") or a letter code ("Mazda 2 DE") never does. "mkN"
+	 * reads as roman N only on rows coded in roman numerals; Mk-coded rows (Fiesta) match only as written, because
+	 * their numbering differs by market. Empty unless exactly one generation matches.
+	 */
+	public Optional<Generation> namedGeneration(String text) {
+		String t = word(text);
+		List<Generation> hits = generations.stream()
+				.filter(g -> codeWords(g.code()).stream().anyMatch(c -> t.contains(word(g.model()) + c + " ")))
+				.toList();
+		return hits.size() == 1 ? Optional.of(hits.getFirst()) : Optional.empty();
+	}
+
+	/** How a title may write the code: "iv", "mk4", "mk 4" for IV; "mk6", "mk 6" for Mk6; nothing for other codes. */
+	private static Set<String> codeWords(String code) {
+		String first = code == null || code.isBlank() ? "" : Text.normalise(code).strip().split("\\s+")[0];
+		int roman = ROMAN.indexOf(first) + 1;
+		if (roman > 0) {
+			return Set.of(first, "mk" + roman, "mk " + roman);
+		}
+		return first.matches("mk\\d+") ? Set.of(first, "mk " + first.substring(2)) : Set.of();
 	}
 
 	/**

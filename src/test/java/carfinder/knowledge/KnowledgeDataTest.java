@@ -157,4 +157,37 @@ class KnowledgeDataTest {
 		assertThat(KB.enginesFor("peugeot-206")).filteredOn(e -> e.id().equals("psa-tu3")).singleElement()
 				.extracting(Engine::kwList).isEqualTo(List.of(54, 55));
 	}
+
+	private static String named(String title) {
+		return KB.namedGeneration(title).map(Generation::id).orElse(null);
+	}
+
+	@Test
+	void namedGeneration_romanAndMk() {
+		assertThat(named("Golf mk4")).isEqualTo("golf-iv");
+		assertThat(named("Golf MK 4 1.4")).isEqualTo("golf-iv");
+		assertThat(named("Golf IV 1.4")).isEqualTo("golf-iv");
+		assertThat(named("VW Golf V tdi")).isEqualTo("golf-v");
+		assertThat(named("Renault Clio III 1.2")).isEqualTo("clio-iii");
+		assertThat(named("Ford Fiesta mk6")).isEqualTo("fiesta-mk6");
+		// Fiesta numbering differs by market: a roman numeral is not turned into a Mk code
+		assertThat(named("Ford Fiesta VI")).isNull();
+		assertThat(recognised("Golf mk4")).containsExactly("Volkswagen", "Golf");
+		assertThat(recognised("Golf IV")).containsExactly("Volkswagen", "Golf");
+	}
+
+	@Test
+	void namedGeneration_onlyRomanOrMkCodes() {
+		assertThat(recognised("Mazda 2 de 2008")).containsExactly("Mazda", "2");
+		assertThat(named("Mazda 2 de 2008")).isNull();
+		assertThat(named("Toyota Yaris XP10")).isNull(); // XP10 is not the roman X
+		assertThat(named("Golf V6")).isNull();
+	}
+
+	@Test
+	void namedGeneration_bareDigitIsNot() {
+		assertThat(named("Golf 4 portas")).isNull();
+		assertThat(recognised("Golf 4 portas")).isNull();
+		assertThat(recognised("Golf")).isNull(); // a model alone, without a code, stays unrecognised
+	}
 }
