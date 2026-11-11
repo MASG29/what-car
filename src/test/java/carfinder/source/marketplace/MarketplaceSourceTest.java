@@ -2,6 +2,12 @@ package carfinder.source.marketplace;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
@@ -13,6 +19,8 @@ import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,6 +28,7 @@ import java.util.random.RandomGenerator;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 class MarketplaceSourceTest {
 
@@ -28,6 +37,14 @@ class MarketplaceSourceTest {
 	private final List<String> requests = new CopyOnWriteArrayList<>();
 	private final List<Headers> headers = new CopyOnWriteArrayList<>();
 	private final AtomicInteger paces = new AtomicInteger();
+	@TempDir
+	Path profile;
+	private MarketplaceBrowser browser;
+
+	@BeforeEach
+	void realBrowser() {
+		browser = new MarketplaceBrowser(profile.toString(), true, 1, new Pace(0, 0, RandomGenerator.getDefault()));
+	}
 
 	@BeforeEach
 	void startServer() throws IOException {
@@ -79,7 +96,7 @@ class MarketplaceSourceTest {
 			}
 		};
 		return new MarketplaceSource(new MarketplaceProperties(base, 20, 0, 0, "test-agent"), pace,
-				MarketplaceAdvertParserTest.PARSER);
+				MarketplaceAdvertParserTest.PARSER, MarketplaceFeedParserTest.PARSER, browser);
 	}
 
 	private String item(String id) {
@@ -162,8 +179,46 @@ class MarketplaceSourceTest {
 	@Test
 	void noBudgetConfigured_readsEveryPage() {
 		MarketplaceSource s = new MarketplaceSource(new MarketplaceProperties(base, null, 0, 0, "test-agent"),
-				new Pace(0, 0, RandomGenerator.getDefault()), MarketplaceAdvertParserTest.PARSER);
+				new Pace(0, 0, RandomGenerator.getDefault()), MarketplaceAdvertParserTest.PARSER,
+				MarketplaceFeedParserTest.PARSER, browser);
 
 		assertThat(s.maxDetailsPerRun()).isEqualTo(Integer.MAX_VALUE);
+	}
+
+	@Test
+	void automatedFalse_neverOpensBrowser() throws IOException {
+		assertThat(source().search(new SearchQuery(2500, null, null, "Toyota", "Yaris"), p -> { })).isEmpty();
+
+		assertThat(browser.isOpen()).isFalse();
+		try (var files = Files.list(profile)) {
+			assertThat(files).isEmpty(); // no browser was ever started on the profile
+		}
+	}
+
+	@Test
+	void automated_opensTheSearchLinkAndParsesTheFeed() throws IOException {
+		browser = mock(MarketplaceBrowser.class);
+		String doc = HarReaderTest.bodies(HarReaderTest.FIXTURE).getFirst();
+		when(browser.collect(anyString(),
+				any())).thenReturn(List.of(doc));
+
+		List<RawListing> found = source().search(new SearchQuery(2500, null, null, "Toyota", "Yaris", true), p -> { });
+
+		assertThat(found).extracting(RawListing::externalId).containsExactlyInAnyOrder("1001", "1002");
+		verify(browser).collect(eq(
+				base + "/marketplace/category/vehicles?maxPrice=2500&query=Toyota+Yaris&exact=false"),
+				any());
+		assertThat(requests).isEmpty(); // the source itself requests nothing
+	}
+
+	@Test
+	void automatedWithNothingCollected_saysSo() {
+		browser = mock(MarketplaceBrowser.class);
+		when(browser.collect(anyString(),
+				any())).thenReturn(List.of());
+
+		assertThatThrownBy(() -> source().search(new SearchQuery(2500, null, null, null, null, true), p -> { }))
+				.isInstanceOf(SourceException.class)
+				.hasMessage("A pesquisa automática não recebeu anúncios do Marketplace");
 	}
 }

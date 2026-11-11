@@ -9,7 +9,10 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import java.util.Set;
 
-/** customWeights is only read for the CUSTOM preset. */
+/**
+ * customWeights is only read for the CUSTOM preset. marketplaceAutomated (absent = false): Marketplace also searches
+ * the site itself on the secondary account.
+ */
 public record StartSearchRequest(@Valid @NotNull SearchLimits limits, @NotNull Preset preset, Weights customWeights,
-		@NotEmpty Set<@NotNull Site> sites) {
+		@NotEmpty Set<@NotNull Site> sites, Boolean marketplaceAutomated) {
 }

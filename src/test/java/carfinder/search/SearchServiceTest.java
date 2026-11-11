@@ -19,6 +19,7 @@ import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
 import carfinder.listing.Listing;
 import carfinder.listing.ListingRepository;
+import carfinder.data.DataStore;
 import carfinder.listing.ListingStore;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
@@ -60,7 +61,7 @@ import org.springframework.transaction.annotation.Transactional;
 import tools.jackson.databind.json.JsonMapper;
 
 @DataJpaTest
-@Import({TestcontainersConfiguration.class, ListingStore.class})
+@Import({TestcontainersConfiguration.class, ListingStore.class, DataStore.class})
 // The run executes on another thread in one test, so writes must commit.
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class SearchServiceTest {
@@ -78,6 +79,10 @@ class SearchServiceTest {
 	ListingRepository listings;
 	@Autowired
 	SearchRunRepository runs;
+	@Autowired
+	DataStore data;
+	@Autowired
+	org.springframework.jdbc.core.JdbcTemplate jdbc;
 
 	private final ScoringService scoring = new ScoringService(new CarMatcher(KB), new ReliabilityScorer(KB),
 			new PriceScorer(new PriceProperties(1.25, 0.80)), new ConsumptionScorer(KB), new CompletenessScorer(),
@@ -97,11 +102,12 @@ class SearchServiceTest {
 	void cleanUp() {
 		runs.deleteAll(); // writes commit here; other test classes share the database
 		listings.deleteAll();
+		jdbc.update("DELETE FROM import_batch");
 	}
 
 	private SearchService service(java.util.concurrent.Executor executor, Duration timeout) {
 		return new SearchService(List.of(source), store, listings, runs, scoring, JsonMapper.builder().build(),
-				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10), PLACES, KB);
+				Clock.systemUTC(), executor, timeout, Duration.ofMillis(10), PLACES, KB, data);
 	}
 
 	private SearchService service() {
@@ -474,7 +480,7 @@ class SearchServiceTest {
 		when(mp.site()).thenReturn(Site.MARKETPLACE);
 		when(mp.maxDetailsPerRun()).thenReturn(20);
 		return new SearchService(List.of(source, mp), store, listings, runs, scoring, JsonMapper.builder().build(),
-				Clock.systemUTC(), Runnable::run, LONG, Duration.ofMillis(10), PLACES, KB);
+				Clock.systemUTC(), Runnable::run, LONG, Duration.ofMillis(10), PLACES, KB, data);
 	}
 
 	@Test
@@ -500,6 +506,56 @@ class SearchServiceTest {
 		assertThat(expected).hasSize(20).isNotEqualTo(listings.findBySite(Site.MARKETPLACE).stream().limit(20)
 				.map(Listing::getUrl).toList());
 		assertThat(read).containsExactlyElementsOf(expected);
+	}
+
+	@Test
+	void automatedMarketplace_addsFoundAdsToImportedOnes() {
+		store.upsert(marketplace("m1", 2000));
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.search(any(), any())).thenReturn(List.of(marketplace("m2", 2100)));
+		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), true);
+
+		assertThat(s.status(id).status()).isEqualTo(RunStatus.DONE);
+		verify(mp).search(org.mockito.ArgumentMatchers.argThat(SearchQuery::automated), any());
+		assertThat(listings.findAllById(runs.findById(id).orElseThrow().getListingIds()))
+				.extracting(Listing::getExternalId).containsExactlyInAnyOrder("m1", "m2");
+		// the found ads form one import batch, deletable like a HAR import
+		assertThat(data.imports()).singleElement().satisfies(b -> {
+			assertThat(b.site()).isEqualTo(Site.MARKETPLACE);
+			assertThat(b.read()).isEqualTo(1);
+			assertThat(b.added()).isEqualTo(1);
+			assertThat(b.listings()).isEqualTo(1);
+		});
+	}
+
+	@Test
+	void marketplaceNotAutomated_neverSearchesTheSite() {
+		store.upsert(marketplace("m1", 2000));
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		SearchService s = withMarketplace(mp);
+
+		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		verify(mp, never()).search(any(), any());
+		assertThat(data.imports()).isEmpty();
+	}
+
+	@Test
+	void automatedMarketplace_waitsForLogin() {
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.search(any(), any())).thenThrow(new NeedsUserException("Faz login na janela aberta"))
+				.thenReturn(List.of(marketplace("m2", 2100)));
+		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), true);
+
+		assertThat(s.status(id).status()).isEqualTo(RunStatus.DONE);
+		assertThat(s.status(id).collected()).isEqualTo(1);
 	}
 
 	@Test

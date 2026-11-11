@@ -117,7 +117,7 @@ async function call<T>(url: string, init?: RequestInit): Promise<T> {
 const post = <T>(url: string, body: unknown) =>
   call<T>(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
 
-export const startSearch = (req: Scoring & { limits: SearchLimits; sites: Site[] }) =>
+export const startSearch = (req: Scoring & { limits: SearchLimits; sites: Site[]; marketplaceAutomated: boolean }) =>
   post<{ id: string }>('/api/searches', req)
 export const getRun = (id: string) => call<RunView>(`/api/searches/${id}`)
 export const getResults = (id: string) => call<Ranking>(`/api/searches/${id}/results`)

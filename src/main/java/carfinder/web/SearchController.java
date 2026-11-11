@@ -33,7 +33,8 @@ public class SearchController {
 	@PostMapping
 	@ResponseStatus(HttpStatus.ACCEPTED)
 	public SearchStarted start(@Valid @RequestBody StartSearchRequest req) {
-		return new SearchStarted(service.start(req.limits(), req.preset(), req.customWeights(), req.sites()));
+		return new SearchStarted(service.start(req.limits(), req.preset(), req.customWeights(), req.sites(),
+				Boolean.TRUE.equals(req.marketplaceAutomated())));
 	}
 
 	@GetMapping("/{id}")

@@ -34,6 +34,8 @@ export default function App() {
   const [error, setError] = useState<string | null>(null)
   const [suggestion, setSuggestion] = useState<string | null>(null)
   const [sites, setSites] = useState<Site[]>(['STANDVIRTUAL'])
+  // never stored: the automated search starts off on every visit
+  const [automated, setAutomated] = useState(false)
 
   const errors = [...validateLimits(form), ...(sites.length === 0 ? ['Escolhe pelo menos um site.'] : [])]
   const scoring: Scoring = { preset, customWeights: preset === 'CUSTOM' ? toWeights(sliders) : null }
@@ -76,7 +78,12 @@ export default function App() {
     setRanking(null)
     setRun(null)
     try {
-      const { id } = await startSearch({ ...scoring, limits: toSearchLimits(form), sites })
+      const { id } = await startSearch({
+        ...scoring,
+        limits: toSearchLimits(form),
+        sites,
+        marketplaceAutomated: automated && sites.includes('MARKETPLACE'),
+      })
       localStorage.setItem(LAST_LIMITS, JSON.stringify(form))
       localStorage.setItem(RUN_ID, id)
       setLastUsed(form)
@@ -105,7 +112,14 @@ export default function App() {
       <h1>Procura de carro usado</h1>
       <SearchForm form={form} onChange={setForm} lastUsed={lastUsed} />
       <PresetPicker preset={preset} sliders={sliders} onPreset={setPreset} onSliders={changeSliders} />
-      <SitesPanel sites={sites} onChange={setSites} form={form} running={running} />
+      <SitesPanel
+        sites={sites}
+        onChange={setSites}
+        form={form}
+        running={running}
+        automated={automated}
+        onAutomated={setAutomated}
+      />
 
       <div className="actions">
         <button className="primary" disabled={errors.length > 0 || running} onClick={search}>

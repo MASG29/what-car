@@ -8,19 +8,25 @@ import carfinder.source.SearchQuery;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.stereotype.Component;
 
 /**
  * Reads public Marketplace item pages logged out: plain HTTP, no cookie handler (so no cookie is ever sent), no
- * account. The feed itself comes from HAR imports, so {@link #search} reads nothing.
+ * account. The feed comes from HAR imports, so {@link #search} reads nothing unless the user turned on the automated
+ * search (secondary account, {@link MarketplaceBrowser}).
  */
 @Component
 public class MarketplaceSource implements ListingSource {
@@ -30,6 +36,8 @@ public class MarketplaceSource implements ListingSource {
 	private final MarketplaceProperties props;
 	private final Pace pace;
 	private final MarketplaceAdvertParser parser;
+	private final MarketplaceFeedParser feedParser;
+	private final MarketplaceBrowser browser;
 	private final HttpClient http = HttpClient.newBuilder()
 			.followRedirects(HttpClient.Redirect.NEVER)
 			.connectTimeout(Duration.ofSeconds(15))
@@ -37,7 +45,9 @@ public class MarketplaceSource implements ListingSource {
 	private boolean requested;
 
 	public MarketplaceSource(MarketplaceProperties props, @Qualifier("marketplacePace") Pace pace,
-			MarketplaceAdvertParser parser) {
+			MarketplaceAdvertParser parser, MarketplaceFeedParser feedParser, MarketplaceBrowser browser) {
+		this.feedParser = feedParser;
+		this.browser = browser;
 		this.props = props;
 		this.pace = pace;
 		this.parser = parser;
@@ -50,7 +60,22 @@ public class MarketplaceSource implements ListingSource {
 
 	@Override
 	public List<RawListing> search(SearchQuery query, Consumer<String> progress) {
-		return List.of();
+		if (!query.automated()) {
+			return List.of();
+		}
+		List<String> bodies = browser.collect(searchUrl(query), progress);
+		if (bodies.isEmpty()) {
+			throw new SourceException("A pesquisa automática não recebeu anúncios do Marketplace");
+		}
+		// ponytail: sold/reserved ids from the feed are dropped here; the HAR import marks them
+		return feedParser.parse(bodies.stream()).live();
+	}
+
+	/** The same vehicles link the HAR guide gives the user: only maxPrice and query are honoured by Facebook. */
+	private String searchUrl(SearchQuery query) {
+		String typed = Stream.of(query.make(), query.model()).filter(Objects::nonNull).collect(Collectors.joining(" "));
+		return props.baseUrl() + "/marketplace/category/vehicles?maxPrice=" + query.maxPriceEur()
+				+ (typed.isEmpty() ? "" : "&query=" + URLEncoder.encode(typed, StandardCharsets.UTF_8)) + "&exact=false";
 	}
 
 	@Override

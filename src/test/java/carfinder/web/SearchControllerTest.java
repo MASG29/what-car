@@ -1,6 +1,7 @@
 package carfinder.web;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -62,7 +63,7 @@ class SearchControllerTest {
 	@Test
 	void postSearch_valid_202WithId() throws Exception {
 		UUID id = UUID.randomUUID();
-		when(service.start(any(), any(), any(), any())).thenReturn(id);
+		when(service.start(any(), any(), any(), any(), anyBoolean())).thenReturn(id);
 
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))
 				.andExpect(status().isAccepted()).andExpect(jsonPath("$.id").value(id.toString()));
@@ -70,7 +71,7 @@ class SearchControllerTest {
 
 	@Test
 	void unknownMakeModel_400WithSuggestion() throws Exception {
-		when(service.start(any(), any(), any(), any()))
+		when(service.start(any(), any(), any(), any(), anyBoolean()))
 				.thenThrow(new carfinder.search.UnknownMakeModelException("Ford Fiesa", "Ford Fiesta"));
 
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))
@@ -81,20 +82,31 @@ class SearchControllerTest {
 
 	@Test
 	void plainBadRequest_hasNoSuggestionField() throws Exception {
-		when(service.start(any(), any(), any(), any())).thenThrow(new IllegalArgumentException("x"));
+		when(service.start(any(), any(), any(), any(), anyBoolean())).thenThrow(new IllegalArgumentException("x"));
 
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))
 				.andExpect(status().isBadRequest()).andExpect(jsonPath("$.suggestion").doesNotExist());
 	}
 
 	@Test
+	void postSearch_marketplaceAutomated_passedOn() throws Exception {
+		when(service.start(any(), any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID());
+		String body = "{\"limits\": " + LIMITS
+				+ ", \"preset\": \"BALANCED\", \"sites\": [\"MARKETPLACE\"], \"marketplaceAutomated\": true}";
+
+		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(body))
+				.andExpect(status().isAccepted());
+		verify(service).start(any(), any(), any(), any(), eq(true));
+	}
+
+	@Test
 	void postSearch_minDoors_optionalAndPassedOn() throws Exception {
-		when(service.start(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
+		when(service.start(any(), any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID());
 		String withDoors = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "
 				+ "\"minDoors\": 5}";
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(withDoors)))
 				.andExpect(status().isAccepted());
-		verify(service).start(argThat(l -> Integer.valueOf(5).equals(l.minDoors())), any(), any(), any());
+		verify(service).start(argThat(l -> Integer.valueOf(5).equals(l.minDoors())), any(), any(), any(), eq(false));
 	}
 
 	@Test
@@ -123,7 +135,7 @@ class SearchControllerTest {
 
 	@Test
 	void postSearch_unknownCentre_400WithPtMessage() throws Exception {
-		when(service.start(any(), any(), any(), any()))
+		when(service.start(any(), any(), any(), any(), anyBoolean()))
 				.thenThrow(new IllegalArgumentException("Localidade desconhecida: Atlantida"));
 		String limits = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "
 				+ "\"centre\": \"Atlantida\", \"radiusKm\": 65}";
@@ -135,14 +147,14 @@ class SearchControllerTest {
 
 	@Test
 	void postSearch_centreAndRadiusReachTheService() throws Exception {
-		when(service.start(any(), any(), any(), any())).thenReturn(UUID.randomUUID());
+		when(service.start(any(), any(), any(), any(), anyBoolean())).thenReturn(UUID.randomUUID());
 		String limits = "{\"maxPriceEur\": 2500, \"maxKm\": 300000, \"minYear\": 2000, \"fuels\": [\"PETROL\"], "
 				+ "\"centre\": \"Ponte de Lima\", \"radiusKm\": 65}";
 
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(limits)))
 				.andExpect(status().isAccepted());
 		verify(service).start(argThat(l -> "Ponte de Lima".equals(l.centre()) && Integer.valueOf(65).equals(l.radiusKm())),
-				any(), any(), any());
+				any(), any(), any(), eq(false));
 	}
 
 	@Test
@@ -158,7 +170,7 @@ class SearchControllerTest {
 
 	@Test
 	void postSearch_whileRunning_409() throws Exception {
-		when(service.start(any(), any(), any(), any()))
+		when(service.start(any(), any(), any(), any(), anyBoolean()))
 				.thenThrow(new IllegalStateException("Já há uma pesquisa a decorrer"));
 
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))
@@ -167,7 +179,7 @@ class SearchControllerTest {
 
 	@Test
 	void postSearch_unsupportedSite_400() throws Exception {
-		when(service.start(any(), any(), any(), any()))
+		when(service.start(any(), any(), any(), any(), anyBoolean()))
 				.thenThrow(new IllegalArgumentException("Site ainda não suportado"));
 
 		mvc.perform(post("/api/searches").contentType(MediaType.APPLICATION_JSON).content(search(LIMITS)))

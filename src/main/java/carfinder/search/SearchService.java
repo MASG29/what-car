@@ -1,5 +1,6 @@
 package carfinder.search;
 
+import carfinder.data.DataStore;
 import carfinder.geo.Places;
 import carfinder.knowledge.Generation;
 import carfinder.knowledge.KnowledgeBase;
@@ -81,19 +82,22 @@ public class SearchService {
 	private final Duration needsUserTimeout;
 	private final Duration needsUserRetry;
 	private final AtomicBoolean busy = new AtomicBoolean();
+	private final DataStore data;
 
 	@Autowired
 	public SearchService(List<ListingSource> sources, ListingStore store, ListingRepository listings,
 			SearchRunRepository runs, ScoringService scoring, JsonMapper json, Clock clock,
 			@Value("${carfinder.needs-user-timeout}") Duration needsUserTimeout,
-			@Value("${carfinder.needs-user-retry}") Duration needsUserRetry, Places places, KnowledgeBase kb) {
+			@Value("${carfinder.needs-user-retry}") Duration needsUserRetry, Places places, KnowledgeBase kb,
+			DataStore data) {
 		this(sources, store, listings, runs, scoring, json, clock, Executors.newSingleThreadExecutor(),
-				needsUserTimeout, needsUserRetry, places, kb);
+				needsUserTimeout, needsUserRetry, places, kb, data);
 	}
 
 	SearchService(List<ListingSource> sources, ListingStore store, ListingRepository listings,
 			SearchRunRepository runs, ScoringService scoring, JsonMapper json, Clock clock, Executor executor,
-			Duration needsUserTimeout, Duration needsUserRetry, Places places, KnowledgeBase kb) {
+			Duration needsUserTimeout, Duration needsUserRetry, Places places, KnowledgeBase kb, DataStore data) {
+		this.data = data;
 		this.places = places;
 		this.kb = kb;
 		this.sources = sources.stream().collect(Collectors.toMap(ListingSource::site, Function.identity()));
@@ -113,6 +117,11 @@ public class SearchService {
 	}
 
 	public UUID start(SearchLimits limits, Preset preset, Weights custom, Set<Site> sites) {
+		return start(limits, preset, custom, sites, false);
+	}
+
+	/** {@code automated}: Marketplace also searches the site itself (secondary account), not only the imports. */
+	public UUID start(SearchLimits limits, Preset preset, Weights custom, Set<Site> sites, boolean automated) {
 		preset.weights(custom); // IllegalArgumentException for bad custom weights
 		if (sites.isEmpty()) {
 			throw new IllegalArgumentException("Escolhe pelo menos um site");
@@ -137,7 +146,7 @@ public class SearchService {
 					custom == null ? null : json.writeValueAsString(custom), sites, clock.instant()));
 			SearchLimits l = limits;
 			Generation g = typed;
-			executor.execute(() -> run(id, l, sites, g));
+			executor.execute(() -> run(id, l, sites, g, automated));
 			return id;
 		}
 		catch (RuntimeException e) {
@@ -236,10 +245,10 @@ public class SearchService {
 		}
 	}
 
-	private void run(UUID id, SearchLimits limits, Set<Site> sites, Generation typed) {
+	private void run(UUID id, SearchLimits limits, Set<Site> sites, Generation typed, boolean automated) {
 		try {
 			SearchQuery query = new SearchQuery(limits.maxPriceEur(), limits.maxKm(), limits.minYear(),
-					typed == null ? null : typed.make(), typed == null ? null : typed.model());
+					typed == null ? null : typed.make(), typed == null ? null : typed.model(), automated);
 			Preset anyPreset = Preset.BALANCED; // the filter does not depend on weights
 			int attempted = 0;
 			int failed = 0;
@@ -249,6 +258,14 @@ public class SearchService {
 			int skipped = 0; // left unread after a back-off; not part of the broken-parser rule
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
+				if (site == Site.MARKETPLACE && automated && source != null) {
+					// what the automated search found joins the imported ads as one import batch
+					List<RawListing> found = waitingForUser(id,
+							() -> source.search(query, msg -> change(id, r -> r.update(RunStatus.RUNNING, msg))));
+					int added = (int) found.stream()
+							.filter(f -> listings.findBySiteAndExternalId(site, f.externalId()).isEmpty()).count();
+					data.recordImport(site, found.size(), added, found.stream().map(f -> store.upsert(f).getId()).toList());
+				}
 				// Marketplace: every imported ad, however old (a HAR cannot tell when an ad was removed)
 				List<Listing> saved = site == Site.MARKETPLACE ? listings.findBySite(site)
 						: waitingForUser(id,
