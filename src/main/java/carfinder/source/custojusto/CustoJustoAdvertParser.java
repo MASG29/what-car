@@ -14,7 +14,7 @@ import carfinder.knowledge.KnowledgeBase;
 import carfinder.knowledge.Text;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
-import carfinder.source.marketplace.MarketplaceAdvertParser;
+import carfinder.source.Figures;
 import java.util.Optional;
 import java.util.stream.StreamSupport;
 import org.springframework.stereotype.Component;
@@ -75,7 +75,7 @@ public class CustoJustoAdvertParser {
 		if (description == null) {
 			return null;
 		}
-		Integer km = MarketplaceAdvertParser.one(MarketplaceAdvertParser.kms(Text.normalise(description)));
+		Integer km = Figures.one(Figures.kms(Text.normalise(description)));
 		if (km == null || band == null) {
 			return km;
 		}
