@@ -107,7 +107,8 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   a lot): the app reads public car search pages for all of Portugal, newest first, with your
   maximum price and minimum year (and the typed make and model) in the address, up to 10 pages,
   then up to 40 advert pages per run (best first), with a random pause of 5 to 10 seconds between
-  requests. Search pages give no km; the advert page gives only a band ("200 000 - 249 999"), so km
+  requests. The address also asks for a price of at least 100 €, so dealers' 0 € ads (which the
+  app drops as symbolic prices) do not use up the page budget. Search pages give no km; the advert page gives only a band ("200 000 - 249 999"), so km
   are taken from the description only when it states one figure inside that band, otherwise they
   stay unknown. It fetches only `www.custojusto.pt` paths under `/<region>/veiculos/carros-usados`,
   sends no cookies, does not follow redirects, and marks an ad the site reports as gone as
@@ -278,8 +279,9 @@ frontend.
   teu IP se pesquisares muito): a aplicação lê páginas públicas de pesquisa de carros de todo o
   país, as mais recentes primeiro, com o teu preço máximo e o ano mínimo (e a marca e modelo que
   escreveres) no endereço, até 10 páginas, e depois até 40 páginas de anúncio por pesquisa (os
-  melhores primeiro), com uma pausa aleatória de 5 a 10 segundos entre pedidos. As páginas de
-  pesquisa não dizem os km e a página do anúncio só dá um intervalo ("200 000 - 249 999"), por isso
+  melhores primeiro), com uma pausa aleatória de 5 a 10 segundos entre pedidos. O endereço pede
+  também um preço mínimo de 100 €, para que os anúncios de stands a 0 € (que a aplicação exclui
+  como preço simbólico) não gastem as páginas. As páginas de pesquisa não dizem os km e a página do anúncio só dá um intervalo ("200 000 - 249 999"), por isso
   os km vêm da descrição só quando ela diz um único valor dentro desse intervalo; senão ficam
   desconhecidos. Só acede a caminhos de `www.custojusto.pt` em `/<região>/veiculos/carros-usados`,
   não envia cookies, não segue redirecionamentos e marca como indisponível um anúncio que o site

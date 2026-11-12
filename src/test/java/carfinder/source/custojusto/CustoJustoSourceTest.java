@@ -93,7 +93,7 @@ class CustoJustoSourceTest {
 		List<RawListing> result = source(10).search(QUERY, progress::add);
 
 		// 120 ads, 40 per page: three pages, newest first is the site's default order
-		assertThat(requests).containsExactly(SEARCH + "?pe=2500", SEARCH + "?pe=2500&o=2", SEARCH + "?pe=2500&o=3");
+		assertThat(requests).containsExactly(SEARCH + "?ps=100&pe=2500", SEARCH + "?ps=100&pe=2500&o=2", SEARCH + "?ps=100&pe=2500&o=3");
 		assertThat(result).extracting(RawListing::externalId).containsExactly("90000001", "90000002", "90000003");
 		assertThat(progress).isNotEmpty();
 		assertThat(userAgents).containsOnly("test-agent");
@@ -118,14 +118,14 @@ class CustoJustoSourceTest {
 	void search_withMakeModelAndYear_requestsModelPath() {
 		source(1).search(new SearchQuery(2500, null, 2005, "Renault", "Clio"), p -> { });
 
-		assertThat(requests).containsExactly(SEARCH + "/renault/clio?pe=2500&rs=2005");
+		assertThat(requests).containsExactly(SEARCH + "/renault/clio?ps=100&pe=2500&rs=2005");
 	}
 
 	@Test
 	void unknownModelSlug_fallsBackToSearchWithoutModel() {
 		List<RawListing> result = source(1).search(new SearchQuery(2500, null, null, "Renault", "Naoexiste"), p -> { });
 
-		assertThat(requests).containsExactly(SEARCH + "/renault/naoexiste?pe=2500", SEARCH + "?pe=2500");
+		assertThat(requests).containsExactly(SEARCH + "/renault/naoexiste?ps=100&pe=2500", SEARCH + "?ps=100&pe=2500");
 		assertThat(result).hasSize(3);
 	}
 
