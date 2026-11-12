@@ -263,6 +263,16 @@ class SearchControllerTest {
 			"https://www.facebook.com/api/graphql/",
 			"https://www.facebook.com/marketplace/",
 			"https://www.facebook.com/login/",
+			"http://www.custojusto.pt/braga/veiculos/carros-usados/citadino/renault-clio-90000001",
+			"https://custojusto.pt/braga/veiculos/carros-usados/citadino/renault-clio-90000001",
+			"https://www.custojusto.pt.evil.test/braga/veiculos/carros-usados/citadino/renault-clio-90000001",
+			"https://user@www.custojusto.pt/braga/veiculos/carros-usados/citadino/renault-clio-90000001",
+			"https://www.custojusto.pt:8443/braga/veiculos/carros-usados/citadino/renault-clio-90000001",
+			"https://www.custojusto.pt/braga/veiculos/carros-usados/citadino/../../../api/x-1",
+			"https://www.custojusto.pt/braga/veiculos/carros-usados",
+			"https://www.custojusto.pt/braga/veiculos/carros-usados/citadino",
+			"https://www.custojusto.pt/braga/imoveis/apartamentos/t2-90000001",
+			"https://www.custojusto.pt/v2/auth",
 			"file:///etc/passwd",
 			"não é um link",
 			" "})
@@ -284,6 +294,19 @@ class SearchControllerTest {
 		mvc.perform(post("/api/score-link").contentType(MediaType.APPLICATION_JSON)
 				.content("{\"url\": \"" + url + "\"}")).andExpect(status().isOk());
 		verify(service).scoreLink(eq(Site.MARKETPLACE), eq(clean), any(), any(), any());
+	}
+
+	@ParameterizedTest
+	@ValueSource(strings = {"https://www.custojusto.pt/braga/veiculos/carros-usados/citadino/renault-clio-90000001",
+			"https://WWW.custojusto.pt/braga/veiculos/carros-usados/citadino/renault-clio-90000001?utm_source=x#fotos"})
+	void scoreLink_acceptsOnlyThisSitesAdUrls(String url) throws Exception {
+		String clean = "https://www.custojusto.pt/braga/veiculos/carros-usados/citadino/renault-clio-90000001";
+		when(service.scoreLink(eq(Site.CUSTOJUSTO), eq(clean), any(), any(), any()))
+				.thenReturn(new ScoringService.Ranking(List.of(), List.of()));
+
+		mvc.perform(post("/api/score-link").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"url\": \"" + url + "\"}")).andExpect(status().isOk());
+		verify(service).scoreLink(eq(Site.CUSTOJUSTO), eq(clean), any(), any(), any());
 	}
 
 	@Test

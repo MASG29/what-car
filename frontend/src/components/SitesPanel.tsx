@@ -6,6 +6,7 @@ import { MarketplacePanel } from './MarketplacePanel'
 const LABELS: Record<Site, string> = {
   STANDVIRTUAL: 'Standvirtual',
   MARKETPLACE: 'Marketplace (anúncios importados)',
+  CUSTOJUSTO: 'CustoJusto',
 }
 
 export function SitesPanel({
@@ -39,6 +40,7 @@ export function SitesPanel({
           {LABELS[s]}
         </label>
       ))}
+      {sites.includes('CUSTOJUSTO') && <p className="warn">Este site pode bloquear o teu IP se pesquisares muito.</p>}
       {sites.includes('MARKETPLACE') && (
         <>
           <label className="inline">

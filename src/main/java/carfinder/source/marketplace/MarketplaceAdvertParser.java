@@ -8,6 +8,7 @@ import carfinder.knowledge.Text;
 import carfinder.listing.Fuel;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.SoldOrReservedException;
 import carfinder.source.marketplace.MarketplaceTitle.TitleFacts;
 import java.time.Year;
 import java.util.ArrayDeque;
@@ -170,7 +171,8 @@ public class MarketplaceAdvertParser {
 		return found;
 	}
 
-	private static Set<Integer> kms(String d) {
+	/** Every odometer-looking figure in normalised text ("216.000 km", "216 mil km"). */
+	public static Set<Integer> kms(String d) {
 		Set<Integer> found = new LinkedHashSet<>();
 		Matcher m = KM.matcher(d);
 		while (m.find()) {
@@ -204,7 +206,7 @@ public class MarketplaceAdvertParser {
 	}
 
 	/** The value when the text gives exactly one, else null (two different figures are never guessed between). */
-	private static <T> T one(Set<T> values) {
+	public static <T> T one(Set<T> values) {
 		return values.size() == 1 ? values.iterator().next() : null;
 	}
 }

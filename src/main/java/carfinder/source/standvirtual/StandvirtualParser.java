@@ -4,6 +4,7 @@ import carfinder.listing.Fuel;
 import carfinder.listing.RawListing;
 import carfinder.listing.SellerType;
 import carfinder.listing.Site;
+import carfinder.source.SearchPage;
 import carfinder.source.SourceException;
 import java.util.ArrayList;
 import java.util.HashMap;

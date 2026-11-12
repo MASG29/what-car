@@ -19,7 +19,7 @@ import carfinder.source.NeedsUserException;
 import carfinder.source.SearchQuery;
 import carfinder.source.SourceException;
 import carfinder.source.marketplace.LoginWallException;
-import carfinder.source.marketplace.SoldOrReservedException;
+import carfinder.source.SoldOrReservedException;
 import jakarta.annotation.PreDestroy;
 import java.time.Clock;
 import java.time.Duration;

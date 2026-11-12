@@ -5,6 +5,7 @@ import carfinder.listing.Site;
 import carfinder.source.ListingSource;
 import carfinder.source.Pace;
 import carfinder.source.SearchQuery;
+import carfinder.source.SearchPage;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.net.URI;

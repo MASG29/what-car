@@ -13,7 +13,7 @@ export const CRITERION_PT: Record<Criterion, string> = {
 
 export type Preset = 'BALANCED' | 'ECONOMICAL' | 'RELIABLE' | 'CUSTOM'
 export type Weights = Record<'price' | 'reliability' | 'consumption' | 'completeness' | 'photos', number>
-export type Site = 'STANDVIRTUAL' | 'MARKETPLACE'
+export type Site = 'STANDVIRTUAL' | 'MARKETPLACE' | 'CUSTOJUSTO'
 
 export type SearchLimits = {
   maxPriceEur: number

@@ -8,6 +8,7 @@ import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.SoldOrReservedException;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.io.InputStream;

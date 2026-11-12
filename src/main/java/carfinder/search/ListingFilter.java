@@ -129,8 +129,10 @@ public class ListingFilter {
 	/** Null when the ad's model is wanted; otherwise the reason. Make aliases resolve through the knowledge base. */
 	private String modelProblem(Listing l, List<String> models) {
 		if (l.getMake() == null || l.getModel() == null) {
-			// Marketplace titles are free text: a make outside the knowledge base is not recognised
-			return l.getSite() == Site.MARKETPLACE ? "marca ou modelo não reconhecidos no título"
+			// Marketplace and CustoJusto search items name the car only in the title: a make outside the knowledge base
+			// is not recognised
+			return l.getSite() == Site.MARKETPLACE || l.getSite() == Site.CUSTOJUSTO
+					? "marca ou modelo não reconhecidos no título"
 					: "marca ou modelo não indicados";
 		}
 		List<Generation> gens = kb.generationsFor(l.getMake(), l.getModel());

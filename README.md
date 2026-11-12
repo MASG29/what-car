@@ -23,7 +23,7 @@ By default it searches the shortlist of models from the underlying research (Col
 Mazda2, Fiesta, Fusion, Polo, Golf, Corolla, Auris, Civic, Mazda3). The "Todos os B/C" option
 widens it to every B and C segment model in the knowledge base. Typing a make and model (for
 example "Ford Fiesta", or just "Fiesta") narrows the results to that model and puts it in
-Standvirtual's search address and in the "Abrir pesquisa no Marketplace" link; a typo gets a "did you mean" suggestion. The UI is in European
+the Standvirtual and CustoJusto search addresses and in the "Abrir pesquisa no Marketplace" link; a typo gets a "did you mean" suggestion. The UI is in European
 Portuguese.
 
 ### Local use only
@@ -103,6 +103,20 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   - Any verification screen (checkpoint, CAPTCHA, "confirm it's you") stops the run and closes
     the window; the app never tries to get past it.
   - The window only reads the search; ad pages are still opened logged out, as above.
+- **CustoJusto** (off by default; ticking it warns that the site may block your IP if you search
+  a lot): the app reads public car search pages for all of Portugal, newest first, with your
+  maximum price and minimum year (and the typed make and model) in the address, up to 10 pages,
+  then up to 40 advert pages per run (best first), with a random pause of 5 to 10 seconds between
+  requests. Search pages give no km; the advert page gives only a band ("200 000 - 249 999"), so km
+  are taken from the description only when it states one figure inside that band, otherwise they
+  stay unknown. It fetches only `www.custojusto.pt` paths under `/<region>/veiculos/carros-usados`,
+  sends no cookies, does not follow redirects, and marks an ad the site reports as gone as
+  unavailable. CustoJusto's `robots.txt` (read on 2026-11-12) says: "It is expressly forbidden to
+  use spiders or other automated methods to access CustoJusto.pt" without the site's permission,
+  and it disallows result pages after the first (`o=`). Its rules page ("Regras", `/ajuda-rules`)
+  forbids automated tools for posting ads and automated or mass messages; it says nothing about
+  reading pages, which does not make reading them allowed. Using this source goes against the
+  site's stated rule and is your own decision and risk.
 
 Each site has its own terms of use. Standvirtual's terms, for example, ask for consent before
 content is downloaded and forbid aggregating listings for third parties. This tool keeps results
@@ -134,7 +148,7 @@ chosen.
 - No `Host` header check: a malicious web page could use DNS rebinding to reach the app on
   127.0.0.1 while it runs. The risk is low for a personal tool, but do not run it next to
   untrusted browsing if that matters to you.
-- Only Standvirtual and Marketplace (through HAR import or the automated search) are supported, and a change in their page
+- Only Standvirtual, Marketplace (through HAR import or the automated search) and CustoJusto are supported, and a change in their page
   format stops searches until the parser is updated (the app says so instead of returning empty
   results).
 - The app does not look at photos. Damage that shows only in the pictures (dents, scratches, a
@@ -171,7 +185,7 @@ Por omissão, pesquisa a lista curta de modelos da investigação de base (Colt,
 Mazda2, Fiesta, Fusion, Polo, Golf, Corolla, Auris, Civic, Mazda3). A opção "Todos os B/C"
 alarga a pesquisa a todos os modelos dos segmentos B e C da base de conhecimento. Se escreveres
 uma marca e modelo (por exemplo "Ford Fiesta", ou só "Fiesta"), os resultados ficam só com esse
-modelo e ele vai no endereço de pesquisa do Standvirtual e no link "Abrir pesquisa no Marketplace"; um erro de escrita dá a sugestão "Será
+modelo e ele vai nos endereços de pesquisa do Standvirtual e do CustoJusto e no link "Abrir pesquisa no Marketplace"; um erro de escrita dá a sugestão "Será
 que querias dizer".
 
 ### Só para uso local
@@ -260,6 +274,21 @@ frontend.
     fecha a janela; a aplicação nunca tenta passá-lo.
   - A janela só lê a pesquisa; as páginas dos anúncios continuam a ser abertas sem sessão, como
     acima.
+- **CustoJusto** (desligado por omissão; ao marcá-lo, a aplicação avisa que o site pode bloquear o
+  teu IP se pesquisares muito): a aplicação lê páginas públicas de pesquisa de carros de todo o
+  país, as mais recentes primeiro, com o teu preço máximo e o ano mínimo (e a marca e modelo que
+  escreveres) no endereço, até 10 páginas, e depois até 40 páginas de anúncio por pesquisa (os
+  melhores primeiro), com uma pausa aleatória de 5 a 10 segundos entre pedidos. As páginas de
+  pesquisa não dizem os km e a página do anúncio só dá um intervalo ("200 000 - 249 999"), por isso
+  os km vêm da descrição só quando ela diz um único valor dentro desse intervalo; senão ficam
+  desconhecidos. Só acede a caminhos de `www.custojusto.pt` em `/<região>/veiculos/carros-usados`,
+  não envia cookies, não segue redirecionamentos e marca como indisponível um anúncio que o site
+  diz ter sido retirado. O `robots.txt` do CustoJusto (lido a 2026-11-12) diz: "It is expressly
+  forbidden to use spiders or other automated methods to access CustoJusto.pt" sem autorização do
+  site, e bloqueia as páginas de resultados a seguir à primeira (`o=`). A página de regras
+  ("Regras", `/ajuda-rules`) proíbe ferramentas automáticas para publicar anúncios e mensagens
+  automáticas ou em massa; não diz nada sobre ler páginas, o que não quer dizer que seja
+  permitido. Usar esta fonte vai contra a regra do site e é decisão e risco teus.
 
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,
 pedem consentimento antes de se descarregar conteúdo e proíbem agregar anúncios para terceiros.
@@ -292,7 +321,7 @@ valores de consumo.
 - Não há verificação do cabeçalho `Host`: uma página maliciosa pode usar DNS rebinding para
   chegar à aplicação em 127.0.0.1 enquanto ela corre. O risco é baixo para uma ferramenta pessoal,
   mas não a deixes a correr junto de navegação pouco fiável se isso te preocupar.
-- Só o Standvirtual e o Marketplace (por importação de HAR ou pela pesquisa automática) são suportados, e uma mudança no
+- Só o Standvirtual, o Marketplace (por importação de HAR ou pela pesquisa automática) e o CustoJusto são suportados, e uma mudança no
   formato das páginas para as pesquisas até o leitor ser atualizado (a aplicação avisa, em vez de
   devolver resultados vazios).
 - A aplicação não olha para as fotos. Danos que só se veem nas imagens (amolgadelas, riscos, uma

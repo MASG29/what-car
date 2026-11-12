@@ -719,7 +719,7 @@ class SearchServiceTest {
 			store.upsert(marketplace("v" + i, 2000 + i));
 		}
 		ListingSource mp = mock(ListingSource.class);
-		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.SoldOrReservedException());
+		when(mp.details(anyString())).thenThrow(new carfinder.source.SoldOrReservedException());
 		SearchService s = withMarketplace(mp);
 
 		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));

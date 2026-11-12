@@ -107,6 +107,15 @@ class ListingFilterTest {
 	}
 
 	@Test
+	void custojustoWithoutRecognisedModel_saysSo() {
+		Listing l = TestListings.of(new RawListing(Site.CUSTOJUSTO, "c", "https://www.custojusto.pt/a/veiculos/carros-usados/b/c-1",
+				"Carro antigo", 1500, null, null, null, 2008, null, null, null, null, null, null, null, null,
+				null, null, 0, null, null, false), false);
+
+		assertThat(apply(l).notesPt()).contains("marca ou modelo não reconhecidos no título");
+	}
+
+	@Test
 	void marketplaceWithoutRecognisedModel_saysSo() {
 		Listing l = TestListings.of(new RawListing(Site.MARKETPLACE, "m", "https://www.facebook.com/marketplace/item/1/",
 				"2008 Opel Corsa 1.2", 1500, null, null, null, 2008, null, null, null, null, null, null, null, null,

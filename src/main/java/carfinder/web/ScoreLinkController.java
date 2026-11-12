@@ -27,6 +27,9 @@ public class ScoreLinkController {
 	private static final String STANDVIRTUAL_AD_PATH = "/carros/anuncio/";
 	private static final String MARKETPLACE_HOST = "www.facebook.com";
 	private static final Pattern MARKETPLACE_ITEM = Pattern.compile("^/marketplace/item/(\\d+)/?$");
+	private static final String CUSTOJUSTO_HOST = "www.custojusto.pt";
+	private static final Pattern CUSTOJUSTO_AD = Pattern
+			.compile("^/[a-z0-9-]+/veiculos/carros-usados/[a-z0-9-]+/[a-z0-9-]+-\\d+$");
 
 	private final SearchService service;
 
@@ -47,7 +50,8 @@ public class ScoreLinkController {
 
 	/**
 	 * Accepts only https://www.standvirtual.com/carros/anuncio/... ad pages and
-	 * https://www.facebook.com/marketplace/item/&lt;digits&gt;/ items: exact host, https, no user info or port. The
+	 * https://www.facebook.com/marketplace/item/&lt;digits&gt;/ items and
+	 * https://www.custojusto.pt/&lt;region&gt;/veiculos/carros-usados/&lt;type&gt;/&lt;slug&gt;-&lt;digits&gt; ads: exact host, https, no user info or port. The
 	 * URL is rebuilt without query or fragment.
 	 */
 	static Link parse(String url) {
@@ -68,6 +72,12 @@ public class ScoreLinkController {
 				throw new IllegalArgumentException(UNSUPPORTED);
 			}
 			return new Link(Site.MARKETPLACE, "https://" + MARKETPLACE_HOST + "/marketplace/item/" + m.group(1) + "/");
+		}
+		if (CUSTOJUSTO_HOST.equalsIgnoreCase(uri.getHost())) {
+			if (!CUSTOJUSTO_AD.matcher(String.valueOf(uri.getRawPath())).matches()) {
+				throw new IllegalArgumentException(UNSUPPORTED);
+			}
+			return new Link(Site.CUSTOJUSTO, "https://" + CUSTOJUSTO_HOST + uri.getRawPath());
 		}
 		if (!STANDVIRTUAL_HOST.equalsIgnoreCase(uri.getHost()) || path == null
 				|| !path.startsWith(STANDVIRTUAL_AD_PATH) || path.length() == STANDVIRTUAL_AD_PATH.length()

@@ -1,7 +1,7 @@
 package carfinder.listing;
 
 public enum Site {
-	STANDVIRTUAL("Standvirtual"), MARKETPLACE("Marketplace");
+	STANDVIRTUAL("Standvirtual"), MARKETPLACE("Marketplace"), CUSTOJUSTO("CustoJusto");
 
 	/** Name shown to the user. */
 	public final String label;
