@@ -112,7 +112,7 @@ class ListingFilterTest {
 				"Carro antigo", 1500, null, null, null, 2008, null, null, null, null, null, null, null, null,
 				null, null, 0, null, null, false), false);
 
-		assertThat(apply(l).notesPt()).contains("marca ou modelo não reconhecidos no título");
+		assertThat(apply(l).notesPt()).contains("modelo ainda não está na base de conhecimento da app");
 	}
 
 	@Test
@@ -121,7 +121,7 @@ class ListingFilterTest {
 				"2008 Opel Corsa 1.2", 1500, null, null, null, 2008, null, null, null, null, null, null, null, null,
 				null, null, 0, null, null, false), false);
 
-		assertThat(apply(l).notesPt()).contains("marca ou modelo não reconhecidos no título");
+		assertThat(apply(l).notesPt()).contains("modelo ainda não está na base de conhecimento da app");
 	}
 
 	@Test

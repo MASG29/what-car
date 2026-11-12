@@ -132,7 +132,7 @@ public class ListingFilter {
 			// Marketplace and CustoJusto search items name the car only in the title: a make outside the knowledge base
 			// is not recognised
 			return l.getSite() == Site.MARKETPLACE || l.getSite() == Site.CUSTOJUSTO
-					? "marca ou modelo não reconhecidos no título"
+					? "modelo ainda não está na base de conhecimento da app"
 					: "marca ou modelo não indicados";
 		}
 		List<Generation> gens = kb.generationsFor(l.getMake(), l.getModel());
