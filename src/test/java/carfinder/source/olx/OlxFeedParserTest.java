@@ -116,6 +116,25 @@ public class OlxFeedParserTest {
 	}
 
 	@Test
+	void modelFieldWithoutDocument_recognisedWhenUniqueToOneMake() throws IOException {
+		// graphql only: no page document, so no category -> make map; the title names no car
+		String har = Files.readString(FIXTURE).replace("/carros-motos-e-barcos/carros/braga/", "/x/");
+		RawListing r = byId(parse(har), "900003");
+
+		assertThat(r.make()).isEqualTo("Toyota");
+		assertThat(r.model()).isEqualTo("Yaris");
+	}
+
+	@Test
+	void modelFieldWithoutDocument_numberAloneIsNotACar() throws IOException {
+		String har = Files.readString(FIXTURE).replace("/carros-motos-e-barcos/carros/braga/", "/x/")
+				.replace("\\\"Yaris\\\"", "\\\"2\\\""); // the modelo field says "2"
+		RawListing r = byId(parse(har), "900003");
+
+		assertThat(r.make()).isNull();
+	}
+
+	@Test
 	void longDescription_cutTo4000() throws IOException {
 		FeedResult f = parse(Files.readString(FIXTURE).replace("Carro com 180.000 km reais.", "x".repeat(4001)));
 

@@ -173,10 +173,13 @@ public class OlxFeedParser {
 				description, null, ConditionReader.read(title, description).parts());
 	}
 
-	/** The site's own make (category) and model fields first; the title when they name no car the app knows. */
+	/**
+	 * The site's own make (category) and model fields first; without the make (no page document in the HAR), a model
+	 * that only one make has; the title when they name no car the app knows.
+	 */
 	private Optional<Generation> makeModel(String title, String make, String model) {
-		Optional<Generation> fields = make != null && model != null ? kb.recogniseMakeModel(make + " " + model)
-				: Optional.empty();
+		Optional<Generation> fields = model == null ? Optional.empty()
+				: make != null ? kb.recogniseMakeModel(make + " " + model) : kb.recogniseTyped(model);
 		return fields.isPresent() ? fields : kb.recogniseMakeModel(title);
 	}
 
