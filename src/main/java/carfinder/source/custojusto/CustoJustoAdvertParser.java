@@ -12,6 +12,7 @@ import carfinder.geo.Places;
 import carfinder.knowledge.Generation;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.knowledge.Text;
+import carfinder.listing.Listing;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.source.Figures;
@@ -33,7 +34,6 @@ import tools.jackson.databind.JsonNode;
 @Component
 public class CustoJustoAdvertParser {
 
-	private static final int DESCRIPTION_MAX = 4000;
 
 	private final KnowledgeBase kb;
 	private final Places places;
@@ -100,6 +100,6 @@ public class CustoJustoAdvertParser {
 		if (s.isEmpty()) {
 			return null;
 		}
-		return s.length() > DESCRIPTION_MAX ? s.substring(0, DESCRIPTION_MAX) : s;
+		return s.length() > Listing.DESCRIPTION_MAX ? s.substring(0, Listing.DESCRIPTION_MAX) : s;
 	}
 }

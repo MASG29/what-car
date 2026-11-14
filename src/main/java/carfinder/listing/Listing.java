@@ -15,6 +15,9 @@ import java.time.Instant;
 @Table(name = "listing", uniqueConstraints = @UniqueConstraint(columnNames = {"site", "external_id"}))
 public class Listing {
 
+	/** The description column's size; every parser cuts the text to it. */
+	public static final int DESCRIPTION_MAX = 4000;
+
 	@Id
 	@GeneratedValue(strategy = GenerationType.IDENTITY)
 	private Long id;
@@ -26,7 +29,7 @@ public class Listing {
 	@Enumerated(EnumType.STRING)
 	private SellerType sellerType;
 
-	@Column(length = 4000)
+	@Column(length = DESCRIPTION_MAX)
 	private String description;
 
 	private String externalId;

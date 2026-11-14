@@ -6,6 +6,7 @@ import static carfinder.source.standvirtual.StandvirtualParser.fuel;
 import static carfinder.source.standvirtual.StandvirtualParser.nextData;
 import static carfinder.source.standvirtual.StandvirtualParser.text;
 
+import carfinder.listing.Listing;
 import carfinder.listing.RawListing;
 import carfinder.listing.SellerType;
 import carfinder.listing.Site;
@@ -22,7 +23,6 @@ import tools.jackson.databind.JsonNode;
  */
 public class StandvirtualAdvertParser {
 
-	private static final int DESCRIPTION_MAX = 4000;
 
 	public RawListing parse(String html, String url) {
 		JsonNode advert = nextData(html).path("props").path("pageProps").path("advert");
@@ -73,7 +73,7 @@ public class StandvirtualAdvertParser {
 		if (s.isEmpty()) {
 			return null;
 		}
-		return s.length() > DESCRIPTION_MAX ? s.substring(0, DESCRIPTION_MAX) : s;
+		return s.length() > Listing.DESCRIPTION_MAX ? s.substring(0, Listing.DESCRIPTION_MAX) : s;
 	}
 
 	private static Boolean imported(String value) {

@@ -5,6 +5,7 @@ import carfinder.knowledge.Generation;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.knowledge.Text;
 import carfinder.listing.Fuel;
+import carfinder.listing.Listing;
 import carfinder.listing.RawListing;
 import carfinder.listing.SellerType;
 import carfinder.listing.Site;
@@ -212,7 +213,7 @@ public class OlxFeedParser {
 			return null;
 		}
 		String s = TAG.matcher(BREAK.matcher(html).replaceAll("\n")).replaceAll("").strip();
-		return s.isEmpty() ? null : s;
+		return s.isEmpty() ? null : s.substring(0, Math.min(s.length(), Listing.DESCRIPTION_MAX));
 	}
 
 	/** The site's fuel keys (2026-11-14). */

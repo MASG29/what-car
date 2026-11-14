@@ -8,6 +8,7 @@ import static carfinder.source.marketplace.MarketplaceFeedParser.text;
 import carfinder.geo.Places;
 import carfinder.knowledge.Text;
 import carfinder.listing.Fuel;
+import carfinder.listing.Listing;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.source.SoldOrReservedException;
@@ -37,7 +38,6 @@ import tools.jackson.databind.json.JsonMapper;
 @Component
 public class MarketplaceAdvertParser {
 
-	private static final int DESCRIPTION_MAX = 4000;
 	private static final String PAGE = "marketplace_product_details_page";
 	private static final Pattern JSON_SCRIPT = Pattern
 			.compile("<script type=\"application/json\"[^>]*>(.*?)</script>", Pattern.DOTALL);
@@ -150,7 +150,7 @@ public class MarketplaceAdvertParser {
 		if (s.indexOf(' ') < 0) {
 			s = s.replace('+', ' ').strip(); // some ads arrive form-encoded: "Levou+essa+manutencao"
 		}
-		return s.length() > DESCRIPTION_MAX ? s.substring(0, DESCRIPTION_MAX) : s;
+		return s.length() > Listing.DESCRIPTION_MAX ? s.substring(0, Listing.DESCRIPTION_MAX) : s;
 	}
 
 	private static Set<Integer> years(String d) {

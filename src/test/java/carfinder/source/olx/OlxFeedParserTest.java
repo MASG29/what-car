@@ -116,6 +116,13 @@ public class OlxFeedParserTest {
 	}
 
 	@Test
+	void longDescription_cutTo4000() throws IOException {
+		FeedResult f = parse(Files.readString(FIXTURE).replace("Carro com 180.000 km reais.", "x".repeat(4001)));
+
+		assertThat(byId(f, "900003").description()).hasSize(4000);
+	}
+
+	@Test
 	void kmFromDescriptionWhenParamMissing() throws IOException {
 		assertThat(byId(parseFixture(), "900003").km()).isEqualTo(180000);
 	}
