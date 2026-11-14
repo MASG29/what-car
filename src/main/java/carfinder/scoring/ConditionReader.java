@@ -66,11 +66,11 @@ public final class ConditionReader {
 	private static final Set<String> NEVER_NEGATED = Set.of("não pega", "não anda");
 	/**
 	 * "para peças"; a sale of parts ("vendo peças", "vendo Clio às peças"); or a title or sentence that starts with
-	 * "peças" ("Peças VW Polo"), unless it praises them ("Peças novas", "Peças originais").
+	 * "peças" ("Peças VW Polo"), unless it praises them ("Peças novas", "Peças originais", "Peças trocadas").
 	 */
 	private static final Pattern PARTS = Pattern.compile("\\b(so )?(vende se )?para pecas\\b"
 			+ "|\\b(vendo|vende-?se|vende se) pecas\\b|\\b(vendo|vende-?se|vende se)( [^ .!?]+){0,3} as pecas\\b"
-			+ "|(^|[.!?] )pecas\\b(?! (novas|originais|de origem|todas))");
+			+ "|(^|[.!?] )pecas\\b(?! (novas|originais|de origem|todas|trocadas|substituidas|mudadas))");
 
 	private static final Set<String> NEGATIONS = Set.of("sem", "nao", "nunca", "zero");
 	/** A new verb ("tem", "tinha", "apresenta", "com") ends the scope unless a negation sits right before it. */

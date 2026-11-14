@@ -242,7 +242,9 @@ class ConditionReaderTest {
 
 	@ParameterizedTest
 	@ValueSource(strings = {"Todas as peças originais.", "Peças novas: embraiagem e travões.",
-			"Tem peças novas.", "Vendo carro com peças de origem."})
+			"Tem peças novas.", "Vendo carro com peças de origem.",
+			"Bom estado. Peças trocadas recentemente: embraiagem e travões.", "Peças substituídas: correia.",
+			"Peças mudadas há pouco tempo."})
 	void parts_goodPecasWords_notParts(String description) {
 		assertThat(ConditionReader.read("Polo 1.4", description).parts()).as(description).isFalse();
 	}
