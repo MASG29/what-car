@@ -22,6 +22,7 @@ import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -30,7 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 /**
  * Imports Marketplace or OLX ads from a HAR file the user saved in their own browser. The request body is the raw
  * file, parsed as it streams in: no multipart, no temp file, nothing of it written or logged. Nothing is requested from
- * either site.
+ * either site. Only application/octet-stream is read: it needs a CORS preflight, so another web page cannot post one.
  */
 @RestController
 public class ImportController {
@@ -52,12 +53,12 @@ public class ImportController {
 		this.search = search;
 	}
 
-	@PostMapping("/api/imports/marketplace")
+	@PostMapping(path = "/api/imports/marketplace", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public ImportResult importMarketplace(HttpServletRequest request) {
 		return importHar(request, Site.MARKETPLACE, HarReader.MARKETPLACE, parser::parse);
 	}
 
-	@PostMapping("/api/imports/olx")
+	@PostMapping(path = "/api/imports/olx", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public ImportResult importOlx(HttpServletRequest request) {
 		return importHar(request, Site.OLX, OlxFeedParser.HAR, olx::parse);
 	}

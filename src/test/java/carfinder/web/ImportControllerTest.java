@@ -93,6 +93,16 @@ class ImportControllerTest {
 	}
 
 	@Test
+	void textPlainImport_415() throws Exception {
+		// a cross-site page can post text/plain without a preflight; only the app's own octet-stream is read
+		for (String path : List.of("/api/imports/marketplace", "/api/imports/olx")) {
+			mvc.perform(post(path).contentType(MediaType.TEXT_PLAIN).content(Files.readAllBytes(FIXTURE)))
+					.andExpect(status().isUnsupportedMediaType());
+		}
+		assertThat(listings.count()).isZero();
+	}
+
+	@Test
 	void importsFixture_returnsCounts() throws Exception {
 		mvc.perform(post("/api/imports/marketplace").contentType(MediaType.APPLICATION_OCTET_STREAM)
 				.content(Files.readAllBytes(FIXTURE))).andExpect(status().isOk())

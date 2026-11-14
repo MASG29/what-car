@@ -50,6 +50,15 @@ class SearchControllerTest {
 			{"maxPriceEur": 2500, "maxKm": 300000, "minYear": 2000, "fuels": ["PETROL"]}""";
 	private static final String AD = "https://www.standvirtual.com/carros/anuncio/renault-clio-IDabc123.html";
 
+	/** The app answers only its own host names (LocalHostFilter); MockMvc sends no Host by default. */
+	@org.springframework.boot.test.context.TestConfiguration
+	static class LocalHost {
+		@org.springframework.context.annotation.Bean
+		org.springframework.boot.webmvc.test.autoconfigure.MockMvcBuilderCustomizer localHost() {
+			return b -> b.defaultRequest(get("/").header("Host", "localhost:8090"));
+		}
+	}
+
 	@Autowired
 	MockMvc mvc;
 

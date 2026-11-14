@@ -163,9 +163,10 @@ chosen.
 
 ### Known limitations
 
-- No `Host` header check: a malicious web page could use DNS rebinding to reach the app on
-  127.0.0.1 while it runs. The risk is low for a personal tool, but do not run it next to
-  untrusted browsing if that matters to you.
+- No login: any program on your computer can use the app while it runs. Web pages cannot: the
+  app answers only requests addressed to `localhost:8090` or `127.0.0.1:8090` (which stops DNS
+  rebinding), and the imports accept only `application/octet-stream`, which another site's page
+  cannot send without the browser asking the app first.
 - Only Standvirtual, Marketplace (through HAR import or the automated search), CustoJusto and OLX (through HAR import) are supported, and a change in their page
   format stops searches until the parser is updated (the app says so instead of returning empty
   results).
@@ -355,9 +356,10 @@ valores de consumo.
 
 ### Limitações conhecidas
 
-- Não há verificação do cabeçalho `Host`: uma página maliciosa pode usar DNS rebinding para
-  chegar à aplicação em 127.0.0.1 enquanto ela corre. O risco é baixo para uma ferramenta pessoal,
-  mas não a deixes a correr junto de navegação pouco fiável se isso te preocupar.
+- Não há login: qualquer programa no teu computador pode usar a aplicação enquanto ela corre. As
+  páginas web não: a aplicação só responde a pedidos dirigidos a `localhost:8090` ou `127.0.0.1:8090`
+  (o que trava o DNS rebinding), e as importações só aceitam `application/octet-stream`, que a
+  página de outro site não consegue enviar sem o browser perguntar primeiro à aplicação.
 - Só o Standvirtual, o Marketplace (por importação de HAR ou pela pesquisa automática), o CustoJusto e o OLX (por importação de HAR) são suportados, e uma mudança no
   formato das páginas para as pesquisas até o leitor ser atualizado (a aplicação avisa, em vez de
   devolver resultados vazios).

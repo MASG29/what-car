@@ -5,5 +5,6 @@ import { defineConfig } from 'vite'
 export default defineConfig({
   plugins: [react()],
   build: { outDir: '../target/classes/static', emptyOutDir: true },
-  server: { proxy: { '/api': 'http://127.0.0.1:8090' } },
+  // changeOrigin: the app answers /api only for Host 127.0.0.1:8090 or localhost:8090
+  server: { proxy: { '/api': { target: 'http://127.0.0.1:8090', changeOrigin: true } } },
 })
