@@ -222,6 +222,22 @@ class MarketplaceBrowserTest {
 	}
 
 	@Test
+	void appShutdown_closesTheLoginWindow() {
+		loginSetsCookie = false;
+		try (var context = new org.springframework.context.annotation.AnnotationConfigApplicationContext()) {
+			context.registerBean(MarketplaceBrowser.class, () -> browser(2));
+			context.refresh();
+			MarketplaceBrowser b = context.getBean(MarketplaceBrowser.class);
+			assertThatThrownBy(() -> b.collect(searchUrl(), m -> {})).isInstanceOf(NeedsUserException.class);
+			assertThat(b.isOpen()).isTrue();
+
+			context.close();
+
+			assertThat(b.isOpen()).isFalse();
+		}
+	}
+
+	@Test
 	void searchRedirectsToLogin_needsUser() {
 		MarketplaceBrowser b = browser(2);
 		assertThatThrownBy(() -> b.collect(searchUrl(), m -> {})).isInstanceOf(NeedsUserException.class);

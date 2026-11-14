@@ -10,6 +10,7 @@ import com.microsoft.playwright.Playwright;
 import com.microsoft.playwright.PlaywrightException;
 import com.microsoft.playwright.Response;
 import com.microsoft.playwright.TimeoutError;
+import jakarta.annotation.PreDestroy;
 import java.net.URI;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -141,6 +142,8 @@ public class MarketplaceBrowser {
 		return context != null;
 	}
 
+	/** Also on app shutdown, so a window left open for the login never outlives the app. */
+	@PreDestroy
 	synchronized void close() {
 		try {
 			if (context != null) {
