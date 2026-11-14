@@ -4,8 +4,10 @@
 
 ## English
 
-A personal used-car finder. It reads ads from Standvirtual, drops the ones outside your limits
-(price, km, year, fuel, distance from your centre, doors), scores the rest and shows the best five with the reasons
+A personal used-car finder. It reads ads from Standvirtual and CustoJusto, and from Facebook
+Marketplace and OLX through HAR files you save in your own browser (Marketplace can also be
+searched automatically, see below). It drops the ads outside your limits (price, km, year, fuel,
+distance from your centre, doors), scores the rest and shows the best five with the reasons
 behind each score.
 
 Each ad is scored on:
@@ -184,8 +186,10 @@ MIT, see [LICENSE](LICENSE).
 
 ## Português
 
-Um localizador pessoal de carros usados. Lê anúncios do Standvirtual, exclui os que estão fora
-dos teus limites (preço, km, ano, combustível, distância ao teu centro, portas), pontua os restantes e mostra os
+Um localizador pessoal de carros usados. Lê anúncios do Standvirtual e do CustoJusto, e do
+Facebook Marketplace e do OLX através de ficheiros HAR que gravas no teu browser (o Marketplace
+também pode ser pesquisado automaticamente, ver abaixo). Exclui os anúncios fora dos teus limites
+(preço, km, ano, combustível, distância ao teu centro, portas), pontua os restantes e mostra os
 cinco melhores com as razões de cada pontuação.
 
 Cada anúncio é pontuado em:
