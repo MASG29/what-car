@@ -123,11 +123,12 @@ public class Places {
 		if (found.isEmpty()) {
 			return new Located(Optional.empty(), Precision.UNKNOWN);
 		}
-		if (found.size() > 1 && district != null && !district.isBlank()) {
+		if (district(district).isPresent()) {
+			// a namesake in another district is never the ad's place; none left -> the district capital
 			found = found.stream().filter(p -> normalise(p.district()).equals(normalise(district))).toList();
 		}
 		return found.size() == 1 ? new Located(Optional.of(found.get(0)), Precision.EXACT)
-				: new Located(Optional.empty(), Precision.AMBIGUOUS);
+				: new Located(Optional.empty(), found.isEmpty() ? Precision.UNKNOWN : Precision.AMBIGUOUS);
 	}
 
 	/** One place per cluster of same-district rows within 10 km; a populated-place row represents the cluster. */

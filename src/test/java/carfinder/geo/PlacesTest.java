@@ -49,8 +49,18 @@ class PlacesTest {
 	}
 
 	@Test
-	void resolve_duplicatedName_districtWithoutIt_ambiguous() {
-		assertThat(places.resolve("Porto", "Braga").precision()).isEqualTo(Precision.AMBIGUOUS);
+	void resolve_nameNotInTheAdsDistrict_districtCapital() {
+		// never the namesake in another district: the distance would come from the wrong place
+		for (String city : new String[] {"Porto", "Lisboa"}) {
+			Located l = places.resolve(city, "Braga");
+			assertThat(l.precision()).as(city).isEqualTo(Precision.DISTRICT_ONLY);
+			assertThat(l.place().orElseThrow().name()).isEqualTo("Braga");
+		}
+	}
+
+	@Test
+	void resolve_unknownDistrictName_ignored() {
+		assertThat(places.resolve("Lisboa", "Distrito Falso").precision()).isEqualTo(Precision.EXACT);
 	}
 
 	@Test
