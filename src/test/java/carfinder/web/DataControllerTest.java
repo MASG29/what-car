@@ -56,7 +56,7 @@ class DataControllerTest {
 	void setUp() {
 		clean();
 		when(search.whileIdle(any())).thenAnswer(inv -> ((Supplier<Object>) inv.getArgument(0)).get());
-		data = new DataStore(jdbc, Clock.fixed(Instant.parse("2026-11-09T14:02:00Z"), ZoneOffset.UTC));
+		data = new DataStore(jdbc, Clock.fixed(Instant.parse("2026-11-09T14:02:00Z"), ZoneOffset.UTC), store);
 		mvc = MockMvcBuilders.standaloneSetup(new DataController(data, search)).build();
 	}
 

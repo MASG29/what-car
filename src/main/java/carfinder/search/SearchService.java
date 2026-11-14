@@ -263,9 +263,7 @@ public class SearchService {
 					// what the automated search found joins the imported ads as one import batch
 					List<RawListing> found = waitingForUser(id,
 							() -> source.search(query, msg -> change(id, r -> r.update(RunStatus.RUNNING, msg))));
-					int added = (int) found.stream()
-							.filter(f -> listings.findBySiteAndExternalId(site, f.externalId()).isEmpty()).count();
-					data.recordImport(site, found.size(), added, found.stream().map(f -> store.upsert(f).getId()).toList());
+					data.importAds(site, found.size(), found, List.of());
 				}
 				// imported sites: every imported ad, however old (a HAR cannot tell when an ad was removed)
 				List<Listing> saved = site.importOnly() ? listings.findBySite(site)

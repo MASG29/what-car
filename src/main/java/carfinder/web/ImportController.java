@@ -1,9 +1,6 @@
 package carfinder.web;
 
 import carfinder.data.DataStore;
-import carfinder.listing.ListingRepository;
-import carfinder.listing.ListingStore;
-import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.search.SearchService;
 import carfinder.source.SourceException;
@@ -17,8 +14,6 @@ import jakarta.servlet.http.HttpServletRequest;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.UncheckedIOException;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Stream;
 import org.springframework.http.HttpStatus;
@@ -38,18 +33,13 @@ public class ImportController {
 
 	private final MarketplaceFeedParser parser;
 	private final OlxFeedParser olx;
-	private final ListingStore store;
-	private final ListingRepository listings;
 	private final SearchService search;
 	private final DataStore data;
 
-	public ImportController(MarketplaceFeedParser parser, OlxFeedParser olx, ListingStore store,
-			ListingRepository listings, SearchService search, DataStore data) {
+	public ImportController(MarketplaceFeedParser parser, OlxFeedParser olx, SearchService search, DataStore data) {
 		this.olx = olx;
 		this.data = data;
 		this.parser = parser;
-		this.store = store;
-		this.listings = listings;
 		this.search = search;
 	}
 
@@ -73,17 +63,8 @@ public class ImportController {
 			catch (IOException e) {
 				throw new UncheckedIOException(e);
 			}
-			int added = 0;
-			List<Long> ids = new ArrayList<>();
-			for (RawListing r : feed.live()) {
-				if (listings.findBySiteAndExternalId(site, r.externalId()).isEmpty()) {
-					added++;
-				}
-				ids.add(store.upsert(r).getId());
-			}
-			feed.unavailableIds().forEach(id -> store.markUnavailable(site, id));
 			int read = feed.live().size() + feed.unavailableIds().size();
-			data.recordImport(site, read, added, ids);
+			int added = data.importAds(site, read, feed.live(), feed.unavailableIds());
 			return new ImportResult(read, added, feed.unavailableIds().size(), feed.skipped());
 		});
 	}

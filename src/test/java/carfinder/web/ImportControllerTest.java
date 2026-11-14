@@ -1,6 +1,7 @@
 package carfinder.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.mock;
@@ -15,6 +16,7 @@ import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Listing;
 import carfinder.listing.ListingRepository;
 import carfinder.listing.ListingStore;
+import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import carfinder.search.SearchService;
 import carfinder.source.marketplace.MarketplaceFeedParser;
@@ -45,7 +47,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 @DataJpaTest
-@Import({TestcontainersConfiguration.class, ListingStore.class})
+@Import({TestcontainersConfiguration.class, ListingStore.class, carfinder.data.DataStore.class})
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @ExtendWith(OutputCaptureExtension.class)
 class ImportControllerTest {
@@ -61,9 +63,11 @@ class ImportControllerTest {
 	@Autowired
 	org.springframework.jdbc.core.JdbcTemplate jdbc;
 
+	@Autowired
+	carfinder.data.DataStore data;
+
 	private final SearchService search = mock(SearchService.class);
 	private MockMvc mvc;
-	private carfinder.data.DataStore data;
 
 	@BeforeEach
 	@SuppressWarnings("unchecked")
@@ -74,10 +78,9 @@ class ImportControllerTest {
 		MarketplaceFeedParser parser = new MarketplaceFeedParser(
 				new MarketplaceTitle(KnowledgeLoader.loadClasspath()),
 				new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
-		data = new carfinder.data.DataStore(jdbc, java.time.Clock.systemUTC());
 		OlxFeedParser olx = new OlxFeedParser(KnowledgeLoader.loadClasspath(),
 				new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
-		mvc = MockMvcBuilders.standaloneSetup(new ImportController(parser, olx, store, listings, search, data)).build();
+		mvc = MockMvcBuilders.standaloneSetup(new ImportController(parser, olx, search, data)).build();
 	}
 
 	@AfterEach
@@ -90,6 +93,21 @@ class ImportControllerTest {
 		return mvc.perform(post("/api/imports/marketplace").contentType(MediaType.APPLICATION_OCTET_STREAM)
 				.content(Files.readAllBytes(FIXTURE))).andExpect(status().isOk()).andReturn().getResponse()
 				.getContentAsString();
+	}
+
+	@Test
+	void importFailingHalfWay_storesNothing() {
+		RawListing good = new RawListing(Site.OLX, "ok-1", "https://www.olx.pt/d/anuncio/x-IDok1.html", "Fiat Punto",
+				900, null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null,
+				false);
+		RawListing bad = new RawListing(Site.OLX, "bad-1", "https://www.olx.pt/d/anuncio/x-IDbad1.html", null, 900,
+				null, null, null, null, null, null, null, null, null, null, null, null, null, null, 0, null, null, false);
+
+		assertThatThrownBy(() -> data.importAds(Site.OLX, 2, List.of(good, bad), List.of()))
+				.isInstanceOf(RuntimeException.class);
+
+		assertThat(listings.count()).isZero();
+		assertThat(data.imports()).isEmpty();
 	}
 
 	@Test

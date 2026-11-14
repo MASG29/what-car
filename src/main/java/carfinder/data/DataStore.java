@@ -1,8 +1,11 @@
 package carfinder.data;
 
+import carfinder.listing.ListingStore;
+import carfinder.listing.RawListing;
 import carfinder.listing.Site;
 import java.sql.Timestamp;
 import java.time.Clock;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -16,10 +19,32 @@ public class DataStore {
 
 	private final JdbcTemplate jdbc;
 	private final Clock clock;
+	private final ListingStore store;
 
-	public DataStore(JdbcTemplate jdbc, Clock clock) {
+	public DataStore(JdbcTemplate jdbc, Clock clock, ListingStore store) {
 		this.jdbc = jdbc;
 		this.clock = clock;
+		this.store = store;
+	}
+
+	/**
+	 * One import: its ads, the ads it saw sold, and its batch. One transaction, so a failure half-way stores nothing.
+	 * Returns how many ads were new.
+	 */
+	@Transactional
+	public int importAds(Site site, int read, List<RawListing> live, Collection<String> unavailableIds) {
+		int added = 0;
+		List<Long> ids = new ArrayList<>();
+		for (RawListing r : live) {
+			if (jdbc.queryForObject("SELECT count(*) FROM listing WHERE site = ? AND external_id = ?", Integer.class,
+					site.name(), r.externalId()) == 0) {
+				added++;
+			}
+			ids.add(store.upsert(r).getId());
+		}
+		unavailableIds.forEach(id -> store.markUnavailable(site, id));
+		recordImport(site, read, added, ids);
+		return added;
 	}
 
 	@Transactional
