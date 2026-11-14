@@ -6,6 +6,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /** Immutable view of the knowledge CSVs. Names are compared normalised; make aliases come from generations. */
 public final class KnowledgeBase {
@@ -41,7 +42,8 @@ public final class KnowledgeBase {
 	/**
 	 * Finds the make and model in free text (an ad title) and returns a generation carrying the canonical names. The
 	 * make (or a make alias such as "vw") and the model must both appear as whole words, or a model alias such as
-	 * "mazda2" alone. The longest model wins ("Grande Punto" over "Punto"), then the earliest in the text.
+	 * "mazda2" alone. A model named by a number ("206") counts only right after the make. The longest model wins
+	 * ("Grande Punto" over "Punto"), then the earliest in the text.
 	 */
 	public Optional<Generation> recogniseMakeModel(String text) {
 		String t = " " + Text.normalise(text).replaceAll("[^a-z0-9]+", " ") + " ";
@@ -50,9 +52,18 @@ public final class KnowledgeBase {
 		for (Generation g : generations) {
 			String make = word(g.make());
 			String model = word(g.model());
-			boolean makeSeen = t.contains(make) || g.aliases().stream().map(KnowledgeBase::word)
-					.anyMatch(a -> t.contains(a) && !a.contains(model.strip()));
-			int pos = makeSeen ? t.indexOf(model) : -1;
+			List<String> makeWords = Stream.concat(Stream.of(make),
+					g.aliases().stream().map(KnowledgeBase::word).filter(a -> !a.contains(model.strip()))).toList();
+			int pos;
+			if (model.strip().matches("\\d+")) {
+				// "Peugeot 407 2.0 HDi 206.000 km" is no 206: a number counts only right after the make.
+				pos = makeWords.stream().mapToInt(m -> {
+					int i = t.indexOf(m.stripTrailing() + model);
+					return i < 0 ? -1 : i + m.stripTrailing().length();
+				}).filter(i -> i >= 0).min().orElse(-1);
+			} else {
+				pos = makeWords.stream().anyMatch(t::contains) ? t.indexOf(model) : -1;
+			}
 			if (pos < 0) {
 				pos = g.aliases().stream().map(KnowledgeBase::word).filter(a -> a.contains(model.strip()))
 						.mapToInt(t::indexOf).filter(i -> i >= 0).min().orElse(-1);

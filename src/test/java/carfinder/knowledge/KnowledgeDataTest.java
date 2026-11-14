@@ -57,6 +57,18 @@ class KnowledgeDataTest {
 	}
 
 	@Test
+	void recogniseMakeModel_numberModelOnlyRightAfterMake() {
+		assertThat(recognised("Mazda 6 2.0 MZR-CD 2004")).isNull();
+		assertThat(recognised("Mazda 6 1.8 2 donos")).isNull();
+		assertThat(recognised("Mazda 323 1.3 1998")).isNull();
+		assertThat(recognised("Peugeot 407 2.0 HDi 206.000 km")).isNull();
+		assertThat(recognised("Peugeot 406 HDi 207 mil km")).isNull();
+		assertThat(recognised("Peugeot 206 1.1 2003")).containsExactly("Peugeot", "206");
+		assertThat(recognised("2005 Peugeot 307 SW 206.000 km")).containsExactly("Peugeot", "307");
+		assertThat(recognised("Mazda 2 1.4 2008")).containsExactly("Mazda", "2");
+	}
+
+	@Test
 	void recogniseTyped_modelAloneOrMakeModel() {
 		assertThat(KB.recogniseTyped("fiesta").map(g -> g.make() + " " + g.model())).hasValue("Ford Fiesta");
 		assertThat(KB.recogniseTyped("  ford   FIESTA ").map(g -> g.make() + " " + g.model())).hasValue("Ford Fiesta");
