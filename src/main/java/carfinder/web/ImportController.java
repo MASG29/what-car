@@ -3,10 +3,10 @@ package carfinder.web;
 import carfinder.data.DataStore;
 import carfinder.listing.Site;
 import carfinder.search.SearchService;
+import carfinder.source.FeedResult;
+import carfinder.source.HarReader;
 import carfinder.source.SourceException;
-import carfinder.source.marketplace.HarReader;
 import carfinder.source.marketplace.MarketplaceFeedParser;
-import carfinder.source.marketplace.MarketplaceFeedParser.FeedResult;
 import carfinder.source.olx.OlxFeedParser;
 import carfinder.web.dto.ErrorDto;
 import carfinder.web.dto.ImportResult;
@@ -45,7 +45,7 @@ public class ImportController {
 
 	@PostMapping(path = "/api/imports/marketplace", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)
 	public ImportResult importMarketplace(HttpServletRequest request) {
-		return importHar(request, Site.MARKETPLACE, HarReader.MARKETPLACE, parser::parse);
+		return importHar(request, Site.MARKETPLACE, MarketplaceFeedParser.HAR, parser::parse);
 	}
 
 	@PostMapping(path = "/api/imports/olx", consumes = MediaType.APPLICATION_OCTET_STREAM_VALUE)

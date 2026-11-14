@@ -3,10 +3,12 @@ package carfinder.source.marketplace;
 import carfinder.listing.ListingStore;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.BlockedException;
+import carfinder.source.FeedResult;
 import carfinder.source.ListingSource;
+import carfinder.source.LoginWallException;
 import carfinder.source.Pace;
 import carfinder.source.SearchQuery;
-import carfinder.source.BlockedException;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.net.URI;
@@ -72,7 +74,7 @@ public class MarketplaceSource implements ListingSource {
 		if (bodies.isEmpty()) {
 			throw new SourceException("A pesquisa automática não recebeu anúncios do Marketplace");
 		}
-		MarketplaceFeedParser.FeedResult feed = feedParser.parse(bodies.stream());
+		FeedResult feed = feedParser.parse(bodies.stream());
 		// same as the HAR import: an ad seen sold or reserved is excluded from now on
 		feed.unavailableIds().forEach(id -> store.markUnavailable(Site.MARKETPLACE, id));
 		return feed.live();

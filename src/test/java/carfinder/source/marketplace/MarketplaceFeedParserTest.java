@@ -8,6 +8,7 @@ import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.FeedResult;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.nio.file.Paths;
@@ -23,7 +24,7 @@ class MarketplaceFeedParserTest {
 			new MarketplaceTitle(KnowledgeLoader.loadClasspath()),
 			new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
 
-	static MarketplaceFeedParser.FeedResult fixture() throws IOException {
+	static FeedResult fixture() throws IOException {
 		return PARSER.parse(HarReaderTest.bodies(HarReaderTest.FIXTURE).stream());
 	}
 
@@ -33,7 +34,7 @@ class MarketplaceFeedParserTest {
 
 	@Test
 	void parsesSixVehicles_skipsNonVehicle() throws IOException {
-		MarketplaceFeedParser.FeedResult r = fixture();
+		FeedResult r = fixture();
 
 		// 6 vehicles: 4 live (1001 appears twice, counted once), 2 sold/pending; the sofa is not a vehicle
 		assertThat(r.live()).extracting(RawListing::externalId).containsExactlyInAnyOrder("1001", "1002", "1003",

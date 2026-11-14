@@ -3,6 +3,8 @@ package carfinder.source.marketplace;
 import carfinder.geo.Places;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.FeedResult;
+import carfinder.source.HarReader;
 import carfinder.source.SourceException;
 import carfinder.source.marketplace.MarketplaceTitle.TitleFacts;
 import java.util.ArrayDeque;
@@ -36,12 +38,9 @@ public class MarketplaceFeedParser {
 			.compile("<script type=\"application/json\"[^>]*>(.*?)</script>", Pattern.DOTALL);
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
-	/** Live vehicles (one per id), the ids seen sold or reserved, and ads left out on purpose (another site's copies). */
-	public record FeedResult(List<RawListing> live, List<String> unavailableIds, int skipped) {
-		public FeedResult(List<RawListing> live, List<String> unavailableIds) {
-			this(live, unavailableIds, 0);
-		}
-	}
+	/** Which HAR bodies hold Marketplace ads. */
+	public static final HarReader.Filter HAR = new HarReader.Filter("https://www.facebook.com/api/graphql/",
+			"https://www.facebook.com/marketplace/", NO_ADS);
 
 	private final MarketplaceTitle titles;
 	private final Places places;

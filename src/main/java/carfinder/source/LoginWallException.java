@@ -1,6 +1,5 @@
-package carfinder.source.marketplace;
+package carfinder.source;
 
-import carfinder.source.SourceException;
 
 /** The item page needs a login; the ad keeps its imported data. Not a sign of a broken parser. */
 public class LoginWallException extends SourceException {

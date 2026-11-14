@@ -12,6 +12,7 @@ import static org.mockito.Mockito.when;
 import carfinder.listing.ListingStore;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.LoginWallException;
 import carfinder.source.Pace;
 import carfinder.source.SearchQuery;
 import carfinder.source.SourceException;

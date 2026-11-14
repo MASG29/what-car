@@ -1,6 +1,5 @@
-package carfinder.source.marketplace;
+package carfinder.source;
 
-import carfinder.source.SourceException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.Base64;
@@ -25,9 +24,6 @@ public final class HarReader {
 	/** Which bodies a site's ads live in, and the PT message when the file has none. */
 	public record Filter(String graphqlUrl, String documentPrefix, String noAdsPt) {
 	}
-
-	public static final Filter MARKETPLACE = new Filter("https://www.facebook.com/api/graphql/",
-			"https://www.facebook.com/marketplace/", MarketplaceFeedParser.NO_ADS);
 
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 

@@ -6,6 +6,8 @@ import static org.junit.jupiter.api.Assumptions.assumeTrue;
 import carfinder.geo.Places;
 import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.RawListing;
+import carfinder.source.FeedResult;
+import carfinder.source.HarReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.Files;
@@ -29,11 +31,11 @@ class MarketplaceFeedParserRealHarTest {
 				Places.loadClasspath());
 
 		List<String> documents;
-		MarketplaceFeedParser.FeedResult all;
-		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in, HarReader.MARKETPLACE)) {
+		FeedResult all;
+		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in, MarketplaceFeedParser.HAR)) {
 			documents = bodies.filter(b -> b.stripLeading().startsWith("<")).toList();
 		}
-		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in, HarReader.MARKETPLACE)) {
+		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in, MarketplaceFeedParser.HAR)) {
 			all = parser.parse(bodies);
 		}
 		List<RawListing> live = all.live();

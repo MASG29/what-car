@@ -11,6 +11,7 @@ import carfinder.listing.Fuel;
 import carfinder.listing.Listing;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
+import carfinder.source.LoginWallException;
 import carfinder.source.SoldOrReservedException;
 import carfinder.source.marketplace.MarketplaceTitle.TitleFacts;
 import java.time.Year;

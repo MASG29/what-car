@@ -3,6 +3,7 @@ package carfinder.source.marketplace;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
+import carfinder.source.HarReader;
 import carfinder.source.SourceException;
 import java.io.ByteArrayInputStream;
 import java.io.FilterInputStream;
@@ -22,7 +23,7 @@ class HarReaderTest {
 	static final Path FIXTURE = Path.of("src/test/resources/fixtures/marketplace-feed.har");
 
 	static List<String> bodies(Path har) throws IOException {
-		try (InputStream in = Files.newInputStream(har); Stream<String> s = HarReader.bodies(in, HarReader.MARKETPLACE)) {
+		try (InputStream in = Files.newInputStream(har); Stream<String> s = HarReader.bodies(in, MarketplaceFeedParser.HAR)) {
 			return s.toList();
 		}
 	}
@@ -77,7 +78,7 @@ class HarReaderTest {
 
 	@Test
 	void notAHar_throwsFilterMessage() {
-		assertThatThrownBy(() -> HarReader.bodies(stream("{\"hello\":1}"), HarReader.MARKETPLACE).toList())
+		assertThatThrownBy(() -> HarReader.bodies(stream("{\"hello\":1}"), MarketplaceFeedParser.HAR).toList())
 				.isInstanceOf(SourceException.class).hasMessage(MarketplaceFeedParser.NO_ADS);
 	}
 
@@ -105,7 +106,7 @@ class HarReaderTest {
 		};
 		CountingStream in = new CountingStream(new SequenceInputStream(parts));
 
-		try (Stream<String> s = HarReader.bodies(in, HarReader.MARKETPLACE)) {
+		try (Stream<String> s = HarReader.bodies(in, MarketplaceFeedParser.HAR)) {
 			Iterator<String> it = s.iterator();
 			assertThat(it.next()).contains("lazy-item");
 			in.firstItemSeen = true;

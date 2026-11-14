@@ -13,13 +13,13 @@ import static org.mockito.Mockito.when;
 import carfinder.TestcontainersConfiguration;
 import carfinder.buying.ChecklistBuilder;
 import carfinder.buying.RealCostCalculator;
+import carfinder.data.DataStore;
 import carfinder.geo.Places;
 import carfinder.knowledge.KnowledgeBase;
 import carfinder.knowledge.KnowledgeLoader;
 import carfinder.listing.Fuel;
 import carfinder.listing.Listing;
 import carfinder.listing.ListingRepository;
-import carfinder.data.DataStore;
 import carfinder.listing.ListingStore;
 import carfinder.listing.RawListing;
 import carfinder.listing.Site;
@@ -528,7 +528,7 @@ class SearchServiceTest {
 		store.upsert(marketplace("m1", 2000));
 		ListingSource mp = mock(ListingSource.class);
 		when(mp.search(any(), any())).thenReturn(List.of(marketplace("m2", 2100)));
-		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		when(mp.details(anyString())).thenThrow(new carfinder.source.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
 		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), true);
@@ -550,7 +550,7 @@ class SearchServiceTest {
 	void marketplaceNotAutomated_neverSearchesTheSite() {
 		store.upsert(marketplace("m1", 2000));
 		ListingSource mp = mock(ListingSource.class);
-		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		when(mp.details(anyString())).thenThrow(new carfinder.source.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
 		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
@@ -564,7 +564,7 @@ class SearchServiceTest {
 		ListingSource mp = mock(ListingSource.class);
 		when(mp.search(any(), any())).thenThrow(new NeedsUserException("Faz login na janela aberta"))
 				.thenReturn(List.of(marketplace("m2", 2100)));
-		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		when(mp.details(anyString())).thenThrow(new carfinder.source.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
 		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), true);
@@ -579,7 +579,7 @@ class SearchServiceTest {
 			store.upsert(marketplace("w" + i, 2000 + i));
 		}
 		ListingSource mp = mock(ListingSource.class);
-		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		when(mp.details(anyString())).thenThrow(new carfinder.source.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
 		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
@@ -632,7 +632,7 @@ class SearchServiceTest {
 			store.upsert(marketplace("b" + i, 2000 + i));
 		}
 		ListingSource mp = mock(ListingSource.class);
-		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
+		when(mp.details(anyString())).thenThrow(new carfinder.source.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
 		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
@@ -649,7 +649,7 @@ class SearchServiceTest {
 			store.upsert(marketplace("p" + i, 2000 + i));
 		}
 		ListingSource mp = mock(ListingSource.class);
-		var wall = new carfinder.source.marketplace.LoginWallException();
+		var wall = new carfinder.source.LoginWallException();
 		var broken = new SourceException("parse");
 		when(mp.details(anyString())).thenThrow(broken, broken, broken, wall, wall, wall);
 		SearchService s = withMarketplace(mp);
@@ -703,7 +703,7 @@ class SearchServiceTest {
 			store.upsert(marketplace("r" + i, 2000 + i));
 		}
 		ListingSource mp = mock(ListingSource.class);
-		var wall = new carfinder.source.marketplace.LoginWallException();
+		var wall = new carfinder.source.LoginWallException();
 		when(mp.details(anyString())).thenThrow(wall, wall)
 				.thenAnswer(a -> marketplace(a.<String>getArgument(0).replaceAll(".*/item/([^/]+)/$", "$1"), 2000))
 				.thenThrow(wall, wall);
