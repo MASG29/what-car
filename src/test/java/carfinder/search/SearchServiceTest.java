@@ -662,6 +662,42 @@ class SearchServiceTest {
 	}
 
 	@Test
+	void blocked_stopsSiteDetailsAtOnce() {
+		for (int i = 0; i < 5; i++) {
+			store.upsert(marketplace("k" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		when(mp.details(anyString())).thenThrow(new carfinder.source.BlockedException("Marketplace", 429));
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		verify(mp, org.mockito.Mockito.times(1)).details(anyString());
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.DONE);
+		assertThat(v.messagePt()).contains("Não foi possível ler 5 anúncios em detalhe")
+				.contains("O " + Site.MARKETPLACE.label + " recusou pedidos (HTTP 429); parei de abrir anúncios desse site nesta pesquisa.");
+	}
+
+	@Test
+	void blocked_notReportedAsFormatChanged() {
+		for (int i = 0; i < 6; i++) {
+			store.upsert(marketplace("n" + i, 2000 + i));
+		}
+		ListingSource mp = mock(ListingSource.class);
+		var notFound = new SourceException("404");
+		when(mp.details(anyString())).thenThrow(notFound, notFound)
+				.thenThrow(new carfinder.source.BlockedException("Marketplace", 403));
+		SearchService s = withMarketplace(mp);
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+
+		RunView v = s.status(id);
+		assertThat(v.status()).isEqualTo(RunStatus.DONE);
+		assertThat(v.messagePt()).contains("HTTP 403");
+	}
+
+	@Test
 	void backOff_streakResetByReadPage() {
 		for (int i = 0; i < 5; i++) {
 			store.upsert(marketplace("r" + i, 2000 + i));

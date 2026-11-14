@@ -6,6 +6,7 @@ import carfinder.listing.Site;
 import carfinder.source.ListingSource;
 import carfinder.source.Pace;
 import carfinder.source.SearchQuery;
+import carfinder.source.BlockedException;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.net.URI;
@@ -124,6 +125,9 @@ public class MarketplaceSource implements ListingSource {
 			if (status / 100 == 3 && response.headers().firstValue("Location").filter(MarketplaceSource::isLogin)
 					.isPresent()) {
 				throw new LoginWallException();
+			}
+			if (status == 400 || status == 403 || status == 429) {
+				throw new BlockedException("Marketplace", status); // 400 is how Facebook refused plain requests
 			}
 			if (status != 200) {
 				throw new SourceException("Marketplace respondeu com erro HTTP " + status);

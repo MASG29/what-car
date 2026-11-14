@@ -55,6 +55,10 @@ class StandvirtualSourceTest {
 			else if (path.startsWith("/carros/anuncio/")) {
 				body = fixture("standvirtual-advert.html");
 			}
+			else if (path.matches("/status/\\d+")) {
+				status = Integer.parseInt(path.substring(8));
+				body = "stop";
+			}
 			else if (path.equals("/moved")) {
 				status = 302;
 				body = "";
@@ -189,5 +193,14 @@ class StandvirtualSourceTest {
 				.isInstanceOf(SourceException.class)
 				.hasMessageContaining("500");
 		assertThat(requests).hasSize(2);
+	}
+
+	@Test
+	void forbiddenOrTooMany_isBlocked() {
+		for (int code : new int[] { 403, 429 }) {
+			assertThatThrownBy(() -> source(5).details(base + "/status/" + code))
+					.isInstanceOf(carfinder.source.BlockedException.class).hasMessageContaining("HTTP " + code)
+					.extracting(e -> ((carfinder.source.BlockedException) e).status()).isEqualTo(code);
+		}
 	}
 }

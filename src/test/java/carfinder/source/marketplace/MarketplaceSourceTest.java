@@ -67,6 +67,9 @@ class MarketplaceSourceTest {
 				status = 302;
 				ex.getResponseHeaders().add("Location", base + "/login/?next=x");
 			}
+			else if (path.matches("/marketplace/item/4(00|03|29)/")) {
+				status = Integer.parseInt(path.substring(18, 21));
+			}
 			else if (path.equals("/marketplace/item/3/")) {
 				status = 302;
 				ex.getResponseHeaders().add("Location", base + "/marketplace/");
@@ -234,5 +237,13 @@ class MarketplaceSourceTest {
 		assertThatThrownBy(() -> source().search(new SearchQuery(2500, null, null, null, null, true), p -> { }))
 				.isInstanceOf(SourceException.class)
 				.hasMessage("A pesquisa automática não recebeu anúncios do Marketplace");
+	}
+
+	@Test
+	void refusedOrTooMany_isBlocked() {
+		for (String code : List.of("400", "403", "429")) {
+			assertThatThrownBy(() -> source().details(item(code)))
+					.isInstanceOf(carfinder.source.BlockedException.class).hasMessageContaining("HTTP " + code);
+		}
 	}
 }

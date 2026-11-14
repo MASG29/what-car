@@ -52,6 +52,10 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
 
 ### Sites
 
+If a site refuses a request (HTTP 403 or 429, or 400 from Facebook), the app stops opening that
+site's ad pages for the rest of the search at once and never retries; those ads keep their search
+data.
+
 - **Standvirtual**: the app reads public search and advert pages
   slowly, with a random pause of 4 to 9 seconds between requests and a page budget per run. It
   never requests `/api/`, `/ajax/`, `/account/` or `/ad/contact/`, it fetches only
@@ -234,6 +238,10 @@ frontend.
   limites e pesos ficam.
 
 ### Sites
+
+Se um site recusar um pedido (HTTP 403 ou 429, ou 400 do Facebook), a aplicação deixa logo de abrir
+páginas de anúncio desse site no resto da pesquisa e nunca tenta de novo; esses anúncios ficam com
+os dados da pesquisa.
 
 - **Standvirtual**: a aplicação lê páginas públicas de pesquisa e de
   anúncio devagar, com uma pausa aleatória de 4 a 9 segundos entre pedidos e um limite de páginas

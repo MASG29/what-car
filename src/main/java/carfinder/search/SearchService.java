@@ -14,6 +14,7 @@ import carfinder.scoring.Excluded;
 import carfinder.scoring.Preset;
 import carfinder.scoring.ScoringService;
 import carfinder.scoring.Weights;
+import carfinder.source.BlockedException;
 import carfinder.source.ListingSource;
 import carfinder.source.NeedsUserException;
 import carfinder.source.SearchQuery;
@@ -252,10 +253,10 @@ public class SearchService {
 			Preset anyPreset = Preset.BALANCED; // the filter does not depend on weights
 			int attempted = 0;
 			int failed = 0;
-			int walled = 0;
+			int refused = 0; // login walls and blocks: say nothing about the parser
 			Site failedSite = null;
-			Site backedOff = null;
 			int skipped = 0; // left unread after a back-off; not part of the broken-parser rule
+			StringBuilder stopped = new StringBuilder(); // why a site's ad pages were left unread
 			for (Site site : sites) {
 				ListingSource source = sources.get(site);
 				if (site == Site.MARKETPLACE && automated && source != null) {
@@ -293,7 +294,8 @@ public class SearchService {
 				for (int i = 0; i < toRead.size(); i++) {
 					if (wallsInARow == WALL_LIMIT) {
 						skipped += toRead.size() - i; // the rest stay unread
-						backedOff = site;
+						stopped.append(" O ").append(site.label).append(" pediu login ").append(WALL_LIMIT)
+								.append(" vezes seguidas; parei de abrir anúncios desse site nesta pesquisa.");
 						break;
 					}
 					Listing l = toRead.get(i);
@@ -311,8 +313,16 @@ public class SearchService {
 					}
 					catch (LoginWallException e) {
 						// the page needs a login: the ad keeps its imported data; says nothing about the parser
-						walled++;
+						refused++;
 						wallsInARow++;
+					}
+					catch (BlockedException e) {
+						// a deliberate block: stop this site's pages at once, never retry
+						refused++;
+						skipped += toRead.size() - i - 1;
+						stopped.append(" O ").append(site.label).append(" recusou pedidos (HTTP ").append(e.status())
+								.append("); parei de abrir anúncios desse site nesta pesquisa.");
+						break;
 					}
 					catch (SourceException e) {
 						// a removed ad (404) keeps its search-page data
@@ -324,16 +334,15 @@ public class SearchService {
 				}
 			}
 			// Every advert page failing is a broken parser, not a few removed ads.
-			if (attempted - walled >= 3 && failed == attempted - walled) {
+			if (attempted - refused >= 3 && failed == attempted - refused) {
 				throw new SourceException(failedSite.formatChangedPt());
 			}
 			int collected = runs.findById(id).orElseThrow().getCollected();
-			int unread = failed + walled + skipped;
+			int unread = failed + refused + skipped;
 			String done = "Pesquisa concluída: " + collected + (collected == 1 ? " anúncio recolhido." : " anúncios recolhidos.")
 					+ (unread == 0 ? "" : " Não foi possível ler " + unread + (unread == 1 ? " anúncio" : " anúncios")
 							+ " em detalhe; ficam com os dados da pesquisa.")
-					+ (backedOff == null ? "" : " O " + backedOff.label + " pediu login " + WALL_LIMIT
-							+ " vezes seguidas; parei de abrir anúncios desse site nesta pesquisa.");
+					+ stopped;
 			finish(id, RunStatus.DONE, done);
 		}
 		catch (SourceException e) {

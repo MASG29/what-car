@@ -6,6 +6,7 @@ import carfinder.source.ListingSource;
 import carfinder.source.Pace;
 import carfinder.source.SearchQuery;
 import carfinder.source.SearchPage;
+import carfinder.source.BlockedException;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.net.URI;
@@ -95,6 +96,9 @@ public class StandvirtualSource implements ListingSource {
 				.GET().build();
 		try {
 			HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString());
+			if (response.statusCode() == 403 || response.statusCode() == 429) {
+				throw new BlockedException("Standvirtual", response.statusCode());
+			}
 			if (response.statusCode() != 200) {
 				throw new SourceException("Standvirtual respondeu com erro HTTP " + response.statusCode());
 			}

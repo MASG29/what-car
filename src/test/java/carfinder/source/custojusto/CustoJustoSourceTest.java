@@ -56,6 +56,9 @@ class CustoJustoSourceTest {
 				status = 307;
 				ex.getResponseHeaders().add("Location", "/braga/veiculos/carros-usados/citadino?gone=90000009");
 			}
+			else if (path.matches(".*-90000(4\\d\\d)")) {
+				status = Integer.parseInt(path.substring(path.length() - 3));
+			}
 			else if (path.endsWith("-90000008")) {
 				status = 302;
 				ex.getResponseHeaders().add("Location", "/somewhere");
@@ -180,5 +183,13 @@ class CustoJustoSourceTest {
 	@Test
 	void maxDetailsPerRun_fromConfig() {
 		assertThat(source(1).maxDetailsPerRun()).isEqualTo(7);
+	}
+
+	@Test
+	void forbiddenOrTooMany_isBlocked() {
+		for (int code : new int[] { 403, 429 }) {
+			assertThatThrownBy(() -> source(1).details(base + "/porto/veiculos/carros-usados/sedan/x-90000" + code))
+					.isInstanceOf(carfinder.source.BlockedException.class).hasMessageContaining("HTTP " + code);
+		}
 	}
 }

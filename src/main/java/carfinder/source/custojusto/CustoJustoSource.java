@@ -7,6 +7,7 @@ import carfinder.source.Pace;
 import carfinder.source.SearchPage;
 import carfinder.source.SearchQuery;
 import carfinder.source.SoldOrReservedException;
+import carfinder.source.BlockedException;
 import carfinder.source.SourceException;
 import java.io.IOException;
 import java.net.URI;
@@ -99,6 +100,9 @@ public class CustoJustoSource implements ListingSource {
 	}
 
 	private static String body(HttpResponse<String> response) {
+		if (response.statusCode() == 403 || response.statusCode() == 429) {
+			throw new BlockedException("CustoJusto", response.statusCode());
+		}
 		if (response.statusCode() != 200) {
 			throw new SourceException("CustoJusto respondeu com erro HTTP " + response.statusCode());
 		}
