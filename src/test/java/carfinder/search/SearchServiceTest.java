@@ -128,7 +128,7 @@ class SearchServiceTest {
 	}
 
 	private UUID start(SearchService s) {
-		return s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL));
+		return s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL), false);
 	}
 
 	@Test
@@ -146,7 +146,7 @@ class SearchServiceTest {
 		assertThat(v.status()).isEqualTo(RunStatus.DONE);
 		assertThat(v.collected()).isEqualTo(2);
 		assertThat(v.messagePt()).contains("2 anúncios");
-		verify(source).search(org.mockito.ArgumentMatchers.eq(new SearchQuery(5000, 300000, 1995)), any());
+		verify(source).search(org.mockito.ArgumentMatchers.eq(new SearchQuery(5000, 300000, 1995, null, null, false)), any());
 		assertThat(listings.findAll()).allMatch(l -> l.getDetailFetchedAt() != null);
 		// results() reads the limits back from JSON and ranks the run's listings.
 		ScoringService.Ranking r = s.results(id);
@@ -357,13 +357,13 @@ class SearchServiceTest {
 		Set<Site> sites = Set.of(Site.STANDVIRTUAL);
 		for (SearchLimits bad : new SearchLimits[] {withCentre(null, 65), withCentre(" ", 65),
 				withCentre("Ponte de Lima", null), withCentre("Ponte de Lima", 0), withCentre("Ponte de Lima", -5)}) {
-			assertThatThrownBy(() -> s.start(bad, Preset.BALANCED, null, sites))
+			assertThatThrownBy(() -> s.start(bad, Preset.BALANCED, null, sites, false))
 					.isInstanceOf(IllegalArgumentException.class).hasMessage("Indica o centro e o raio da pesquisa");
 		}
-		assertThatThrownBy(() -> s.start(withCentre("Atlantida", 65), Preset.BALANCED, null, sites))
+		assertThatThrownBy(() -> s.start(withCentre("Atlantida", 65), Preset.BALANCED, null, sites, false))
 				.isInstanceOf(IllegalArgumentException.class).hasMessage("Localidade desconhecida: Atlantida");
 		assertThat(runs.count()).isZero();
-		assertThat(s.start(withCentre("ponte de lima", 65), Preset.BALANCED, null, sites)).isNotNull();
+		assertThat(s.start(withCentre("ponte de lima", 65), Preset.BALANCED, null, sites, false)).isNotNull();
 	}
 
 	private static SearchLimits withCentre(String centre, Integer radius) {
@@ -388,9 +388,9 @@ class SearchServiceTest {
 	void start_siteWithoutSource_rejected() {
 		SearchService s = service();
 
-		assertThatThrownBy(() -> s.start(LIMITS, Preset.BALANCED, null, Set.of()))
+		assertThatThrownBy(() -> s.start(LIMITS, Preset.BALANCED, null, Set.of(), false))
 				.isInstanceOf(IllegalArgumentException.class);
-		assertThatThrownBy(() -> s.start(LIMITS, Preset.CUSTOM, null, Set.of(Site.STANDVIRTUAL)))
+		assertThatThrownBy(() -> s.start(LIMITS, Preset.CUSTOM, null, Set.of(Site.STANDVIRTUAL), false))
 				.isInstanceOf(IllegalArgumentException.class);
 		assertThat(runs.count()).isZero();
 	}
@@ -434,7 +434,7 @@ class SearchServiceTest {
 		store.upsert(clio("s1", 2000, 150000)); // another site's ad is not part of a Marketplace-only run
 		SearchService s = service();
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		assertThat(s.status(id).status()).isEqualTo(RunStatus.DONE);
 		assertThat(s.status(id).collected()).isEqualTo(2);
@@ -456,7 +456,7 @@ class SearchServiceTest {
 		store.upsert(marketplace("m1", 2000)); // another site's ad is not part of an OLX-only run
 		SearchService s = service();
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.OLX));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.OLX), false);
 
 		assertThat(s.status(id).status()).isEqualTo(RunStatus.DONE);
 		verify(source, never()).search(any(), any());
@@ -516,7 +516,7 @@ class SearchServiceTest {
 				Preset.BALANCED, null).ranked().stream().limit(20).map(x -> x.listing().getUrl()).toList();
 		SearchService s = withMarketplace(mp);
 
-		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		assertThat(expected).hasSize(20).isNotEqualTo(listings.findBySite(Site.MARKETPLACE).stream().limit(20)
 				.map(Listing::getUrl).toList());
@@ -553,7 +553,7 @@ class SearchServiceTest {
 		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
-		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		verify(mp, never()).search(any(), any());
 		assertThat(data.imports()).isEmpty();
@@ -582,7 +582,7 @@ class SearchServiceTest {
 		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		RunView v = s.status(id);
 		assertThat(v.status()).isEqualTo(RunStatus.DONE);
@@ -600,9 +600,9 @@ class SearchServiceTest {
 		when(source.search(any(), any())).thenReturn(List.of());
 		SearchService s = service();
 
-		UUID id = s.start(typed(" ford fiesta "), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL));
+		UUID id = s.start(typed(" ford fiesta "), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL), false);
 
-		verify(source).search(org.mockito.ArgumentMatchers.eq(new SearchQuery(5000, 300000, 1995, "Ford", "Fiesta")),
+		verify(source).search(org.mockito.ArgumentMatchers.eq(new SearchQuery(5000, 300000, 1995, "Ford", "Fiesta", false)),
 				any());
 		SearchLimits stored = JsonMapper.builder().build().readValue(runs.findById(id).orElseThrow().getLimitsJson(),
 				SearchLimits.class);
@@ -614,12 +614,12 @@ class SearchServiceTest {
 	void start_unknownMakeModel_rejectedWithSuggestion() {
 		SearchService s = service();
 
-		assertThatThrownBy(() -> s.start(typed("Ford Fiesa"), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL)))
+		assertThatThrownBy(() -> s.start(typed("Ford Fiesa"), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL), false))
 				.isInstanceOf(UnknownMakeModelException.class)
 				.hasMessageStartingWith("Marca e modelo desconhecidos")
 				.hasMessageContaining("Será que querias dizer «Ford Fiesta»?")
 				.extracting(e -> ((UnknownMakeModelException) e).suggestion()).isEqualTo("Ford Fiesta");
-		assertThatThrownBy(() -> s.start(typed("xyz"), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL)))
+		assertThatThrownBy(() -> s.start(typed("xyz"), Preset.BALANCED, null, Set.of(Site.STANDVIRTUAL), false))
 				.isInstanceOf(UnknownMakeModelException.class)
 				.hasMessageContaining("por exemplo, Ford Fiesta")
 				.extracting(e -> ((UnknownMakeModelException) e).suggestion()).isNull();
@@ -635,7 +635,7 @@ class SearchServiceTest {
 		when(mp.details(anyString())).thenThrow(new carfinder.source.marketplace.LoginWallException());
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		verify(mp, org.mockito.Mockito.times(3)).details(anyString());
 		RunView v = s.status(id);
@@ -654,7 +654,7 @@ class SearchServiceTest {
 		when(mp.details(anyString())).thenThrow(broken, broken, broken, wall, wall, wall);
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		RunView v = s.status(id);
 		assertThat(v.status()).isEqualTo(RunStatus.FAILED);
@@ -670,7 +670,7 @@ class SearchServiceTest {
 		when(mp.details(anyString())).thenThrow(new carfinder.source.BlockedException("Marketplace", 429));
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		verify(mp, org.mockito.Mockito.times(1)).details(anyString());
 		RunView v = s.status(id);
@@ -690,7 +690,7 @@ class SearchServiceTest {
 				.thenThrow(new carfinder.source.BlockedException("Marketplace", 403));
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		RunView v = s.status(id);
 		assertThat(v.status()).isEqualTo(RunStatus.DONE);
@@ -709,7 +709,7 @@ class SearchServiceTest {
 				.thenThrow(wall, wall);
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		verify(mp, org.mockito.Mockito.times(5)).details(anyString());
 		RunView v = s.status(id);
@@ -735,7 +735,7 @@ class SearchServiceTest {
 		});
 		SearchService s = withMarketplace(mp);
 
-		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		Listing g1 = listings.findBySiteAndExternalId(Site.MARKETPLACE, "g1").orElseThrow();
 		assertThat(g1.getDetailFetchedAt()).isNotNull();
@@ -773,7 +773,7 @@ class SearchServiceTest {
 		when(mp.details(anyString())).thenThrow(new carfinder.source.SoldOrReservedException());
 		SearchService s = withMarketplace(mp);
 
-		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE));
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.MARKETPLACE), false);
 
 		RunView v = s.status(id);
 		assertThat(v.status()).isEqualTo(RunStatus.DONE);

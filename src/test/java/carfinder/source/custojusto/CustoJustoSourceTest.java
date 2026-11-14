@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 class CustoJustoSourceTest {
 
-	private static final SearchQuery QUERY = new SearchQuery(2500, null, null);
+	private static final SearchQuery QUERY = new SearchQuery(2500, null, null, null, null, false);
 	private static final String SEARCH = "/portugal/veiculos/carros-usados";
 	private static final String AD = "/braga/veiculos/carros-usados/citadino/renault-clio-1-2-16v-90000001";
 
@@ -119,14 +119,14 @@ class CustoJustoSourceTest {
 
 	@Test
 	void search_withMakeModelAndYear_requestsModelPath() {
-		source(1).search(new SearchQuery(2500, null, 2005, "Renault", "Clio"), p -> { });
+		source(1).search(new SearchQuery(2500, null, 2005, "Renault", "Clio", false), p -> { });
 
 		assertThat(requests).containsExactly(SEARCH + "/renault/clio?ps=100&pe=2500&rs=2005");
 	}
 
 	@Test
 	void unknownModelSlug_fallsBackToSearchWithoutModel() {
-		List<RawListing> result = source(1).search(new SearchQuery(2500, null, null, "Renault", "Naoexiste"), p -> { });
+		List<RawListing> result = source(1).search(new SearchQuery(2500, null, null, "Renault", "Naoexiste", false), p -> { });
 
 		assertThat(requests).containsExactly(SEARCH + "/renault/naoexiste?ps=100&pe=2500", SEARCH + "?ps=100&pe=2500");
 		assertThat(result).hasSize(3);

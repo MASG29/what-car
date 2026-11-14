@@ -22,7 +22,7 @@ class HarReaderTest {
 	static final Path FIXTURE = Path.of("src/test/resources/fixtures/marketplace-feed.har");
 
 	static List<String> bodies(Path har) throws IOException {
-		try (InputStream in = Files.newInputStream(har); Stream<String> s = HarReader.bodies(in)) {
+		try (InputStream in = Files.newInputStream(har); Stream<String> s = HarReader.bodies(in, HarReader.MARKETPLACE)) {
 			return s.toList();
 		}
 	}
@@ -77,7 +77,7 @@ class HarReaderTest {
 
 	@Test
 	void notAHar_throwsFilterMessage() {
-		assertThatThrownBy(() -> HarReader.bodies(stream("{\"hello\":1}")).toList())
+		assertThatThrownBy(() -> HarReader.bodies(stream("{\"hello\":1}"), HarReader.MARKETPLACE).toList())
 				.isInstanceOf(SourceException.class).hasMessage(MarketplaceFeedParser.NO_ADS);
 	}
 
@@ -105,7 +105,7 @@ class HarReaderTest {
 		};
 		CountingStream in = new CountingStream(new SequenceInputStream(parts));
 
-		try (Stream<String> s = HarReader.bodies(in)) {
+		try (Stream<String> s = HarReader.bodies(in, HarReader.MARKETPLACE)) {
 			Iterator<String> it = s.iterator();
 			assertThat(it.next()).contains("lazy-item");
 			in.firstItemSeen = true;

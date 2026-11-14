@@ -12,10 +12,6 @@ public record ConditionResult(List<String> problemsPt, List<String> maintenanceP
 		damagePt = List.copyOf(damagePt);
 	}
 
-	public ConditionResult(List<String> problemsPt, List<String> maintenancePt) {
-		this(problemsPt, maintenancePt, List.of(), false);
-	}
-
 	/** Builder's call, not a sourced figure: +0.03 per maintenance item, -0.05 per problem, each capped at 3. */
 	public double rankAdjustment() {
 		return 0.03 * Math.min(3, maintenancePt.size()) - 0.05 * Math.min(3, problemsPt.size());

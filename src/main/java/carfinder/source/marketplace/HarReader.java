@@ -35,11 +35,6 @@ public final class HarReader {
 	}
 
 	/** Lazy: each body is read when the stream asks for it. Close the stream to close the parser. */
-	public static Stream<String> bodies(InputStream har) {
-		return bodies(har, MARKETPLACE);
-	}
-
-	/** Lazy: each body is read when the stream asks for it. Close the stream to close the parser. */
 	public static Stream<String> bodies(InputStream har, Filter filter) {
 		JsonParser p = MAPPER.createParser(har);
 		Iterator<String> it = new Iterator<>() {

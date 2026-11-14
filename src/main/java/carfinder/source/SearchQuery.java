@@ -6,12 +6,4 @@ package carfinder.source;
  */
 public record SearchQuery(int maxPriceEur, Integer maxKm, Integer minYear, String make, String model,
 		boolean automated) {
-
-	public SearchQuery(int maxPriceEur, Integer maxKm, Integer minYear, String make, String model) {
-		this(maxPriceEur, maxKm, minYear, make, model, false);
-	}
-
-	public SearchQuery(int maxPriceEur, Integer maxKm, Integer minYear) {
-		this(maxPriceEur, maxKm, minYear, null, null);
-	}
 }

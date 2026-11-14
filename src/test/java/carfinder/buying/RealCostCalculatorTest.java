@@ -31,11 +31,11 @@ class RealCostCalculatorTest {
 
 	static CarMatch match(Timing timing) {
 		Engine e = new Engine("e", "toyota", "1sz", "PETROL", 998, List.of(50), timing);
-		return new CarMatch(Optional.empty(), List.of(), false, Optional.of(e), List.of(), List.of(), false);
+		return new CarMatch(Optional.empty(), List.of(), false, Optional.of(e), List.of(), List.of(), false, 1);
 	}
 
 	static CarMatch noEngine() {
-		return new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(), false);
+		return new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(), false, 0);
 	}
 
 	@Test

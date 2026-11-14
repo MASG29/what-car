@@ -66,9 +66,9 @@ class ScoringServiceTest {
 	void rank_missingSubScore_renormalisesButLowersRank() {
 		Weights w = Preset.BALANCED.weights(null);
 		ScoringService.Totals onlyPriceAndPhotos = ScoringService.combine(
-				subs(Map.of(Criterion.PRICE, sub(0.6), Criterion.PHOTOS, sub(0.6))), w);
+				subs(Map.of(Criterion.PRICE, sub(0.6), Criterion.PHOTOS, sub(0.6))), w, 1.0);
 		ScoringService.Totals documented = ScoringService.combine(subs(Map.of(Criterion.PRICE, sub(0.6),
-				Criterion.PHOTOS, sub(0.6), Criterion.RELIABILITY, sub(0.5))), w);
+				Criterion.PHOTOS, sub(0.6), Criterion.RELIABILITY, sub(0.5))), w, 1.0);
 
 		// Missing reliability is left out, not counted as 0 ...
 		assertThat(onlyPriceAndPhotos.total()).isCloseTo(0.6, within(1e-9));
@@ -85,12 +85,12 @@ class ScoringServiceTest {
 	void rank_missingCriteriaAddNothing_sparsePerfectAdBelowDocumentedAverageAd() {
 		Weights w = Preset.BALANCED.weights(null);
 		ScoringService.Totals sparse = ScoringService.combine(
-				subs(Map.of(Criterion.COMPLETENESS, sub(1.0), Criterion.PHOTOS, sub(1.0))), w);
+				subs(Map.of(Criterion.COMPLETENESS, sub(1.0), Criterion.PHOTOS, sub(1.0))), w, 1.0);
 		Map<Criterion, SubScore> allFive = new EnumMap<>(Criterion.class);
 		for (Criterion c : Criterion.values()) {
 			allFive.put(c, sub(0.6));
 		}
-		ScoringService.Totals documented = ScoringService.combine(allFive, w);
+		ScoringService.Totals documented = ScoringService.combine(allFive, w, 1.0);
 
 		assertThat(sparse.total()).isCloseTo(1.0, within(1e-9)); // shown total unchanged
 		assertThat(sparse.rank()).isCloseTo(0.25 * 0.625, within(1e-9));
@@ -100,7 +100,7 @@ class ScoringServiceTest {
 
 	@Test
 	void noValues_totalZero() {
-		assertThat(ScoringService.combine(subs(Map.of()), Preset.BALANCED.weights(null)).total()).isZero();
+		assertThat(ScoringService.combine(subs(Map.of()), Preset.BALANCED.weights(null), 1.0).total()).isZero();
 	}
 
 	@Test
@@ -135,7 +135,7 @@ class ScoringServiceTest {
 		assertThat(cheap.suspect()).isTrue();
 		assertThat(cheap.top5()).isFalse();
 		assertThat(cheap.confidence()).isCloseTo(
-				ScoringService.combine(cheap.subs(), Preset.BALANCED.weights(null)).confidence()
+				ScoringService.combine(cheap.subs(), Preset.BALANCED.weights(null), 1.0).confidence()
 						* ScoringService.SUSPECT_CONFIDENCE, within(1e-9));
 		assertThat(ranked).filteredOn(x -> x != cheap).extracting(ScoredListing::suspect).containsOnly(false);
 		assertThat(ranked).filteredOn(ScoredListing::top5).hasSize(5).doesNotContain(cheap);

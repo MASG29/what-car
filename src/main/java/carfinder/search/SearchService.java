@@ -117,10 +117,6 @@ public class SearchService {
 	private static final class NeedsUserTimeout extends RuntimeException {
 	}
 
-	public UUID start(SearchLimits limits, Preset preset, Weights custom, Set<Site> sites) {
-		return start(limits, preset, custom, sites, false);
-	}
-
 	/** {@code automated}: Marketplace also searches the site itself (secondary account), not only the imports. */
 	public UUID start(SearchLimits limits, Preset preset, Weights custom, Set<Site> sites, boolean automated) {
 		preset.weights(custom); // IllegalArgumentException for bad custom weights

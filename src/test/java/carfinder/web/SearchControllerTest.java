@@ -226,7 +226,7 @@ class SearchControllerTest {
 				Criterion.RELIABILITY, none), 0.7, 0.5, 0.52, true, false, List.of("km não indicados"), List.of(),
 				new RealCost(2500, Map.of("Preço pedido", 2000.0), "800 a 1500 €/ano"),
 				new Checklist(List.of(new Checklist.Link("IMT", "https://example.test/imt")), List.of("Revisões?")),
-				new ConditionResult(List.of(), List.of()), "1.º lugar: preço 70 %; confiança 50 %.");
+				new ConditionResult(List.of(), List.of(), List.of(), false), "1.º lugar: preço 70 %; confiança 50 %.");
 		List<Excluded> excluded = List.of(
 				new Excluded(ad("x1"), List.of("preço acima do teu limite (2600 €)", "ano abaixo do teu limite (1999)")),
 				new Excluded(ad("x2"), List.of("preço acima do teu limite (2800 €)")));

@@ -24,7 +24,7 @@ class ConsumptionScorerTest {
 		return new CarMatch(Optional.of(g), List.of(g), false,
 				engineId == null ? Optional.empty() : KB.enginesFor(g.id()).stream()
 						.filter(e -> e.id().equals(engineId)).findFirst(),
-				List.of(), List.of(), false);
+				List.of(), List.of(), false, 1);
 	}
 
 	@Test
@@ -37,7 +37,7 @@ class ConsumptionScorerTest {
 
 	@Test
 	void consumption_noGenerationOrNoEngine_semDadosOficiais() {
-		CarMatch none = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(), false);
+		CarMatch none = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(), false, 0);
 		assertThat(scorer.score(none).explanationPt()).isEqualTo("sem dados oficiais");
 		assertThat(scorer.score(match("Renault", "Clio", "r-clio-3", null)).value()).isEmpty();
 	}

@@ -36,7 +36,7 @@ class ReliabilityScorerTest {
 
 	private static CarMatch exact(Generation g, List<FaultHit> faults, List<GearboxHit> gearbox) {
 		return new CarMatch(Optional.of(g), List.of(g), false, Optional.empty(), faults, gearbox,
-				faults.stream().anyMatch(FaultHit::uncertain));
+				faults.stream().anyMatch(FaultHit::uncertain), 0);
 	}
 
 	private static CarMatch exact(Generation g) {
@@ -111,7 +111,7 @@ class ReliabilityScorerTest {
 		// C3 I ends 2009-06 and its successor is not in the knowledge base: EZ2010 must not score a 2009 car
 		Generation c3 = gen("Citroën", "C3", "r-c3-1");
 		CarMatch mixed = new CarMatch(Optional.empty(), List.of(c3), true, Optional.empty(), List.of(), List.of(),
-				false);
+				false, 0);
 
 		SubScore s = scorer.score(mixed, car("Citroën", "C3", 2009), 17);
 
@@ -146,7 +146,7 @@ class ReliabilityScorerTest {
 	@Test
 	void unknownCarAndYear_semDadosNoCrash() {
 		CarMatch none = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(),
-				false);
+				false, 0);
 
 		SubScore s = scorer.score(none, listing(null, null, null, null, null, null, null, null, null), 0);
 

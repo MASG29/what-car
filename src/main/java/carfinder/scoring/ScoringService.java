@@ -142,13 +142,9 @@ public class ScoringService {
 	/**
 	 * total (shown) re-normalises over present values (a missing value is left out, never a neutral number). rank
 	 * divides by every weight, so a missing criterion adds nothing, then scales by confidence: a sparse ad cannot
-	 * outrank a documented one just because data is missing.
+	 * outrank a documented one just because data is missing. confidenceFactor scales the combined confidence (and so
+	 * the rank) for ads whose figures are less sure.
 	 */
-	static Totals combine(Map<Criterion, SubScore> subs, Weights w) {
-		return combine(subs, w, 1.0);
-	}
-
-	/** confidenceFactor scales the combined confidence (and so the rank) for ads whose figures are less sure. */
 	static Totals combine(Map<Criterion, SubScore> subs, Weights w, double confidenceFactor) {
 		double weighted = 0;
 		double presentWeight = 0;

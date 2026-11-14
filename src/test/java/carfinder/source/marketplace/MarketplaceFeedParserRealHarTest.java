@@ -30,10 +30,10 @@ class MarketplaceFeedParserRealHarTest {
 
 		List<String> documents;
 		MarketplaceFeedParser.FeedResult all;
-		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in)) {
+		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in, HarReader.MARKETPLACE)) {
 			documents = bodies.filter(b -> b.stripLeading().startsWith("<")).toList();
 		}
-		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in)) {
+		try (InputStream in = Files.newInputStream(Path.of(path)); Stream<String> bodies = HarReader.bodies(in, HarReader.MARKETPLACE)) {
 			all = parser.parse(bodies);
 		}
 		List<RawListing> live = all.live();

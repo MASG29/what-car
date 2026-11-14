@@ -12,8 +12,8 @@ class ConditionReaderTest {
 
 	@Test
 	void nullOrBlank_noHints() {
-		assertThat(ConditionReader.read(null)).isEqualTo(new ConditionResult(List.of(), List.of()));
-		assertThat(ConditionReader.read("  ")).isEqualTo(new ConditionResult(List.of(), List.of()));
+		assertThat(ConditionReader.read(null)).isEqualTo(new ConditionResult(List.of(), List.of(), List.of(), false));
+		assertThat(ConditionReader.read("  ")).isEqualTo(new ConditionResult(List.of(), List.of(), List.of(), false));
 	}
 
 	@Test
@@ -140,10 +140,10 @@ class ConditionReaderTest {
 
 	@Test
 	void adjustment_capsAtThreeEach() {
-		assertThat(new ConditionResult(List.of(), List.of()).rankAdjustment()).isZero();
-		assertThat(new ConditionResult(List.of("a"), List.of()).rankAdjustment()).isCloseTo(-0.05, within(1e-9));
-		assertThat(new ConditionResult(List.of(), List.of("a", "b")).rankAdjustment()).isCloseTo(0.06, within(1e-9));
-		assertThat(new ConditionResult(List.of("a", "b", "c", "d", "e"), List.of("a", "b", "c", "d"))
+		assertThat(new ConditionResult(List.of(), List.of(), List.of(), false).rankAdjustment()).isZero();
+		assertThat(new ConditionResult(List.of("a"), List.of(), List.of(), false).rankAdjustment()).isCloseTo(-0.05, within(1e-9));
+		assertThat(new ConditionResult(List.of(), List.of("a", "b"), List.of(), false).rankAdjustment()).isCloseTo(0.06, within(1e-9));
+		assertThat(new ConditionResult(List.of("a", "b", "c", "d", "e"), List.of("a", "b", "c", "d"), List.of(), false)
 				.rankAdjustment()).isCloseTo(0.09 - 0.15, within(1e-9));
 	}
 
@@ -217,7 +217,7 @@ class ConditionReaderTest {
 	@Test
 	void damageAndParts_doNotChangeRankAdjustment() {
 		assertThat(new ConditionResult(List.of(), List.of(), List.of("batido"), true).rankAdjustment()).isZero();
-		assertThat(ConditionReader.read(null, null)).isEqualTo(new ConditionResult(List.of(), List.of()));
+		assertThat(ConditionReader.read(null, null)).isEqualTo(new ConditionResult(List.of(), List.of(), List.of(), false));
 	}
 
 	@Test

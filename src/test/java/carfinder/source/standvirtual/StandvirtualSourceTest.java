@@ -22,7 +22,7 @@ import org.junit.jupiter.api.Test;
 
 class StandvirtualSourceTest {
 
-	private static final SearchQuery QUERY = new SearchQuery(2500, null, null);
+	private static final SearchQuery QUERY = new SearchQuery(2500, null, null, null, null, false);
 
 	private HttpServer server;
 	private String base;
@@ -100,7 +100,7 @@ class StandvirtualSourceTest {
 
 	@Test
 	void search_withMakeModel_requestsModelPath() {
-		source(1).search(new SearchQuery(2500, null, null, "Toyota", "Yaris"), p -> { });
+		source(1).search(new SearchQuery(2500, null, null, "Toyota", "Yaris", false), p -> { });
 
 		assertThat(requests).first().asString().startsWith("/carros/toyota/yaris?");
 	}

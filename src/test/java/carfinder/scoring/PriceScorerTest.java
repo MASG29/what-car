@@ -21,7 +21,7 @@ class PriceScorerTest {
 	private static final Generation CLIO3 = new Generation("r-clio-3", "Renault", "Clio", "III", "B",
 			YearMonth.of(2005, 1), YearMonth.of(2012, 6), List.of(), List.of(), "Clio");
 	private static final CarMatch MATCH = new CarMatch(Optional.of(CLIO3), List.of(CLIO3), false, Optional.empty(),
-			List.of(), List.of(), false);
+			List.of(), List.of(), false, 0);
 	private final PriceScorer scorer = new PriceScorer(new PriceProperties(1.25, 0.80));
 
 	private static Listing ad(String id, Integer price, int year, Integer km, boolean parts) {
@@ -161,7 +161,7 @@ class PriceScorerTest {
 
 	@Test
 	void price_withoutGeneration_usesMakeAndModel() {
-		CarMatch none = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(), false);
+		CarMatch none = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(), List.of(), List.of(), false, 0);
 		List<Listing> pool = new ArrayList<>(pool().subList(0, 2));
 		pool.add(ad("gen-iv", 2007, 2010, 100000, false));
 		pool.add(ad("renault-clio-2011", 1500, 2011, 100000, false));

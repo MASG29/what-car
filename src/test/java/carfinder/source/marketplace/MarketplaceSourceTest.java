@@ -175,7 +175,7 @@ class MarketplaceSourceTest {
 
 	@Test
 	void searchReadsNothing_andBudgetIsConfigured() {
-		assertThat(source().search(new SearchQuery(2500, null, null), p -> { })).isEmpty();
+		assertThat(source().search(new SearchQuery(2500, null, null, null, null, false), p -> { })).isEmpty();
 		assertThat(source().maxDetailsPerRun()).isEqualTo(20);
 		assertThat(source().site()).isEqualTo(Site.MARKETPLACE);
 		assertThat(requests).isEmpty();
@@ -192,7 +192,7 @@ class MarketplaceSourceTest {
 
 	@Test
 	void automatedFalse_neverOpensBrowser() throws IOException {
-		assertThat(source().search(new SearchQuery(2500, null, null, "Toyota", "Yaris"), p -> { })).isEmpty();
+		assertThat(source().search(new SearchQuery(2500, null, null, "Toyota", "Yaris", false), p -> { })).isEmpty();
 
 		assertThat(browser.isOpen()).isFalse();
 		try (var files = Files.list(profile)) {

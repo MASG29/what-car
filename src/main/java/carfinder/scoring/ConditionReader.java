@@ -89,7 +89,7 @@ public final class ConditionReader {
 		String joined = Stream.of(title, description).filter(t -> t != null && !t.isBlank())
 				.collect(Collectors.joining(". "));
 		if (joined.isEmpty()) {
-			return new ConditionResult(List.of(), List.of());
+			return new ConditionResult(List.of(), List.of(), List.of(), false);
 		}
 		// "nao fumador" is about the owner, not a negation of what follows ("Não fumador, riscos na porta")
 		String text = Text.normalise(joined).replaceAll("\\bnao fumador", "fumador");

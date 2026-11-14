@@ -15,13 +15,13 @@ class WhyTextTest {
 				null, null, condition, null);
 	}
 
-	private static final ConditionResult NONE = new ConditionResult(List.of(), List.of());
+	private static final ConditionResult NONE = new ConditionResult(List.of(), List.of(), List.of(), false);
 
 	@Test
 	void twoStrongest_semDados_confidence_adjustment() {
 		ScoredListing s = scored(Map.of(Criterion.RELIABILITY, sub(0.8), Criterion.PRICE, sub(0.7),
 				Criterion.COMPLETENESS, sub(0.6), Criterion.PHOTOS, sub(0.5)), 0.47,
-				new ConditionResult(List.of("riscos"), List.of()));
+				new ConditionResult(List.of("riscos"), List.of(), List.of(), false));
 		assertThat(WhyText.build(s, 3)).isEqualTo(
 				"3.º lugar: fiabilidade 80 % e preço 70 %; consumo sem dados; confiança 47 %; "
 						+ "−0,05 por riscos mencionados.");
@@ -39,7 +39,7 @@ class WhyTextTest {
 	@Test
 	void severalMissing_andBothKindsOfHints() {
 		ScoredListing s = scored(Map.of(Criterion.PRICE, sub(0.6)), 0.3,
-				new ConditionResult(List.of("riscos", "ferrugem"), List.of("embraiagem")));
+				new ConditionResult(List.of("riscos", "ferrugem"), List.of("embraiagem"), List.of(), false));
 		assertThat(WhyText.build(s, 2)).isEqualTo("2.º lugar: preço 60 %; "
 				+ "fiabilidade, consumo, anúncio completo, fotos sem dados; confiança 30 %; "
 				+ "−0,07 por riscos, ferrugem mencionados e manutenção recente (embraiagem).");
@@ -49,7 +49,7 @@ class WhyTextTest {
 	void maintenanceOnly_positive() {
 		ScoredListing s = scored(Map.of(Criterion.PRICE, sub(0.6), Criterion.RELIABILITY, sub(0.6),
 				Criterion.CONSUMPTION, sub(0.6), Criterion.COMPLETENESS, sub(0.6), Criterion.PHOTOS, sub(0.6)), 1.0,
-				new ConditionResult(List.of(), List.of("embraiagem", "amortecedores")));
+				new ConditionResult(List.of(), List.of("embraiagem", "amortecedores"), List.of(), false));
 		assertThat(WhyText.build(s, 4)).endsWith("; +0,06 por manutenção recente (embraiagem, amortecedores).");
 	}
 

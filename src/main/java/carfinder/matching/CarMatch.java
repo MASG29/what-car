@@ -13,11 +13,6 @@ public record CarMatch(Optional<Generation> generation, List<Generation> candida
 		Optional<Engine> engine, List<FaultHit> faults, List<GearboxHit> gearbox, boolean windowEdgeUncertain,
 		int engineOptions) {
 
-	public CarMatch(Optional<Generation> generation, List<Generation> candidates, boolean mixed,
-			Optional<Engine> engine, List<FaultHit> faults, List<GearboxHit> gearbox, boolean windowEdgeUncertain) {
-		this(generation, candidates, mixed, engine, faults, gearbox, windowEdgeUncertain, engine.isPresent() ? 1 : 0);
-	}
-
 	/** Several engines fit the generation and nothing in the ad picks one. */
 	public boolean severalEngines() {
 		return !candidates.isEmpty() && engine.isEmpty() && engineOptions > 1;

@@ -32,7 +32,7 @@ class ListingFilterTest {
 			new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
 
 	private static final CarMatch NO_MATCH = new CarMatch(Optional.empty(), List.of(), false, Optional.empty(),
-			List.of(), List.of(), false);
+			List.of(), List.of(), false, 0);
 	private static final PriceResult PLAIN = price(false, false);
 	private static final RealCost COST = new RealCost(1800, Map.of(), "");
 
