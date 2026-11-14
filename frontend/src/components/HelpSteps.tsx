@@ -1,5 +1,7 @@
+export type HelpStep = { text: string; image?: string }
+
 /** Numbered PT-PT steps for recording a Marketplace HAR by hand. Screenshots have personal data cropped out. */
-const STEPS: { text: string; image?: string }[] = [
+const MARKETPLACE_STEPS: HelpStep[] = [
   {
     text:
       'Carrega em "Abrir pesquisa no Marketplace". O Facebook abre já com o teu preço máximo; o ano e os km ' +
@@ -37,15 +39,24 @@ const STEPS: { text: string; image?: string }[] = [
   { text: 'Carrega em "Importar HAR" aqui e escolhe o ficheiro que gravaste.' },
 ]
 
-export function HelpSteps() {
+const MARKETPLACE_WARNING = 'O ficheiro HAR tem a tua sessão do Facebook: não o partilhes e apaga-o depois de importar.'
+
+/** Defaults to the Marketplace guide; another HAR-import site passes its own steps and warning. */
+export function HelpSteps({
+  steps = MARKETPLACE_STEPS,
+  warning = MARKETPLACE_WARNING,
+}: {
+  steps?: HelpStep[]
+  warning?: string
+}) {
   return (
     <details>
       <summary>Como gravar o ficheiro HAR (passo a passo)</summary>
       <p className="warn">
-        <strong>O ficheiro HAR tem a tua sessão do Facebook: não o partilhes e apaga-o depois de importar.</strong>
+        <strong>{warning}</strong>
       </p>
       <ol>
-        {STEPS.map((s) => (
+        {steps.map((s) => (
           <li key={s.text}>
             <p>{s.text}</p>
             {s.image && <img src={s.image} alt="" loading="lazy" className="help-shot" />}

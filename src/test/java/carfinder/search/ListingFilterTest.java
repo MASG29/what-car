@@ -125,6 +125,15 @@ class ListingFilterTest {
 	}
 
 	@Test
+	void olxWithoutRecognisedModel_saysSo() {
+		Listing l = TestListings.of(new RawListing(Site.OLX, "o", "https://www.olx.pt/d/anuncio/x-IDX1.html",
+				"Carro antigo", 1500, null, null, null, 2008, null, null, null, null, null, null, null, null,
+				null, null, 0, null, null, false), false);
+
+		assertThat(apply(l).notesPt()).contains("modelo ainda não está na base de conhecimento da app");
+	}
+
+	@Test
 	void filter_dropsParts() {
 		dropped(apply(ad(1500, "Volkswagen", "Polo", 2010, 150000, Fuel.PETROL, "Braga", 8, true, true)));
 	}

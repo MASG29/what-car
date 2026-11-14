@@ -41,6 +41,36 @@ class HarReaderTest {
 	}
 
 	@Test
+	void olxFilter_yieldsOnlyGraphqlAndSearchDocument() throws IOException {
+		List<String> bodies;
+		try (InputStream in = Files.newInputStream(Path.of("src/test/resources/fixtures/olx-feed.har"));
+				Stream<String> s = HarReader.bodies(in, carfinder.source.olx.OlxFeedParser.HAR)) {
+			bodies = s.toList();
+		}
+
+		// the search document and the graphql POST; not the script, not /api/v1/
+		assertThat(bodies).hasSize(2);
+		assertThat(bodies.getFirst()).startsWith("<!DOCTYPE html>");
+		assertThat(bodies.get(1)).startsWith("{\"data\"");
+		assertThat(String.join("", bodies)).doesNotContain("FAKEOLXCOOKIE", "FAKEOLXTOKEN", "FAKEOLXAUTH",
+				"FAKEOLXSETCOOKIE");
+	}
+
+	@Test
+	void olxFilter_skipsFacebookBodies() throws IOException {
+		try (InputStream in = Files.newInputStream(FIXTURE);
+				Stream<String> s = HarReader.bodies(in, carfinder.source.olx.OlxFeedParser.HAR)) {
+			assertThat(s.toList()).isEmpty();
+		}
+	}
+
+	@Test
+	void notAHar_throwsTheFiltersMessage() {
+		assertThatThrownBy(() -> HarReader.bodies(stream("hello"), carfinder.source.olx.OlxFeedParser.HAR).toList())
+				.isInstanceOf(SourceException.class).hasMessage(carfinder.source.olx.OlxFeedParser.NO_ADS);
+	}
+
+	@Test
 	void decodesBase64() throws IOException {
 		assertThat(bodies(FIXTURE).get(2)).contains("2009 Fiat Grande Punto 1.2 gasolina");
 	}

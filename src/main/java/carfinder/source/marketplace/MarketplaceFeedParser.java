@@ -36,8 +36,11 @@ public class MarketplaceFeedParser {
 			.compile("<script type=\"application/json\"[^>]*>(.*?)</script>", Pattern.DOTALL);
 	private static final JsonMapper MAPPER = JsonMapper.builder().build();
 
-	/** Live vehicles (one per id) and the ids seen sold or reserved. */
-	public record FeedResult(List<RawListing> live, List<String> unavailableIds) {
+	/** Live vehicles (one per id), the ids seen sold or reserved, and ads left out on purpose (another site's copies). */
+	public record FeedResult(List<RawListing> live, List<String> unavailableIds, int skipped) {
+		public FeedResult(List<RawListing> live, List<String> unavailableIds) {
+			this(live, unavailableIds, 0);
+		}
 	}
 
 	private final MarketplaceTitle titles;

@@ -1,4 +1,4 @@
-import type { Ad, Ranking } from './api'
+import type { Ad, Ranking, Site } from './api'
 import type { LimitsForm } from './limits'
 
 /**
@@ -19,7 +19,11 @@ export function marketplaceSearchUrl(form: LimitsForm): string {
 export const unreadMarketplace = (r: Ranking): Ad[] =>
   r.ranked.filter((s) => s.listing.site === 'MARKETPLACE' && !s.listing.detailFetched).map((s) => s.listing)
 
-export type ImportResult = { read: number; added: number; unavailable: number }
+/** skipped: another site's copies left out on import (OLX's Standvirtual ads); absent = 0 */
+export type ImportResult = { read: number; added: number; unavailable: number; skipped?: number }
+
+/** Sites whose ads come from HAR files the user imports. */
+export const isImported = (s: Site) => s === 'MARKETPLACE' || s === 'OLX'
 
 const DAY_MS = 24 * 60 * 60 * 1000
 
@@ -35,5 +39,6 @@ export function importSummaryPt(r: ImportResult): string {
     `${r.added} ${r.added === 1 ? 'novo' : 'novos'}`,
   ]
   if (r.unavailable > 0) parts.push(`${r.unavailable} ${r.unavailable === 1 ? 'vendido ou reservado' : 'vendidos ou reservados'}`)
+  if (r.skipped) parts.push(`${r.skipped} do Standvirtual, ${r.skipped === 1 ? 'ignorado' : 'ignorados'}`)
   return parts.join(', ') + '.'
 }

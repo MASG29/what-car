@@ -309,6 +309,18 @@ class SearchControllerTest {
 		verify(service).scoreLink(eq(Site.CUSTOJUSTO), eq(clean), any(), any(), any());
 	}
 
+	@ParameterizedTest
+	@ValueSource(strings = {"https://www.olx.pt/d/anuncio/renault-clio-IDJo0c4.html", "https://olx.pt/d/anuncio/x-IDJ1.html",
+			"https://m.olx.pt/d/anuncio/x-IDJ1.html", "https://WWW.OLX.PT/carros-motos-e-barcos/carros/",
+			"http://www.olx.pt/d/anuncio/x-IDJ1.html"})
+	void scoreLink_olx_400SaysImportHar(String url) throws Exception {
+		mvc.perform(post("/api/score-link").contentType(MediaType.APPLICATION_JSON)
+				.content("{\"url\": \"" + url + "\"}")).andExpect(status().isBadRequest())
+				.andExpect(jsonPath("$.messagePt").value(
+						"O OLX bloqueia a leitura automática. Importa um ficheiro HAR do OLX (ver «Sites»)."));
+		verifyNoInteractions(service);
+	}
+
 	@Test
 	void scoreLink_standvirtualAd_scoresIt() throws Exception {
 		when(service.scoreLink(eq(Site.STANDVIRTUAL), eq(AD), any(), any(), any()))

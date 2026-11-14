@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { deleteAllData, deleteImport, deleteSearches, formatInt, type ImportBatch, listImports } from '../api'
+import { deleteAllData, deleteImport, deleteSearches, formatInt, type ImportBatch, listImports, SITE_NAMES } from '../api'
 
 const when = (iso: string) =>
   new Date(iso).toLocaleString('pt-PT', { day: 'numeric', month: 'numeric', year: 'numeric', hour: '2-digit', minute: '2-digit' })
@@ -42,7 +42,7 @@ export function DataPanel({ disabled, onCleared }: { disabled: boolean; onCleare
       <ul>
         {imports?.map((b) => (
           <li key={b.id}>
-            {when(b.importedAt)} — {formatInt(b.read)} lidos, {formatInt(b.added)} novos, {formatInt(b.listings)} anúncios{' '}
+            {SITE_NAMES[b.site]}, {when(b.importedAt)} — {formatInt(b.read)} lidos, {formatInt(b.added)} novos, {formatInt(b.listings)} anúncios{' '}
             <button
               disabled={disabled}
               onClick={() =>

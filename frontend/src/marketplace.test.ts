@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { emptyForm } from './limits'
 import type { Ranking, Scored } from './api'
-import { importedAgoPt, importSummaryPt, marketplaceSearchUrl, unreadMarketplace } from './marketplace'
+import { importedAgoPt, importSummaryPt, isImported, marketplaceSearchUrl, unreadMarketplace } from './marketplace'
 
 describe('marketplaceSearchUrl', () => {
   it('holds the max price only (Facebook ignores year and km in the link)', () => {
@@ -37,6 +37,24 @@ describe('importSummaryPt', () => {
       '6 anúncios lidos, 4 novos, 2 vendidos ou reservados.',
     )
     expect(importSummaryPt({ read: 1, added: 1, unavailable: 0 })).toBe('1 anúncio lido, 1 novo.')
+  })
+
+  it('says how many Standvirtual copies were left out', () => {
+    expect(importSummaryPt({ read: 145, added: 145, unavailable: 0, skipped: 54 })).toBe(
+      '145 anúncios lidos, 145 novos, 54 do Standvirtual, ignorados.',
+    )
+    expect(importSummaryPt({ read: 3, added: 0, unavailable: 1, skipped: 1 })).toBe(
+      '3 anúncios lidos, 0 novos, 1 vendido ou reservado, 1 do Standvirtual, ignorado.',
+    )
+  })
+})
+
+describe('isImported', () => {
+  it('is true for the HAR-import sites only', () => {
+    expect(isImported('MARKETPLACE')).toBe(true)
+    expect(isImported('OLX')).toBe(true)
+    expect(isImported('STANDVIRTUAL')).toBe(false)
+    expect(isImported('CUSTOJUSTO')).toBe(false)
   })
 })
 

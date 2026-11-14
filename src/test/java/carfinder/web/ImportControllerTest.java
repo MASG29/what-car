@@ -19,6 +19,7 @@ import carfinder.listing.Site;
 import carfinder.search.SearchService;
 import carfinder.source.marketplace.MarketplaceFeedParser;
 import carfinder.source.marketplace.MarketplaceTitle;
+import carfinder.source.olx.OlxFeedParser;
 import jakarta.servlet.http.HttpServletRequest;
 import java.lang.reflect.Method;
 import java.nio.file.Files;
@@ -74,7 +75,9 @@ class ImportControllerTest {
 				new MarketplaceTitle(KnowledgeLoader.loadClasspath()),
 				new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
 		data = new carfinder.data.DataStore(jdbc, java.time.Clock.systemUTC());
-		mvc = MockMvcBuilders.standaloneSetup(new ImportController(parser, store, listings, search, data)).build();
+		OlxFeedParser olx = new OlxFeedParser(KnowledgeLoader.loadClasspath(),
+				new Places(Paths.get("src/test/resources/fixtures/geo/places-test.tsv")));
+		mvc = MockMvcBuilders.standaloneSetup(new ImportController(parser, olx, store, listings, search, data)).build();
 	}
 
 	@AfterEach
@@ -167,8 +170,87 @@ class ImportControllerTest {
 		Method[] handlers = Arrays.stream(ImportController.class.getDeclaredMethods())
 				.filter(m -> m.isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class))
 				.toArray(Method[]::new);
-		assertThat(handlers).hasSize(1);
-		assertThat(handlers[0].getParameterTypes()).containsExactly(HttpServletRequest.class)
-				.doesNotContain(MultipartFile.class);
+		assertThat(handlers).hasSize(2).allSatisfy(h -> assertThat(h.getParameterTypes())
+				.containsExactly(HttpServletRequest.class).doesNotContain(MultipartFile.class));
+	}
+
+	private static final Path OLX_FIXTURE = Path.of("src/test/resources/fixtures/olx-feed.har");
+
+	private String importOlx() throws Exception {
+		return mvc.perform(post("/api/imports/olx").contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.content(Files.readAllBytes(OLX_FIXTURE))).andExpect(status().isOk()).andReturn().getResponse()
+				.getContentAsString();
+	}
+
+	@Test
+	void importsOlxFixture_returnsCounts() throws Exception {
+		mvc.perform(post("/api/imports/olx").contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.content(Files.readAllBytes(OLX_FIXTURE))).andExpect(status().isOk())
+				.andExpect(jsonPath("$.read").value(3)).andExpect(jsonPath("$.added").value(2))
+				.andExpect(jsonPath("$.unavailable").value(1)).andExpect(jsonPath("$.skipped").value(2));
+		assertThat(listings.findBySite(Site.OLX)).hasSize(2);
+		assertThat(listings.findBySite(Site.MARKETPLACE)).isEmpty();
+
+		importOlx();
+		assertThat(data.imports()).extracting(b -> b.site()).containsOnly(Site.OLX);
+		assertThat(data.imports()).extracting(b -> b.added()).containsExactly(0, 2);
+	}
+
+	@Test
+	void olxImport_storesTheFeedsDetailFields() throws Exception {
+		importOlx();
+
+		Listing l = listings.findBySiteAndExternalId(Site.OLX, "900001").orElseThrow();
+		assertThat(l.getDescription()).isEqualTo("Bom estado.\nNão é para peças.");
+		assertThat(l.getCc()).isEqualTo(1149);
+		assertThat(l.getPowerCv()).isEqualTo(75);
+		assertThat(l.getDoors()).isEqualTo(5);
+		assertThat(l.getMonth()).isEqualTo(3);
+		assertThat(l.getPhotoCount()).isEqualTo(6);
+		assertThat(l.getKm()).isEqualTo(216000);
+		assertThat(l.isParts()).isFalse();
+
+		mvc.perform(post("/api/imports/olx").contentType(MediaType.APPLICATION_OCTET_STREAM)
+				.content(Files.readString(OLX_FIXTURE).replace("Não é para peças.", "Vendo para peças.")))
+				.andExpect(status().isOk());
+		assertThat(listings.findBySiteAndExternalId(Site.OLX, "900001").orElseThrow().isParts()).isTrue();
+	}
+
+	@Test
+	void olxLiveAdSeenRemovedLater_markedUnavailable() throws Exception {
+		importOlx();
+		String removed = Files.readString(OLX_FIXTURE).replace("\\\"status\\\": \\\"active\\\"",
+				"\\\"status\\\": \\\"removed_by_user\\\"");
+
+		mvc.perform(post("/api/imports/olx").contentType(MediaType.APPLICATION_OCTET_STREAM).content(removed))
+				.andExpect(status().isOk());
+
+		assertThat(listings.findBySite(Site.OLX)).extracting(Listing::getExternalId, Listing::isUnavailable)
+				.contains(org.assertj.core.groups.Tuple.tuple("900003", true));
+	}
+
+	@Test
+	void olxSellerDataNeverStoredOrLogged(CapturedOutput output) throws Exception {
+		String result = importOlx();
+
+		for (Listing l : listings.findAll()) {
+			assertThat(String.join("|", String.valueOf(l.getTitle()), l.getUrl(), String.valueOf(l.getCity()),
+					String.valueOf(l.getDistrict()), String.valueOf(l.getMake()), String.valueOf(l.getModel()),
+					String.valueOf(l.getVersion()), String.valueOf(l.getDescription()), l.getExternalId()))
+					.doesNotContain(carfinder.source.olx.OlxFeedParserTest.SENTINELS)
+					.doesNotContain("FAKEOLXCOOKIE", "FAKEOLXTOKEN", "FAKEOLXAUTH");
+		}
+		assertThat(result).doesNotContain(carfinder.source.olx.OlxFeedParserTest.SENTINELS);
+		assertThat(output.getAll()).doesNotContain(carfinder.source.olx.OlxFeedParserTest.SENTINELS)
+				.doesNotContain("FAKEOLXCOOKIE", "FAKEOLXTOKEN", "FAKEOLXAUTH");
+	}
+
+	@Test
+	void notOlxHar_400Pt() throws Exception {
+		for (byte[] body : List.of("hello".getBytes(), Files.readAllBytes(FIXTURE))) {
+			mvc.perform(post("/api/imports/olx").contentType(MediaType.APPLICATION_OCTET_STREAM).content(body))
+					.andExpect(status().isBadRequest())
+					.andExpect(jsonPath("$.messagePt").value(OlxFeedParser.NO_ADS));
+		}
 	}
 }

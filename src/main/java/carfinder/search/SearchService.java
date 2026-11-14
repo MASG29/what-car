@@ -126,8 +126,8 @@ public class SearchService {
 		if (sites.isEmpty()) {
 			throw new IllegalArgumentException("Escolhe pelo menos um site");
 		}
-		// Marketplace ranks the imported ads, so it needs no source bean
-		if (!sites.stream().allMatch(s -> s == Site.MARKETPLACE || sources.containsKey(s))) {
+		// Marketplace and OLX rank the imported ads, so they need no source bean
+		if (!sites.stream().allMatch(s -> s.importOnly() || sources.containsKey(s))) {
 			throw new IllegalArgumentException(UNSUPPORTED);
 		}
 		if (limits.centre() == null || limits.centre().isBlank() || limits.radiusKm() == null
@@ -266,8 +266,8 @@ public class SearchService {
 							.filter(f -> listings.findBySiteAndExternalId(site, f.externalId()).isEmpty()).count();
 					data.recordImport(site, found.size(), added, found.stream().map(f -> store.upsert(f).getId()).toList());
 				}
-				// Marketplace: every imported ad, however old (a HAR cannot tell when an ad was removed)
-				List<Listing> saved = site == Site.MARKETPLACE ? listings.findBySite(site)
+				// imported sites: every imported ad, however old (a HAR cannot tell when an ad was removed)
+				List<Listing> saved = site.importOnly() ? listings.findBySite(site)
 						: waitingForUser(id,
 								() -> source.search(query, msg -> change(id, r -> r.update(RunStatus.RUNNING, msg))))
 								.stream().map(store::upsert).toList();

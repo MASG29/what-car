@@ -449,6 +449,21 @@ class SearchServiceTest {
 	}
 
 	@Test
+	void olxRunRanksStoredOlxAds_noSourceBean() {
+		store.upsert(new RawListing(Site.OLX, "o1", "https://www.olx.pt/d/anuncio/x-IDX1.html", "Renault Clio 1.2",
+				2000, "Renault", "Clio", null, 2008, null, 150000, null, null, null, null, null, null, null, "Braga", 0,
+				null, null, false));
+		store.upsert(marketplace("m1", 2000)); // another site's ad is not part of an OLX-only run
+		SearchService s = service();
+
+		UUID id = s.start(LIMITS, Preset.BALANCED, null, Set.of(Site.OLX));
+
+		assertThat(s.status(id).status()).isEqualTo(RunStatus.DONE);
+		verify(source, never()).search(any(), any());
+		assertThat(s.results(id).ranked()).extracting(x -> x.listing().getExternalId()).containsExactly("o1");
+	}
+
+	@Test
 	void whileIdle_sharesTheRunSlot() throws Exception {
 		CountDownLatch inside = new CountDownLatch(1);
 		CountDownLatch release = new CountDownLatch(1);

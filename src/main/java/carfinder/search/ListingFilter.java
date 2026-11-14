@@ -129,9 +129,9 @@ public class ListingFilter {
 	/** Null when the ad's model is wanted; otherwise the reason. Make aliases resolve through the knowledge base. */
 	private String modelProblem(Listing l, List<String> models) {
 		if (l.getMake() == null || l.getModel() == null) {
-			// Marketplace and CustoJusto search items name the car only in the title: a make outside the knowledge base
+			// Marketplace, CustoJusto and OLX items name the car in the title (OLX also in fields the KB may not know): a make outside the knowledge base
 			// is not recognised
-			return l.getSite() == Site.MARKETPLACE || l.getSite() == Site.CUSTOJUSTO
+			return l.getSite() == Site.MARKETPLACE || l.getSite() == Site.CUSTOJUSTO || l.getSite() == Site.OLX
 					? "modelo ainda não está na base de conhecimento da app"
 					: "marca ou modelo não indicados";
 		}

@@ -2,11 +2,13 @@ import { useState } from 'react'
 import type { Site } from '../api'
 import type { LimitsForm } from '../limits'
 import { MarketplacePanel } from './MarketplacePanel'
+import { OlxPanel } from './OlxPanel'
 
 const LABELS: Record<Site, string> = {
   STANDVIRTUAL: 'Standvirtual',
   MARKETPLACE: 'Marketplace (anúncios importados)',
   CUSTOJUSTO: 'CustoJusto',
+  OLX: 'OLX (anúncios importados)',
 }
 
 export function SitesPanel({
@@ -67,6 +69,7 @@ export function SitesPanel({
           <MarketplacePanel form={form} disabled={running} />
         </>
       )}
+      {sites.includes('OLX') && <OlxPanel disabled={running} />}
     </section>
   )
 }

@@ -23,6 +23,8 @@ import org.springframework.web.bind.annotation.RestController;
 public class ScoreLinkController {
 
 	static final String UNSUPPORTED = "Site ainda não suportado";
+	static final String OLX_BLOCKED = "O OLX bloqueia a leitura automática. Importa um ficheiro HAR do OLX (ver «Sites»).";
+	private static final java.util.Set<String> OLX_HOSTS = java.util.Set.of("olx.pt", "www.olx.pt", "m.olx.pt");
 	private static final String STANDVIRTUAL_HOST = "www.standvirtual.com";
 	private static final String STANDVIRTUAL_AD_PATH = "/carros/anuncio/";
 	private static final String MARKETPLACE_HOST = "www.facebook.com";
@@ -61,6 +63,9 @@ public class ScoreLinkController {
 		}
 		catch (IllegalArgumentException e) {
 			throw new IllegalArgumentException(UNSUPPORTED);
+		}
+		if (uri.getHost() != null && OLX_HOSTS.contains(uri.getHost().toLowerCase(java.util.Locale.ROOT))) {
+			throw new IllegalArgumentException(OLX_BLOCKED); // never fetched: OLX answers plain HTTP with a WAF block
 		}
 		String path = uri.getPath();
 		if (!"https".equalsIgnoreCase(uri.getScheme()) || uri.getRawUserInfo() != null || uri.getPort() != -1) {

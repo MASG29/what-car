@@ -118,6 +118,19 @@ Requirements: Java 21 or newer and Docker. The build downloads its own Node.js f
   forbids automated tools for posting ads and automated or mass messages; it says nothing about
   reading pages, which does not make reading them allowed. Using this source goes against the
   site's stated rule and is your own decision and risk.
+- **OLX** (off by default; HAR import only): OLX answers any request that does not come from a
+  browser with a block page (a CloudFront WAF "403 Request blocked"), so the app never requests
+  anything from OLX and never tries to get past that block. You browse OLX's car search in your
+  own browser, save a HAR file (the in-app guide shows how: F12, Network, Doc + Fetch/XHR,
+  Preserve log, reload, 3 to 5 result pages, "Save all as HAR") and import it. The file is read
+  in memory as it uploads and never written anywhere; only each ad's title, price, year,
+  registration month, km, fuel, gearbox, engine size, power, doors, town and district, private or
+  dealer, photo count, description and link are kept. The seller's name, id, contact, shop, map
+  position, plate and VIN are never read. Ads OLX copies from Standvirtual are left out (the
+  Standvirtual source reads them in full), and an ad the file shows as no longer active is marked
+  unavailable. The HAR holds your OLX session cookies: do not share it, and delete it after
+  importing. OLX's `robots.txt` and terms were not checked, because they cannot be fetched
+  without a browser either (same 403).
 
 Each site has its own terms of use. Standvirtual's terms, for example, ask for consent before
 content is downloaded and forbid aggregating listings for third parties. This tool keeps results
@@ -149,7 +162,7 @@ chosen.
 - No `Host` header check: a malicious web page could use DNS rebinding to reach the app on
   127.0.0.1 while it runs. The risk is low for a personal tool, but do not run it next to
   untrusted browsing if that matters to you.
-- Only Standvirtual, Marketplace (through HAR import or the automated search) and CustoJusto are supported, and a change in their page
+- Only Standvirtual, Marketplace (through HAR import or the automated search), CustoJusto and OLX (through HAR import) are supported, and a change in their page
   format stops searches until the parser is updated (the app says so instead of returning empty
   results).
 - The app does not look at photos. Damage that shows only in the pictures (dents, scratches, a
@@ -291,6 +304,20 @@ frontend.
   ("Regras", `/ajuda-rules`) proíbe ferramentas automáticas para publicar anúncios e mensagens
   automáticas ou em massa; não diz nada sobre ler páginas, o que não quer dizer que seja
   permitido. Usar esta fonte vai contra a regra do site e é decisão e risco teus.
+- **OLX** (desligado por omissão; só por importação de HAR): o OLX responde a qualquer pedido que
+  não venha de um navegador com uma página de bloqueio (um "403 Request blocked" da firewall
+  CloudFront), por isso a aplicação nunca pede nada ao OLX nem tenta contornar esse bloqueio.
+  Navegas na pesquisa de carros do OLX no teu navegador, gravas um ficheiro HAR (o guia na
+  aplicação explica: F12, Rede, Doc + Fetch/XHR, Manter registo, recarregar, 3 a 5 páginas de
+  resultados, "Guardar tudo como HAR") e importas. O ficheiro é lido em memória enquanto é enviado
+  e nunca é gravado; de cada anúncio só ficam o título, preço, ano, mês de registo, km,
+  combustível, caixa, cilindrada, potência, portas, localidade e distrito, particular ou
+  profissional, número de fotos, descrição e link. O nome, id, contacto, loja, posição no mapa,
+  matrícula e VIN do vendedor nunca são lidos. Os anúncios que o OLX copia do Standvirtual ficam
+  de fora (a fonte Standvirtual lê-os por inteiro), e um anúncio que o ficheiro mostra como já não
+  ativo fica marcado como indisponível. O HAR tem os cookies da tua sessão do OLX: não o
+  partilhes e apaga-o depois de importar. O `robots.txt` e os termos do OLX não foram verificados,
+  porque também não se conseguem obter sem navegador (o mesmo 403).
 
 Cada site tem os seus próprios termos de utilização. Os termos do Standvirtual, por exemplo,
 pedem consentimento antes de se descarregar conteúdo e proíbem agregar anúncios para terceiros.
@@ -323,7 +350,7 @@ valores de consumo.
 - Não há verificação do cabeçalho `Host`: uma página maliciosa pode usar DNS rebinding para
   chegar à aplicação em 127.0.0.1 enquanto ela corre. O risco é baixo para uma ferramenta pessoal,
   mas não a deixes a correr junto de navegação pouco fiável se isso te preocupar.
-- Só o Standvirtual, o Marketplace (por importação de HAR ou pela pesquisa automática) e o CustoJusto são suportados, e uma mudança no
+- Só o Standvirtual, o Marketplace (por importação de HAR ou pela pesquisa automática), o CustoJusto e o OLX (por importação de HAR) são suportados, e uma mudança no
   formato das páginas para as pesquisas até o leitor ser atualizado (a aplicação avisa, em vez de
   devolver resultados vazios).
 - A aplicação não olha para as fotos. Danos que só se veem nas imagens (amolgadelas, riscos, uma

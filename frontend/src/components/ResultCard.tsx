@@ -1,6 +1,6 @@
 import { type Ad, CRITERIA, CRITERION_PT, formatEur, formatInt, pct, type Scored } from '../api'
 import { FUEL_PT } from '../limits'
-import { importedAgoPt } from '../marketplace'
+import { importedAgoPt, isImported } from '../marketplace'
 import { ChecklistPanel } from './ChecklistPanel'
 import { RealCostPanel } from './RealCostPanel'
 import { Source } from './Source'
@@ -16,7 +16,7 @@ export function adFacts(l: Ad): string {
     l.powerCv ? `${l.powerCv} cv` : null,
     l.gearbox,
     [l.city, l.district].filter(Boolean).join(', ') || null,
-    l.site === 'MARKETPLACE' ? importedAgoPt(l.lastSeen) : null,
+    isImported(l.site) ? importedAgoPt(l.lastSeen) : null,
   ]
     .filter(Boolean)
     .join(' · ')

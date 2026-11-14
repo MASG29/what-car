@@ -13,7 +13,13 @@ export const CRITERION_PT: Record<Criterion, string> = {
 
 export type Preset = 'BALANCED' | 'ECONOMICAL' | 'RELIABLE' | 'CUSTOM'
 export type Weights = Record<'price' | 'reliability' | 'consumption' | 'completeness' | 'photos', number>
-export type Site = 'STANDVIRTUAL' | 'MARKETPLACE' | 'CUSTOJUSTO'
+export type Site = 'STANDVIRTUAL' | 'MARKETPLACE' | 'CUSTOJUSTO' | 'OLX'
+export const SITE_NAMES: Record<Site, string> = {
+  STANDVIRTUAL: 'Standvirtual',
+  MARKETPLACE: 'Marketplace',
+  CUSTOJUSTO: 'CustoJusto',
+  OLX: 'OLX',
+}
 
 export type SearchLimits = {
   maxPriceEur: number
@@ -131,6 +137,14 @@ export const scoreLink = (req: Scoring & { url: string; limits: SearchLimits | n
 /** The HAR goes as the raw request body: the server parses it as it streams and never stores the file. */
 export const importMarketplace = (file: File) =>
   call<ImportResult>('/api/imports/marketplace', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/octet-stream' },
+    body: file,
+  })
+
+/** Same contract as the Marketplace import; nothing is requested from OLX. */
+export const importOlx = (file: File) =>
+  call<ImportResult>('/api/imports/olx', {
     method: 'POST',
     headers: { 'Content-Type': 'application/octet-stream' },
     body: file,
